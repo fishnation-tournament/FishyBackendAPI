@@ -82,4 +82,64 @@ public static class MapTools
         List<DataTypes.Map> mapRes = ReadMaps(reader);
         return mapRes;
     }
+    
+    public static DataTypes.Map GetMapById(SQLInteraction interactionHelper, ulong MID)
+    {
+        string query = "SELECT * FROM maps WHERE MID = " + MID + " LIMIT 1";
+        var reader = interactionHelper.GetReader(query);
+        DataTypes.Map mapRes = ReadSingleMap(reader);
+        return mapRes;
+    }
+
+    public static List<DataTypes.Map> SearchMapByName(SQLInteraction interactionHelper, string searchTerm)
+    {
+        string query = "SELECT * FROM maps WHERE MapName LIKE '%" + searchTerm + "%'";
+        var reader = interactionHelper.GetReader(query);
+        List<DataTypes.Map> maps = ReadMaps(reader);
+        return maps;
+    }
+    
+    public static List<DataTypes.Map> SearchMapsBySeason(SQLInteraction interactionHelper, int season)
+    {
+        string query = "SELECT * FROM maps WHERE Season = " + season;
+        var reader = interactionHelper.GetReader(query);
+        List<DataTypes.Map> maps = ReadMaps(reader);
+        return maps;
+    }
+    
+    public static void UpdateMap(SQLInteraction interactionHelper, DataTypes.Map map)
+    {
+        string query = "UPDATE maps SET BSMapID = '" + map.BSMapID + "', MapName = '" + map.MapName + "', MapImageLink = '" + map.MapImageLink + "', MapPoolID = " + map.MapPoolID + ", Season = " + map.Season + " WHERE MID = " + map.MID;
+        interactionHelper.SendCommand(query);
+    }
+    
+    public static void AddMap(SQLInteraction interactionHelper, DataTypes.Map map)
+    {
+        string query = "INSERT INTO maps (BSMapID, MapName, MapImageLink, MapPoolID, Season) VALUES ('" + map.BSMapID + "', '" + map.MapName + "', '" + map.MapImageLink + "', " + map.MapPoolID + ", " + map.Season + ")";
+        interactionHelper.SendCommand(query);
+    }
+    
+    public static void DeleteMap(SQLInteraction interactionHelper, ulong MID)
+    {
+        string query = "DELETE FROM maps WHERE MID = " + MID;
+        interactionHelper.SendCommand(query);
+    }
+    
+    public static void AddMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool)
+    {
+        string query = "INSERT INTO mappools (MapPoolName, MapPoolDescription, Season) VALUES ('" + mapPool.MapPoolName + "', '" + mapPool.MapPoolDescription + "', " + mapPool.Season + ")";
+        interactionHelper.SendCommand(query);
+    }
+    
+    public static void UpdateMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool)
+    {
+        string query = "UPDATE mappools SET MapPoolName = '" + mapPool.MapPoolName + "', MapPoolDescription = '" + mapPool.MapPoolDescription + "', Season = " + mapPool.Season + " WHERE MapPoolID = " + mapPool.MapPoolID;
+        interactionHelper.SendCommand(query);
+    }
+    
+    public static void DeleteMapPool(SQLInteraction interactionHelper, ulong MapPoolID)
+    {
+        string query = "DELETE FROM mappools WHERE MapPoolID = " + MapPoolID;
+        interactionHelper.SendCommand(query);
+    }
 }
