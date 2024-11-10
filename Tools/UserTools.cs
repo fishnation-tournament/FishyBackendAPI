@@ -65,6 +65,28 @@ public static class UserTools
         return users;
     }
     
+    public static List<DataTypes.User> SearchUsersByRole(SQLInteraction interactionHelper, string searchTerm)
+    {
+        string query = "SELECT * FROM users WHERE Role LIKE '%" + searchTerm + "%'";
+        var reader = interactionHelper.GetReader(query);
+        List<DataTypes.User> users = new List<DataTypes.User>();
+        while (reader.Read())
+        {
+            DataTypes.User user = new DataTypes.User();
+            user.UID = reader.GetUInt64(0);
+            user.OptBLUID = reader.GetUInt64(1);
+            user.Username = reader.GetString(2);
+            user.UserPfpLink = reader.GetString(3);
+            user.UserBio = reader.GetString(4);
+            user.DiscordID = reader.GetUInt64(5);
+            user.DiscordUsername = reader.GetString(6);
+            user.RegistrationDate = reader.GetDateTime(7);
+            user.Role = reader.GetString(8);
+            users.Add(user);
+        }
+        return users;
+    }
+    
     public static void UpdateUser(SQLInteraction interactionHelper, DataTypes.User user)
     {
         string query = "UPDATE users SET OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', UserBio = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordUsername = '" + user.DiscordUsername + "', RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "' WHERE UID = " + user.UID;
