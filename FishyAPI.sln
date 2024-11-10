@@ -1,0 +1,21 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FishyAPI", "FishyAPI.csproj", "{551570A9-0575-4434-8F3D-5E351A3E3957}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0B063D14-23FE-4F04-9ACD-B36E0FF029A2}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{551570A9-0575-4434-8F3D-5E351A3E3957}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{551570A9-0575-4434-8F3D-5E351A3E3957}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{551570A9-0575-4434-8F3D-5E351A3E3957}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{551570A9-0575-4434-8F3D-5E351A3E3957}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

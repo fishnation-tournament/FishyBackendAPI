@@ -1,0 +1,6 @@
+@FishyAPI_HostAddress = http://localhost:5124
+
+GET {{FishyAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

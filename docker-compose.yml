@@ -1,0 +1,6 @@
+﻿services:
+  fishyapi:
+    image: fishyapi
+    build:
+      context: .
+      dockerfile: Dockerfile
