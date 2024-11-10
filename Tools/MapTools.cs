@@ -61,18 +61,42 @@ public static class MapTools
     
     public static List<DataTypes.MapPool> GetMapPools(SQLInteraction interactionHelper)
     {
-        string query = "SELECT * FROM mappools";
+        string query = "SELECT * FROM map_pools";
         var reader = interactionHelper.GetReader(query);
         List<DataTypes.MapPool> mapPools = ReadMapPools(interactionHelper, reader);
+        reader.Close();
+
         return mapPools;
     }
     
     public static DataTypes.MapPool GetMapPoolById(SQLInteraction interactionHelper, ulong MapPoolID)
     {
-        string query = "SELECT * FROM mappools WHERE MapPoolID = " + MapPoolID + " LIMIT 1";
+        string query = "SELECT * FROM map_pools WHERE MapPoolID = " + MapPoolID + " LIMIT 1";
         var reader = interactionHelper.GetReader(query);
         DataTypes.MapPool mapPoolRes = ReadSingleMapPool(interactionHelper, reader);
+        reader.Close();
+
         return mapPoolRes;
+    }
+    
+    public static List<DataTypes.MapPool> SearchMapPoolByName(SQLInteraction interactionHelper, string searchTerm)
+    {
+        string query = "SELECT * FROM map_pools WHERE MapPoolName LIKE '%" + searchTerm + "%'";
+        var reader = interactionHelper.GetReader(query);
+        List<DataTypes.MapPool> mapPools = ReadMapPools(interactionHelper, reader);
+        reader.Close();
+
+        return mapPools;
+    }
+    
+    public static List<DataTypes.MapPool> SearchMapPoolsBySeason(SQLInteraction interactionHelper, int season)
+    {
+        string query = "SELECT * FROM map_pools WHERE Season = " + season;
+        var reader = interactionHelper.GetReader(query);
+        List<DataTypes.MapPool> mapPools = ReadMapPools(interactionHelper, reader);
+        reader.Close();
+
+        return mapPools;
     }
     
     public static List<DataTypes.Map> GetMapsInMapPool(SQLInteraction interactionHelper, ulong MapPoolID)
@@ -80,6 +104,8 @@ public static class MapTools
         string query = "SELECT * FROM maps WHERE MapPoolID = " + MapPoolID;
         var reader = interactionHelper.GetReader(query);
         List<DataTypes.Map> mapRes = ReadMaps(reader);
+        reader.Close();
+
         return mapRes;
     }
     
@@ -88,6 +114,8 @@ public static class MapTools
         string query = "SELECT * FROM maps WHERE MID = " + MID + " LIMIT 1";
         var reader = interactionHelper.GetReader(query);
         DataTypes.Map mapRes = ReadSingleMap(reader);
+        reader.Close();
+
         return mapRes;
     }
 
@@ -96,6 +124,8 @@ public static class MapTools
         string query = "SELECT * FROM maps WHERE MapName LIKE '%" + searchTerm + "%'";
         var reader = interactionHelper.GetReader(query);
         List<DataTypes.Map> maps = ReadMaps(reader);
+        reader.Close();
+
         return maps;
     }
     
@@ -104,6 +134,8 @@ public static class MapTools
         string query = "SELECT * FROM maps WHERE Season = " + season;
         var reader = interactionHelper.GetReader(query);
         List<DataTypes.Map> maps = ReadMaps(reader);
+        reader.Close();
+
         return maps;
     }
     

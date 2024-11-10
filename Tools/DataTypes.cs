@@ -68,5 +68,6 @@ public static class DataTypes
         public int Score;
         public int MaxScore;
         public int Misses;
+        public ulong QualifierID;
     }
 }
