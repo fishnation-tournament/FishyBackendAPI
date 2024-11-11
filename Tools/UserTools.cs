@@ -6,12 +6,6 @@ public static class UserTools
 {
     private static List<DataTypes.User> ReadResults(MySqlDataReader reader)
     {
-        if (!reader.Read())
-        {
-            reader.Close();
-            return new List<DataTypes.User>();
-        }
-        
         List<DataTypes.User> users = new List<DataTypes.User>();
         while (reader.Read())
         {
@@ -34,13 +28,8 @@ public static class UserTools
     
     private static DataTypes.User ReadSingleResult(MySqlDataReader reader)
     {
-        if (!reader.Read())
-        {
-            reader.Close();
-            return new DataTypes.User();
-        }
-        
         DataTypes.User user = new DataTypes.User();
+        reader.Read();
         user.UID = reader.GetUInt64(0);
         user.OptBLUID = reader.GetUInt64(1);
         user.Username = reader.GetString(2);
