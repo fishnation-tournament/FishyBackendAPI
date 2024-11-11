@@ -165,37 +165,37 @@ public static class MapTools
         return maps;
     }
     
-    public static void UpdateMap(SQLInteraction interactionHelper, DataTypes.Map map)
+    public static void UpdateMap(SQLInteraction interactionHelper, DataTypes.Map map) //PUT
     {
         string query = "UPDATE maps SET BSMapID = '" + map.BSMapID + "', MapName = '" + map.MapName + "', MapImageLink = '" + map.MapImageLink + "', MapPoolID = " + map.MapPoolID + ", Season = " + map.Season + " WHERE MID = " + map.MID;
         interactionHelper.SendCommand(query);
     }
     
-    public static void AddMap(SQLInteraction interactionHelper, DataTypes.Map map)
+    public static void AddMap(SQLInteraction interactionHelper, DataTypes.Map map) //POST
     {
         string query = "INSERT INTO maps (BSMapID, MapName, MapImageLink, MPID, Season) VALUES ('" + map.BSMapID + "', '" + map.MapName + "', '" + map.MapImageLink + "', " + map.MapPoolID + ", " + map.Season + ")";
         interactionHelper.SendCommand(query);
     }
     
-    public static void DeleteMap(SQLInteraction interactionHelper, ulong MID)
+    public static void DeleteMap(SQLInteraction interactionHelper, ulong MID) //DELETE
     {
         string query = "DELETE FROM maps WHERE MapID = " + MID;
         interactionHelper.SendCommand(query);
     }
     
-    public static void AddMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool)
+    public static void AddMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool) //POST
     {
         string query = "INSERT INTO mappools (MapPoolName, MapPoolDescription, Season) VALUES ('" + mapPool.MapPoolName + "', '" + mapPool.MapPoolDescription + "', " + mapPool.Season + ")";
         interactionHelper.SendCommand(query);
     }
     
-    public static void UpdateMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool)
+    public static void UpdateMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool) //PUT
     {
         string query = "UPDATE mappools SET MapPoolName = '" + mapPool.MapPoolName + "', MapPoolDescription = '" + mapPool.MapPoolDescription + "', Season = " + mapPool.Season + " WHERE MapPoolID = " + mapPool.MapPoolID;
         interactionHelper.SendCommand(query);
     }
     
-    public static void DeleteMapPool(SQLInteraction interactionHelper, ulong MapPoolID)
+    public static void DeleteMapPool(SQLInteraction interactionHelper, ulong MapPoolID) //DELETE
     {
         string query = "DELETE FROM mappools WHERE MapPoolID = " + MapPoolID;
         interactionHelper.SendCommand(query);
