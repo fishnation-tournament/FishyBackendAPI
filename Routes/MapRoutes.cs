@@ -52,5 +52,41 @@ public class MapRoutes
             List<DataTypes.MapPool> mapPools = MapTools.GetMapPoolsBySeason(interactionHelper, season);
             return mapPools;
         }).WithName("GetMapPoolsBySeason").WithOpenApi();
+        
+        endpoints.MapPost("/Maps/AddMapPool", async (DataTypes.MapPool mapPool) =>
+        {
+            MapTools.AddMapPool(interactionHelper, mapPool);
+            return Results.Created($"/Maps/GetMapPoolById/{mapPool.MapPoolID}", mapPool);
+        }).WithName("AddMapPool").WithOpenApi();
+        
+        endpoints.MapPost("/Maps/AddMap", async (DataTypes.Map map) =>
+        {
+            MapTools.AddMap(interactionHelper, map);
+            return Results.Created($"/Maps/GetMapById/{map.MID}", map);
+        }).WithName("AddMap").WithOpenApi();
+        
+        endpoints.MapPut("/Maps/UpdateMapPool", async (DataTypes.MapPool mapPool) =>
+        {
+            MapTools.UpdateMapPool(interactionHelper, mapPool);
+            return Results.Created($"/Maps/GetMapPoolById/{mapPool.MapPoolID}", mapPool);
+        }).WithName("UpdateMapPool").WithOpenApi();
+        
+        endpoints.MapPut("/Maps/UpdateMap", async (DataTypes.Map map) =>
+        {
+            MapTools.UpdateMap(interactionHelper, map);
+            return Results.Created($"/Maps/GetMapById/{map.MID}", map);
+        }).WithName("UpdateMap").WithOpenApi();
+        
+        endpoints.MapDelete("/Maps/DeleteMapPool/{MapPoolID}", (ulong MapPoolID) =>
+        {
+            MapTools.DeleteMapPool(interactionHelper, MapPoolID);
+            return Results.NoContent();
+        }).WithName("DeleteMapPool").WithOpenApi();
+        
+        endpoints.MapDelete("/Maps/DeleteMap/{MID}", (ulong MID) =>
+        {
+            MapTools.DeleteMap(interactionHelper, MID);
+            return Results.NoContent();
+        }).WithName("DeleteMap").WithOpenApi();
     }
 }
