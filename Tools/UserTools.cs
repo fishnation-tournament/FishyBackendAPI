@@ -29,16 +29,18 @@ public static class UserTools
     private static DataTypes.User ReadSingleResult(MySqlDataReader reader)
     {
         DataTypes.User user = new DataTypes.User();
-        reader.Read();
-        user.UID = reader.GetUInt64(0);
-        user.OptBLUID = reader.GetUInt64(1);
-        user.Username = reader.GetString(2);
-        user.UserPfpLink = reader.GetString(3);
-        user.UserBio = reader.GetString(4);
-        user.DiscordID = reader.GetUInt64(5);
-        user.DiscordUsername = reader.GetString(6);
-        user.RegistrationDate = reader.GetDateTime(7);
-        user.Role = reader.GetString(8);
+        while (reader.Read())
+        {
+            user.UID = reader.GetUInt64(0);
+            user.OptBLUID = reader.GetUInt64(1);
+            user.Username = reader.GetString(2);
+            user.UserPfpLink = reader.GetString(3);
+            user.UserBio = reader.GetString(4);
+            user.DiscordID = reader.GetUInt64(5);
+            user.DiscordUsername = reader.GetString(6);
+            user.RegistrationDate = reader.GetDateTime(7);
+            user.Role = reader.GetString(8);
+        }
         reader.Close();
         
         return user;

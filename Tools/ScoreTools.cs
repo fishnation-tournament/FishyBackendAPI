@@ -5,12 +5,6 @@ public class ScoreTools
 {
     public static List<DataTypes.MatchScore> ReadMatchScores(MySqlDataReader reader)
     {
-        if(!reader.Read())
-        {
-            reader.Close();
-            return new List<DataTypes.MatchScore>();
-        }
-        
         List<DataTypes.MatchScore> scores = new List<DataTypes.MatchScore>();
         while (reader.Read())
         {
@@ -31,20 +25,17 @@ public class ScoreTools
     
     public static DataTypes.QualifierScore ReadSingleQualifierScore(MySqlDataReader reader)
     {
-        if(!reader.Read())
-        {
-            reader.Close();
-            return new DataTypes.QualifierScore();
-        }
-        
         DataTypes.QualifierScore score = new DataTypes.QualifierScore();
-        score.ScoreID = reader.GetUInt64(0);
-        score.UID = reader.GetUInt64(1);
-        score.MapID = reader.GetUInt64(2);
-        score.Score = reader.GetInt32(3);
-        score.MaxScore = reader.GetInt32(4);
-        score.Misses = reader.GetInt32(5);
-        score.QualifierID = reader.GetUInt64(6);
+        while (reader.Read())
+        {
+            score.ScoreID = reader.GetUInt64(0);
+            score.UID = reader.GetUInt64(1);
+            score.MapID = reader.GetUInt64(2);
+            score.Score = reader.GetInt32(3);
+            score.MaxScore = reader.GetInt32(4);
+            score.Misses = reader.GetInt32(5);
+            score.QualifierID = reader.GetUInt64(6);
+        }
         reader.Close();
         
         return score;
@@ -52,12 +43,6 @@ public class ScoreTools
     
     public static List<DataTypes.QualifierScore> ReadQualifierScores(MySqlDataReader reader)
     {
-        if(!reader.Read())
-        {
-            reader.Close();
-            return new List<DataTypes.QualifierScore>();
-        }
-        
         List<DataTypes.QualifierScore> scores = new List<DataTypes.QualifierScore>();
         while (reader.Read())
         {

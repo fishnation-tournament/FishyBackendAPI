@@ -5,12 +5,6 @@ public static class MapTools
 {
     public static List<DataTypes.Map> ReadMaps(MySqlDataReader reader)
     {
-        if (!reader.Read())
-        {
-            reader.Close();
-            return new List<DataTypes.Map>();
-        }
-        
         List<DataTypes.Map> maps = new List<DataTypes.Map>();
         while (reader.Read())
         {
@@ -32,32 +26,24 @@ public static class MapTools
     
     public static DataTypes.Map ReadSingleMap(MySqlDataReader reader)
     {
-        if (!reader.Read())
-        {
-            reader.Close();
-            return new DataTypes.Map();
-        }
-        
         DataTypes.Map map = new DataTypes.Map();
-        map.MID = reader.GetUInt64(0);
-        map.BSMapID = reader.GetString(1);
-        map.MapName = reader.GetString(2);
-        map.MapImageLink = reader.GetString(3);
-        map.MapPoolID = reader.GetUInt64(4);
-        map.Season = reader.GetInt32(5);
-        map.Difficulty = reader.GetString(6);
+        while(reader.Read())
+        {
+            map.MID = reader.GetUInt64(0);
+            map.BSMapID = reader.GetString(1);
+            map.MapName = reader.GetString(2);
+            map.MapImageLink = reader.GetString(3);
+            map.MapPoolID = reader.GetUInt64(4);
+            map.Season = reader.GetInt32(5);
+            map.Difficulty = reader.GetString(6);
+        }
         reader.Close();
+        
         return map;
     }
     
     public static List<DataTypes.MapPool> ReadMapPools(SQLInteraction interactionHelper, MySqlDataReader reader)
     {
-        if (!reader.Read())
-        {
-            reader.Close();
-            return new List<DataTypes.MapPool>();
-        }
-        
         List<DataTypes.MapPool> mapPools = new List<DataTypes.MapPool>();
         while (reader.Read())
         {
@@ -83,19 +69,18 @@ public static class MapTools
     
     public static DataTypes.MapPool ReadSingleMapPool(SQLInteraction interactionHelper, MySqlDataReader reader)
     {
-        if (!reader.Read())
-        {
-            reader.Close();
-            return new DataTypes.MapPool();
-        }
-
         DataTypes.MapPool mapPool = new DataTypes.MapPool();
-        mapPool.MapPoolID = reader.GetUInt64(0);
-        mapPool.MapPoolName = reader.GetString(1);
-        mapPool.MapPoolDescription = reader.GetString(2);
-        mapPool.Season = reader.GetInt32(3);
+        while (reader.Read())
+        {
+            mapPool.MapPoolID = reader.GetUInt64(0);
+            mapPool.MapPoolName = reader.GetString(1);
+            mapPool.MapPoolDescription = reader.GetString(2);
+            mapPool.Season = reader.GetInt32(3);
+        }
         reader.Close();
+        
         mapPool.Maps = GetMapsInMapPool(interactionHelper, mapPool.MapPoolID);
+        
         return mapPool;
     }
     
