@@ -131,7 +131,7 @@ public static class MapTools
     
     public static List<DataTypes.Map> GetMapsInMapPool(SQLInteraction interactionHelper, ulong MapPoolID)
     {
-        string query = "SELECT * FROM maps WHERE MapPoolID = " + MapPoolID;
+        string query = "SELECT * FROM maps WHERE MPID = " + MapPoolID;
         var reader = interactionHelper.GetReader(query);
         List<DataTypes.Map> mapRes = ReadMaps(reader);
 
@@ -167,13 +167,13 @@ public static class MapTools
     
     public static void UpdateMap(SQLInteraction interactionHelper, DataTypes.Map map) //PUT
     {
-        string query = "UPDATE maps SET BSMapID = '" + map.BSMapID + "', MapName = '" + map.MapName + "', MapImageLink = '" + map.MapImageLink + "', MapPoolID = " + map.MapPoolID + ", Season = " + map.Season + " WHERE MID = " + map.MID;
+        string query = "UPDATE maps SET BSMapID = '" + map.BSMapID + "', MapName = '" + map.MapName + "', MapImageLink = '" + map.MapImageLink + "', MPID = " + map.MapPoolID + ", Season = " + map.Season + ", Difficulty = '" + map.Difficulty + "' WHERE MapID = " + map.MID;
         interactionHelper.SendCommand(query);
     }
     
     public static void AddMap(SQLInteraction interactionHelper, DataTypes.Map map) //POST
     {
-        string query = "INSERT INTO maps (BSMapID, MapName, MapImageLink, MPID, Season) VALUES ('" + map.BSMapID + "', '" + map.MapName + "', '" + map.MapImageLink + "', " + map.MapPoolID + ", " + map.Season + ")";
+        string query = "INSERT INTO maps (BSMapID, MapName, MapImageLink, MPID, Season, Difficulty) VALUES ('" + map.BSMapID + "', '" + map.MapName + "', '" + map.MapImageLink + "', " + map.MapPoolID + ", " + map.Season + ", " + map.Difficulty + ")";
         interactionHelper.SendCommand(query);
     }
     
@@ -185,19 +185,19 @@ public static class MapTools
     
     public static void AddMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool) //POST
     {
-        string query = "INSERT INTO mappools (MapPoolName, MapPoolDescription, Season) VALUES ('" + mapPool.MapPoolName + "', '" + mapPool.MapPoolDescription + "', " + mapPool.Season + ")";
+        string query = "INSERT INTO map_pools (MapPoolName, MapPoolDescription, Season) VALUES ('" + mapPool.MapPoolName + "', '" + mapPool.MapPoolDescription + "', " + mapPool.Season + ")";
         interactionHelper.SendCommand(query);
     }
     
     public static void UpdateMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool) //PUT
     {
-        string query = "UPDATE mappools SET MapPoolName = '" + mapPool.MapPoolName + "', MapPoolDescription = '" + mapPool.MapPoolDescription + "', Season = " + mapPool.Season + " WHERE MapPoolID = " + mapPool.MapPoolID;
+        string query = "UPDATE map_pools SET MapPoolName = '" + mapPool.MapPoolName + "', MapPoolDescription = '" + mapPool.MapPoolDescription + "', Season = " + mapPool.Season + " WHERE MPID = " + mapPool.MapPoolID;
         interactionHelper.SendCommand(query);
     }
     
     public static void DeleteMapPool(SQLInteraction interactionHelper, ulong MapPoolID) //DELETE
     {
-        string query = "DELETE FROM mappools WHERE MapPoolID = " + MapPoolID;
+        string query = "DELETE FROM map_pools WHERE MPID = " + MapPoolID;
         interactionHelper.SendCommand(query);
     }
 }
