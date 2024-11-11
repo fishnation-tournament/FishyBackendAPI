@@ -5,38 +5,61 @@ public class MatchTools
 {
     public static List<DataTypes.Match> ReadMatches(SQLInteraction interactionHelper, MySqlDataReader reader)
     {
+        if (!reader.Read())
+        {
+            reader.Close();
+            return new List<DataTypes.Match>();
+        }
+        
         List<DataTypes.Match> matches = new List<DataTypes.Match>();
         while (reader.Read())
         {
             DataTypes.Match match = new DataTypes.Match();
             match.MID = reader.GetUInt64(0);
-            match.MapPoolID = reader.GetUInt64(1);
-            match.Player1ID = reader.GetUInt64(2);
-            match.Player2ID = reader.GetUInt64(3);
-            match.WinnerID = reader.GetUInt64(4);
-            match.Player1Score = reader.GetInt32(5);
-            match.Player2Score = reader.GetInt32(6);
-            match.MatchDate = reader.GetDateTime(7);
+            match.Player1ID = reader.GetUInt64(1);
+            match.Player2ID = reader.GetUInt64(2);
+            match.Player1Score = reader.GetInt32(3);
+            match.Player2Score = reader.GetInt32(4);
+            match.MatchDate = reader.GetDateTime(5);
+            match.Complete = reader.GetBoolean(6);
+            match.WinnerID = reader.GetUInt64(7);
             match.Season = reader.GetInt32(8);
-            match.Scores = ScoreTools.GetMatchScores(interactionHelper, match.MID);
+            match.MapPoolID = reader.GetUInt64(9);
+            match.Scores = new List<DataTypes.MatchScore>();
             matches.Add(match);
         }
+        reader.Close();
         
+        for(int i = 0; i < matches.Count; i++)
+        {
+            var tempMatch = matches[i];
+            tempMatch.Scores = ScoreTools.GetMatchScores(interactionHelper, tempMatch.MID);
+            matches[i] = tempMatch;
+        }
         return matches;
     }
     
     public static DataTypes.Match ReadSingleMatch(SQLInteraction interactionHelper, MySqlDataReader reader)
     {
+        if (!reader.Read())
+        {
+            reader.Close();
+            return new DataTypes.Match();
+        }
+        
         DataTypes.Match match = new DataTypes.Match();
         match.MID = reader.GetUInt64(0);
-        match.MapPoolID = reader.GetUInt64(1);
-        match.Player1ID = reader.GetUInt64(2);
-        match.Player2ID = reader.GetUInt64(3);
-        match.WinnerID = reader.GetUInt64(4);
-        match.Player1Score = reader.GetInt32(5);
-        match.Player2Score = reader.GetInt32(6);
-        match.MatchDate = reader.GetDateTime(7);
+        match.Player1ID = reader.GetUInt64(1);
+        match.Player2ID = reader.GetUInt64(2);
+        match.Player1Score = reader.GetInt32(3);
+        match.Player2Score = reader.GetInt32(4);
+        match.MatchDate = reader.GetDateTime(5);
+        match.Complete = reader.GetBoolean(6);
+        match.WinnerID = reader.GetUInt64(7);
         match.Season = reader.GetInt32(8);
+        match.MapPoolID = reader.GetUInt64(9);
+        reader.Close();
+        
         match.Scores = ScoreTools.GetMatchScores(interactionHelper, match.MID);
         return match;
     }
@@ -46,7 +69,7 @@ public class MatchTools
         string query = "SELECT * FROM matches";
         MySqlDataReader reader = interactionHelper.GetReader(query);
         List<DataTypes.Match> matches = ReadMatches(interactionHelper, reader);
-        reader.Close();
+
         return matches;
     }
     
@@ -55,7 +78,16 @@ public class MatchTools
         string query = $"SELECT * FROM matches WHERE Season = {season}";
         MySqlDataReader reader = interactionHelper.GetReader(query);
         List<DataTypes.Match> matches = ReadMatches(interactionHelper, reader);
-        reader.Close();
+        
         return matches;
+    }
+    
+    public static DataTypes.Match GetMatchById(SQLInteraction interactionHelper, ulong MID)
+    {
+        string query = $"SELECT * FROM matches WHERE MatchID = {MID} LIMIT 1";
+        MySqlDataReader reader = interactionHelper.GetReader(query);
+        DataTypes.Match match = ReadSingleMatch(interactionHelper, reader);
+        
+        return match;
     }
 }

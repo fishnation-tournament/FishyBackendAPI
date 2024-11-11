@@ -1,5 +1,7 @@
 using FishyAPI.Tools;
 using FishyAPI.Tools.DBInteractions;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 
 DotNetEnv.Env.TraversePath().Load("./.env");
 Console.WriteLine("Attempting to connect to the database");
@@ -21,7 +23,6 @@ else
 }
 
 SQLInteraction interactionHelper = new SQLInteraction(dbConn.Connection);
-List<DataTypes.User> users = UserTools.SearchUserByName(interactionHelper, "4lw");
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,30 +42,94 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+app.MapGet("/Maps/GetMaps", () =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    List<DataTypes.Map> maps = MapTools.GetMaps(interactionHelper);
+    return maps;
+}).WithName("GetMaps").WithOpenApi();
 
-app.MapGet("/weatherforecast", () =>
-    {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast")
-    .WithOpenApi();
+app.MapGet("/Maps/GetMapBySeason/{season}", (int season) =>
+{
+    List<DataTypes.Map> maps = MapTools.GetMapsBySeason(interactionHelper, season);
+    return maps;
+}).WithName("GetMapsBySeason").WithOpenApi();
+
+app.MapGet("/Maps/GetMapById/{MID}", (ulong MID) =>
+{
+    DataTypes.Map map = MapTools.GetMapById(interactionHelper, MID);
+    return map;
+}).WithName("GetMapById").WithOpenApi();
+
+app.MapGet("/Maps/SearchMapByName/{searchTerm}", (string searchTerm) =>
+{
+    List<DataTypes.Map> maps = MapTools.GetMapsByName(interactionHelper, searchTerm);
+    return maps;
+}).WithName("SearchMapsByName").WithOpenApi();
+
+app.MapGet("/Users/GetUsers", () =>
+{
+    List<DataTypes.User> users = UserTools.GetUsers(interactionHelper);
+    return users;
+}).WithName("GetUsers").WithOpenApi();
+
+app.MapGet("/Users/GetUserById/{UID}", (ulong UID) =>
+{
+    DataTypes.User user = UserTools.GetUserById(interactionHelper, UID);
+    return user;
+}).WithName("GetUserById").WithOpenApi();
+
+app.MapGet("/Users/SearchUserByName/{searchTerm}", (string searchTerm) =>
+{
+    List<DataTypes.User> users = UserTools.GetUserByName(interactionHelper, searchTerm);
+    return users;
+}).WithName("SearchUserByName").WithOpenApi();
+
+app.MapGet("/Maps/GetMapPools", () =>
+{
+    List<DataTypes.MapPool> mapPools = MapTools.GetMapPools(interactionHelper);
+    return mapPools;
+}).WithName("GetMapPools").WithOpenApi();
+
+app.MapGet("/Maps/GetMapPoolById/{MapPoolID}", (ulong MapPoolID) =>
+{
+    DataTypes.MapPool mapPool = MapTools.GetMapPoolById(interactionHelper, MapPoolID);
+    return mapPool;
+}).WithName("GetMapPoolById").WithOpenApi();
+
+app.MapGet("/Maps/SearchMapPoolByName/{searchTerm}", (string searchTerm) =>
+{
+    List<DataTypes.MapPool> mapPools = MapTools.GetMapPoolByName(interactionHelper, searchTerm);
+    return mapPools;
+}).WithName("SearchMapPoolByName").WithOpenApi();
+
+app.MapGet("/Maps/GetMapPoolsBySeason/{season}", (int season) =>
+{
+    List<DataTypes.MapPool> mapPools = MapTools.GetMapPoolsBySeason(interactionHelper, season);
+    return mapPools;
+}).WithName("GetMapPoolsBySeason").WithOpenApi();
+
+app.MapGet("/Scores/Qualifiers/{QualifierID}", (ulong QualifierID) =>
+{
+    List<DataTypes.QualifierScore> scores = ScoreTools.GetQualifierScores(interactionHelper, QualifierID);
+    return scores;
+}).WithName("GetQualifierScores").WithOpenApi();
+
+app.MapGet("/Matches/GetAll", () =>
+{
+    List<DataTypes.Match> matches = MatchTools.GetMatches(interactionHelper);
+    return matches;
+}).WithName("GetMatches").WithOpenApi();
+
+app.MapGet("/Matches/GetMatchById/{MID}", (ulong MID) =>
+{
+    DataTypes.Match match = MatchTools.GetMatchById(interactionHelper, MID);
+    return match;
+}).WithName("GetMatchById").WithOpenApi();
+
+app.MapGet("/Matches/GetMatchesBySeason/{Season}", (int Season) =>
+{
+    List<DataTypes.Match> matches = MatchTools.GetMatchesBySeason(interactionHelper, Season);
+    return matches;
+}).WithName("GetMatchesBySeason").WithOpenApi();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
-

@@ -6,6 +6,12 @@ public static class UserTools
 {
     private static List<DataTypes.User> ReadResults(MySqlDataReader reader)
     {
+        if (!reader.Read())
+        {
+            reader.Close();
+            return new List<DataTypes.User>();
+        }
+        
         List<DataTypes.User> users = new List<DataTypes.User>();
         while (reader.Read())
         {
@@ -21,11 +27,19 @@ public static class UserTools
             user.Role = reader.GetString(8);
             users.Add(user);
         }
+        reader.Close();
+        
         return users;
     }
     
     private static DataTypes.User ReadSingleResult(MySqlDataReader reader)
     {
+        if (!reader.Read())
+        {
+            reader.Close();
+            return new DataTypes.User();
+        }
+        
         DataTypes.User user = new DataTypes.User();
         user.UID = reader.GetUInt64(0);
         user.OptBLUID = reader.GetUInt64(1);
@@ -36,6 +50,8 @@ public static class UserTools
         user.DiscordUsername = reader.GetString(6);
         user.RegistrationDate = reader.GetDateTime(7);
         user.Role = reader.GetString(8);
+        reader.Close();
+        
         return user;
     }
     public static List<DataTypes.User> GetUsers(SQLInteraction interactionHelper)
@@ -43,6 +59,7 @@ public static class UserTools
         string query = "SELECT * FROM users";
         var reader = interactionHelper.GetReader(query);
         List<DataTypes.User> users = ReadResults(reader);
+        
         return users;
     }
     
@@ -51,22 +68,25 @@ public static class UserTools
         string query = "SELECT * FROM users WHERE UID = " + UID + " LIMIT 1";
         var reader = interactionHelper.GetReader(query);
         DataTypes.User userRes = ReadSingleResult(reader);
+        
         return userRes;
     }
     
-    public static List<DataTypes.User> SearchUserByName(SQLInteraction interactionHelper, string searchTerm)
+    public static List<DataTypes.User> GetUserByName(SQLInteraction interactionHelper, string searchTerm)
     {
         string query = "SELECT * FROM users WHERE Username LIKE '%" + searchTerm + "%'";
         var reader = interactionHelper.GetReader(query);
         List<DataTypes.User> users = ReadResults(reader);
+        
         return users;
     }
     
-    public static List<DataTypes.User> SearchUsersByRole(SQLInteraction interactionHelper, string searchTerm)
+    public static List<DataTypes.User> GetUsersByRole(SQLInteraction interactionHelper, string searchTerm)
     {
         string query = "SELECT * FROM users WHERE Role LIKE '%" + searchTerm + "%'";
         var reader = interactionHelper.GetReader(query);
         List<DataTypes.User> users = ReadResults(reader);
+        
         return users;
     }
     
