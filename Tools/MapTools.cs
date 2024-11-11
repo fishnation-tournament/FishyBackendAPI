@@ -131,7 +131,7 @@ public static class MapTools
     
     public static List<DataTypes.Map> GetMapsInMapPool(SQLInteraction interactionHelper, ulong MapPoolID)
     {
-        string query = "SELECT * FROM maps WHERE MPID = " + MapPoolID;
+        string query = "SELECT * FROM maps WHERE MapPoolID = " + MapPoolID;
         var reader = interactionHelper.GetReader(query);
         List<DataTypes.Map> mapRes = ReadMaps(reader);
 
