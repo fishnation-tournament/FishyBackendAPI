@@ -85,13 +85,13 @@ public class MatchTools
     
     public static void CreateMatch(SQLInteraction interactionHelper, DataTypes.Match match)
     {
-        string query = $"INSERT INTO matches (Player1ID, Player2ID, Player1Score, Player2Score, MatchDate, Complete, WinnerID, Season, MapPoolID) VALUES ({match.Player1ID}, {match.Player2ID}, {match.Player1Score}, {match.Player2Score}, '{match.MatchDate.ToString("yyyy-MM-dd HH:mm:ss")}', {match.Complete}, {match.WinnerID}, {match.Season}, {match.MapPoolID})";
+        string query = $"INSERT INTO matches (Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, Season, MapPoolID) VALUES ({match.Player1ID}, {match.Player2ID}, {match.Player1Score}, {match.Player2Score}, '{match.MatchDate.ToString("yyyy-MM-dd HH:mm:ss")}', {match.Complete}, {match.WinnerID}, {match.Season}, {match.MapPoolID})";
         interactionHelper.SendCommand(query);
     }
     
     public static void UpdateMatch(SQLInteraction interactionHelper, DataTypes.Match match)
     {
-        string query = $"UPDATE matches SET Player1ID = {match.Player1ID}, Player2ID = {match.Player2ID}, Player1Score = {match.Player1Score}, Player2Score = {match.Player2Score}, MatchDate = '{match.MatchDate.ToString("yyyy-MM-dd HH:mm:ss")}', Complete = {match.Complete}, WinnerID = {match.WinnerID}, Season = {match.Season}, MapPoolID = {match.MapPoolID} WHERE MatchID = {match.MID}";
+        string query = $"UPDATE matches SET Player1UID = {match.Player1ID}, Player2UID = {match.Player2ID}, Player1Points = {match.Player1Score}, Player2Points = {match.Player2Score}, MatchDateTime = '{match.MatchDate.ToString("yyyy-MM-dd HH:mm:ss")}', MatchComplete = {match.Complete}, WinnerUID = {match.WinnerID}, Season = {match.Season}, MapPoolID = {match.MapPoolID} WHERE MatchID = {match.MID}";
         interactionHelper.SendCommand(query);
     }
     
