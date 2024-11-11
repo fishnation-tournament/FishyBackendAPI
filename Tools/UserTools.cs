@@ -40,8 +40,8 @@ public static class UserTools
             user.DiscordUsername = reader.GetString(6);
             user.RegistrationDate = reader.GetDateTime(7);
             user.Role = reader.GetString(8);
-            reader.Close();
         }
+        reader.Close();
         
         return user;
     }
