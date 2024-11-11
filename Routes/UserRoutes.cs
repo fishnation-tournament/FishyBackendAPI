@@ -35,5 +35,23 @@ public class UserRoutes
             List<DataTypes.User> users = UserTools.GetUsersByRole(interactionHelper, Role);
             return users;
         }).WithName("GetUsersByRole").WithOpenApi();
+        
+        endpoints.MapPost("/Users/AddUser", (DataTypes.User user) =>
+        {
+            UserTools.AddUser(interactionHelper, user);
+            return Results.Created($"/Users/GetUserById/{user.UID}", user);
+        }).WithName("AddUser").WithOpenApi();
+        
+        endpoints.MapPut("/Users/UpdateUser", (DataTypes.User user) =>
+        {
+            UserTools.UpdateUser(interactionHelper, user);
+            return Results.Created($"/Users/GetUserById/{user.UID}", user);
+        }).WithName("UpdateUser").WithOpenApi();
+        
+        endpoints.MapDelete("/Users/DeleteUser/{UID}", (ulong UID) =>
+        {
+            UserTools.DeleteUser(interactionHelper, UID);
+            return Results.NoContent();
+        }).WithName("DeleteUser").WithOpenApi();
     }
 }

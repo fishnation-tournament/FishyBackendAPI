@@ -15,6 +15,7 @@ namespace FishyAPI.Tools
         {
             var cmd = new MySqlCommand(query, dbConn);
             cmd.ExecuteNonQuery();
+            
         }
 
         public MySqlDataReader GetReader(string query)

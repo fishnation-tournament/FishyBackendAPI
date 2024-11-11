@@ -56,11 +56,12 @@ public static class UserTools
     
     public static DataTypes.User GetUserById(SQLInteraction interactionHelper, ulong UID)
     {
-        string query = "SELECT * FROM users WHERE UID = " + UID;
-        var reader = interactionHelper.GetReader(query);
-        DataTypes.User userRes = ReadSingleResult(reader);
-        
-        return userRes;
+        string query = $"SELECT * FROM users WHERE UID = {UID}";
+        using (var reader = interactionHelper.GetReader(query))
+        {
+            var user = ReadSingleResult(reader);
+            return user;
+        }
     }
     
     public static List<DataTypes.User> GetUsersByName(SQLInteraction interactionHelper, string searchTerm)
@@ -104,7 +105,7 @@ public static class UserTools
     
     public static void DeleteUser(SQLInteraction interactionHelper, ulong UID)
     {
-        string query = "DELETE FROM users WHERE UID = " + UID;
+        string query = $"DELETE FROM users WHERE UID = {UID}";
         interactionHelper.SendCommand(query);
     }
 }
