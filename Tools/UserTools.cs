@@ -90,6 +90,12 @@ public static class UserTools
         return userRes;
     }
     
+    public static void AddUser(SQLInteraction interactionHelper, DataTypes.User user)
+    {
+        string query = "INSERT INTO users (OptBLUID, Username, UserPfpLink, UserBio, DiscordID, DiscordUsername, RegistrationDate, Role) VALUES (" + user.OptBLUID + ", '" + user.Username + "', '" + user.UserPfpLink + "', '" + user.UserBio + "', " + user.DiscordID + ", '" + user.DiscordUsername + "', '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "')";
+        interactionHelper.SendCommand(query);
+    }
+    
     public static void UpdateUser(SQLInteraction interactionHelper, DataTypes.User user)
     {
         string query = "UPDATE users SET OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', UserBio = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordUsername = '" + user.DiscordUsername + "', RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "' WHERE UID = " + user.UID;
@@ -99,12 +105,6 @@ public static class UserTools
     public static void DeleteUser(SQLInteraction interactionHelper, ulong UID)
     {
         string query = "DELETE FROM users WHERE UID = " + UID;
-        interactionHelper.SendCommand(query);
-    }
-    
-    public static void AddUser(SQLInteraction interactionHelper, DataTypes.User user)
-    {
-        string query = "INSERT INTO users (OptBLUID, Username, UserPfpLink, UserBio, DiscordID, DiscordUsername, RegistrationDate, Role) VALUES (" + user.OptBLUID + ", '" + user.Username + "', '" + user.UserPfpLink + "', '" + user.UserBio + "', " + user.DiscordID + ", '" + user.DiscordUsername + "', '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "')";
         interactionHelper.SendCommand(query);
     }
 }
