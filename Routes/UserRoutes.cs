@@ -4,7 +4,7 @@ namespace FishyAPI.Routes;
 
 public class UserRoutes
 {
-    public static void MapUserRoutes(IEndpointRouteBuilder endpoints, SQLInteraction interactionHelper)
+    public static void MapUserRoutes(WebApplication endpoints, SQLInteraction interactionHelper)
     {
         endpoints.MapGet("/Users/GetUsers", () =>
         {

@@ -1,7 +1,6 @@
 using FishyAPI.Tools;
 using FishyAPI.Tools.DBInteractions;
-using System.Text.Json;
-using Microsoft.AspNetCore.Http;
+using FishyAPI.Routes;
 
 DotNetEnv.Env.TraversePath().Load("./.env");
 Console.WriteLine("Attempting to connect to the database");
@@ -42,28 +41,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/Scores/Qualifiers/{QualifierID}", (ulong QualifierID) =>
-{
-    List<DataTypes.QualifierScore> scores = ScoreTools.GetQualifierScores(interactionHelper, QualifierID);
-    return scores;
-}).WithName("GetQualifierScores").WithOpenApi();
-
-app.MapGet("/Matches/GetAll", () =>
-{
-    List<DataTypes.Match> matches = MatchTools.GetMatches(interactionHelper);
-    return matches;
-}).WithName("GetMatches").WithOpenApi();
-
-app.MapGet("/Matches/GetMatchById/{MID}", (ulong MID) =>
-{
-    DataTypes.Match match = MatchTools.GetMatchById(interactionHelper, MID);
-    return match;
-}).WithName("GetMatchById").WithOpenApi();
-
-app.MapGet("/Matches/GetMatchesBySeason/{Season}", (int Season) =>
-{
-    List<DataTypes.Match> matches = MatchTools.GetMatchesBySeason(interactionHelper, Season);
-    return matches;
-}).WithName("GetMatchesBySeason").WithOpenApi();
+MapRoutes.MapMapRoutes(app, interactionHelper);
+ScoresRoutes.RegisterScoresRoutes(app, interactionHelper);
+UserRoutes.MapUserRoutes(app, interactionHelper);
 
 app.Run();

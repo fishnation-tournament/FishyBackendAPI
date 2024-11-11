@@ -3,7 +3,7 @@ namespace FishyAPI.Routes;
 
 public class MapRoutes
 {
-    public static void MapMapRoutes(IEndpointRouteBuilder endpoints, SQLInteraction interactionHelper)
+    public static void MapMapRoutes(WebApplication endpoints, SQLInteraction interactionHelper)
     {
         endpoints.MapGet("/Maps/GetMaps", () =>
         {
