@@ -56,14 +56,14 @@ public static class UserTools
     
     public static DataTypes.User GetUserById(SQLInteraction interactionHelper, ulong UID)
     {
-        string query = "SELECT * FROM users WHERE UID = " + UID + " LIMIT 1";
+        string query = "SELECT * FROM users WHERE UID = " + UID;
         var reader = interactionHelper.GetReader(query);
         DataTypes.User userRes = ReadSingleResult(reader);
         
         return userRes;
     }
     
-    public static List<DataTypes.User> GetUserByName(SQLInteraction interactionHelper, string searchTerm)
+    public static List<DataTypes.User> GetUsersByName(SQLInteraction interactionHelper, string searchTerm)
     {
         string query = "SELECT * FROM users WHERE Username LIKE '%" + searchTerm + "%'";
         var reader = interactionHelper.GetReader(query);
@@ -79,6 +79,15 @@ public static class UserTools
         List<DataTypes.User> users = ReadResults(reader);
         
         return users;
+    }
+    
+    public static DataTypes.User GetUserByDiscordId(SQLInteraction interactionHelper, ulong DiscordID)
+    {
+        string query = "SELECT * FROM users WHERE DiscordID = " + DiscordID;
+        var reader = interactionHelper.GetReader(query);
+        DataTypes.User userRes = ReadSingleResult(reader);
+        
+        return userRes;
     }
     
     public static void UpdateUser(SQLInteraction interactionHelper, DataTypes.User user)

@@ -60,9 +60,9 @@ public class ScoreTools
         
         return scores;
     }
-    public static List<DataTypes.MatchScore> GetMatchScores(SQLInteraction interactionHelper, ulong MID)
+    public static List<DataTypes.MatchScore> GetMatchScores(SQLInteraction interactionHelper, ulong MatchID)
     {
-        string query = $"SELECT * FROM player_scores WHERE MatchID = {MID}";
+        string query = $"SELECT * FROM player_scores WHERE MatchID = {MatchID}";
         MySqlDataReader reader = interactionHelper.GetReader(query);
         List<DataTypes.MatchScore> scores = ReadMatchScores(reader);
         reader.Close();
@@ -70,9 +70,9 @@ public class ScoreTools
         return scores;
     }
     
-    public static List<DataTypes.QualifierScore> GetQualifierScores(SQLInteraction interactionHelper, ulong QID)
+    public static List<DataTypes.QualifierScore> GetQualifierScores(SQLInteraction interactionHelper, ulong QualifierID)
     {
-        string query = $"SELECT * FROM qualifier_scores WHERE QualifierID = {QID}";
+        string query = $"SELECT * FROM qualifier_scores WHERE QualifierID = {QualifierID}";
         MySqlDataReader reader = interactionHelper.GetReader(query);
         List<DataTypes.QualifierScore> scores = ReadQualifierScores(reader);
         reader.Close();
@@ -80,9 +80,9 @@ public class ScoreTools
         return scores;
     }
     
-    public static List<DataTypes.QualifierScore> GetQualifierScoreByMapID(SQLInteraction interactionHelper, ulong MapID)
+    public static List<DataTypes.QualifierScore> GetQualifierScoreByMapID(SQLInteraction interactionHelper, ulong QualifierID, ulong MapID)
     {
-        string query = $"SELECT * FROM qualifier_scores WHERE MapID = {MapID}";
+        string query = $"SELECT * FROM qualifier_scores WHERE MapID = {MapID} AND QualifierID = {QualifierID}";
         MySqlDataReader reader = interactionHelper.GetReader(query);
         List<DataTypes.QualifierScore> scores = ReadQualifierScores(reader);
         reader.Close();
@@ -90,9 +90,9 @@ public class ScoreTools
         return scores;
     }
     
-    public static List<DataTypes.QualifierScore> GetQualifierScoresByUID(SQLInteraction interactionHelper, ulong UID)
+    public static List<DataTypes.QualifierScore> GetQualifierScoresByUID(SQLInteraction interactionHelper, ulong QualifierID, ulong UID)
     {
-        string query = $"SELECT * FROM qualifier_scores WHERE UID = {UID}";
+        string query = $"SELECT * FROM qualifier_scores WHERE UID = {UID} AND QualifierID = {QualifierID}";
         MySqlDataReader reader = interactionHelper.GetReader(query);
         List<DataTypes.QualifierScore> scores = ReadQualifierScores(reader);
         reader.Close();
@@ -100,9 +100,9 @@ public class ScoreTools
         return scores;
     }
     
-    public static DataTypes.QualifierScore GetQualifierScoreByQualifierID(SQLInteraction interactionHelper, ulong QID)
+    public static DataTypes.QualifierScore GetQualifierScoreByQualifierID(SQLInteraction interactionHelper, ulong QualifierID)
     {
-        string query = $"SELECT * FROM qualifier_scores WHERE QualifierID = {QID} LIMIT 1";
+        string query = $"SELECT * FROM qualifier_scores WHERE QualifierID = {QualifierID}";
         MySqlDataReader reader = interactionHelper.GetReader(query);
         DataTypes.QualifierScore score = ReadSingleQualifierScore(reader);
         reader.Close();
