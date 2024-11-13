@@ -3,7 +3,7 @@ namespace FishyAPI.Tools;
 
 public static class FrontFacingDataTypes
 {
-    public struct FfMap
+    public struct FrontFacingMap
     {
         public string BSMapID { get; set; }
         public string MapName { get; set; }
@@ -13,15 +13,15 @@ public static class FrontFacingDataTypes
         public string Difficulty { get; set; }
     }
     
-    public struct FfMapPool
+    public struct FrontFacingMapPool
     {
         public string MapPoolName { get; set; }
         public string MapPoolDescription { get; set; }
-        public List<FfMap> Maps { get; set; }
+        public List<FrontFacingMap> Maps { get; set; }
         public int Season { get; set; }
     }
     
-    public struct FfMatch
+    public struct FrontFacingMatch
     {
         public ulong MapPoolID { get; set; }
         public ulong Player1ID { get; set; }
@@ -31,12 +31,12 @@ public static class FrontFacingDataTypes
         public int Player1Score { get; set; }
         public int Player2Score { get; set; }
         public DateTime MatchDate { get; set; }
-        public List<FfMatchScore> Scores { get; set; }
+        public List<FrontFacingMatchScore> Scores { get; set; }
         public int Season { get; set; }
         
     }
 
-    public struct FfMatchScore
+    public struct FrontFacingMatchScore
     {
         public ulong UID { get; set; }
         public ulong MapID { get; set; }
@@ -46,7 +46,7 @@ public static class FrontFacingDataTypes
         public int Misses { get; set; }
     }
     
-    public struct FfQualifierScore
+    public struct FrontFacingQualifierScore
     {
         public ulong UID { get; set; }
         public ulong MapID { get; set; }

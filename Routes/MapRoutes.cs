@@ -53,13 +53,13 @@ public class MapRoutes
             return mapPools;
         }).WithName("GetMapPoolsBySeason").WithOpenApi();
         
-        endpoints.MapPost("/Maps/AddMapPool", async (FrontFacingDataTypes.FfMapPool mapPool) =>
+        endpoints.MapPost("/Maps/AddMapPool", async (FrontFacingDataTypes.FrontFacingMapPool mapPool) =>
         {
             DataTypes.MapPool newMapPool = MapTools.AddMapPool(interactionHelper, mapPool);
             return Results.Created($"/Maps/GetMapPoolById/{newMapPool.MapPoolID}", newMapPool);
         }).WithName("AddMapPool").WithOpenApi();
         
-        endpoints.MapPost("/Maps/AddMap", async (FrontFacingDataTypes.FfMap map) =>
+        endpoints.MapPost("/Maps/AddMap", async (FrontFacingDataTypes.FrontFacingMap map) =>
         {
             DataTypes.Map newMap = MapTools.AddMap(interactionHelper, map);
             return Results.Created($"/Maps/GetMapById/{newMap.MID}", newMap);

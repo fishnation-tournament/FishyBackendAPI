@@ -165,9 +165,9 @@ public static class MapTools
         return maps;
     }
     
-    public static DataTypes.Map AddMap(SQLInteraction interactionHelper, FrontFacingDataTypes.FfMap ffMap) //POST
+    public static DataTypes.Map AddMap(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingMap frontFacingMap) //POST
     {
-        string query = "INSERT INTO maps (BSMapID, MapName, MapImageLink, MPID, Season, Difficulty) VALUES ('" + ffMap.BSMapID + "', '" + ffMap.MapName + "', '" + ffMap.MapImageLink + "', " + ffMap.MapPoolID + ", " + ffMap.Season + ", " + ffMap.Difficulty + ")";
+        string query = "INSERT INTO maps (BSMapID, MapName, MapImageLink, MPID, Season, Difficulty) VALUES ('" + frontFacingMap.BSMapID + "', '" + frontFacingMap.MapName + "', '" + frontFacingMap.MapImageLink + "', " + frontFacingMap.MapPoolID + ", " + frontFacingMap.Season + ", " + frontFacingMap.Difficulty + ")";
         interactionHelper.SendCommand(query);
         
         string getIdQuery = "SELECT LAST_INSERT_ID() FROM maps";
@@ -199,9 +199,9 @@ public static class MapTools
         interactionHelper.SendCommand(query);
     }
     
-    public static DataTypes.MapPool AddMapPool(SQLInteraction interactionHelper, FrontFacingDataTypes.FfMapPool ffMapPool) //POST
+    public static DataTypes.MapPool AddMapPool(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingMapPool frontFacingMapPool) //POST
     {
-        string query = "INSERT INTO map_pools (MapPoolName, MapPoolDescription, Season) VALUES ('" + ffMapPool.MapPoolName + "', '" + ffMapPool.MapPoolDescription + "', " + ffMapPool.Season + ")";
+        string query = "INSERT INTO map_pools (MapPoolName, MapPoolDescription, Season) VALUES ('" + frontFacingMapPool.MapPoolName + "', '" + frontFacingMapPool.MapPoolDescription + "', " + frontFacingMapPool.Season + ")";
         interactionHelper.SendCommand(query);
         
         string getIdQuery = "SELECT LAST_INSERT_ID() FROM map_pools";

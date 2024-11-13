@@ -83,9 +83,9 @@ public class MatchTools
         return match;
     }
     
-    public static void CreateMatch(SQLInteraction interactionHelper, FrontFacingDataTypes.FfMatch ffMatch)
+    public static void CreateMatch(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingMatch frontFacingMatch)
     {
-        string query = $"INSERT INTO matches (Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, Season, MPID) VALUES ({ffMatch.Player1ID}, {ffMatch.Player2ID}, {ffMatch.Player1Score}, {ffMatch.Player2Score}, '{ffMatch.MatchDate.ToString("yyyy-MM-dd HH:mm:ss")}', {ffMatch.Complete}, {ffMatch.WinnerID}, {ffMatch.Season}, {ffMatch.MapPoolID})";
+        string query = $"INSERT INTO matches (Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, Season, MPID) VALUES ({frontFacingMatch.Player1ID}, {frontFacingMatch.Player2ID}, {frontFacingMatch.Player1Score}, {frontFacingMatch.Player2Score}, '{frontFacingMatch.MatchDate.ToString("yyyy-MM-dd HH:mm:ss")}', {frontFacingMatch.Complete}, {frontFacingMatch.WinnerID}, {frontFacingMatch.Season}, {frontFacingMatch.MapPoolID})";
         interactionHelper.SendCommand(query);
     }
     

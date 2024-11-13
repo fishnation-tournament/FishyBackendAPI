@@ -120,13 +120,13 @@ public class ScoreTools
         return score;
     }
     
-    public static void CreateMatchScore(SQLInteraction interactionHelper, FrontFacingDataTypes.FfMatchScore score)
+    public static void CreateMatchScore(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingMatchScore score)
     {
         string query = $"INSERT INTO player_scores (UID, MapID, MatchID, Score, MaxScore, Misses) VALUES ({score.UID}, {score.MapID}, {score.MatchID}, {score.Score}, {score.MaxScore}, {score.Misses})";
         interactionHelper.SendCommand(query);
     }
     
-    public static void CreateQualifierScore(SQLInteraction interactionHelper, FrontFacingDataTypes.FfQualifierScore score)
+    public static void CreateQualifierScore(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingQualifierScore score)
     {
         string query = $"INSERT INTO qualifier_scores (UID, MapID, QualifierID, Score, MaxScore, Misses) VALUES ({score.UID}, {score.MapID}, {score.QualifierID}, {score.Score}, {score.MaxScore}, {score.Misses})";
         interactionHelper.SendCommand(query);
