@@ -53,16 +53,16 @@ public class MapRoutes
             return mapPools;
         }).WithName("GetMapPoolsBySeason").WithOpenApi();
         
-        endpoints.MapPost("/Maps/AddMapPool", async (DataTypes.MapPool mapPool) =>
+        endpoints.MapPost("/Maps/AddMapPool", async (FrontFacingDataTypes.FfMapPool mapPool) =>
         {
-            MapTools.AddMapPool(interactionHelper, mapPool);
-            return Results.Created($"/Maps/GetMapPoolById/{mapPool.MapPoolID}", mapPool);
+            DataTypes.MapPool newMapPool = MapTools.AddMapPool(interactionHelper, mapPool);
+            return Results.Created($"/Maps/GetMapPoolById/{newMapPool.MapPoolID}", newMapPool);
         }).WithName("AddMapPool").WithOpenApi();
         
-        endpoints.MapPost("/Maps/AddMap", async (DataTypes.Map map) =>
+        endpoints.MapPost("/Maps/AddMap", async (FrontFacingDataTypes.FfMap map) =>
         {
-            MapTools.AddMap(interactionHelper, map);
-            return Results.Created($"/Maps/GetMapById/{map.MID}", map);
+            DataTypes.Map newMap = MapTools.AddMap(interactionHelper, map);
+            return Results.Created($"/Maps/GetMapById/{newMap.MID}", newMap);
         }).WithName("AddMap").WithOpenApi();
         
         endpoints.MapPut("/Maps/UpdateMapPool", async (DataTypes.MapPool mapPool) =>

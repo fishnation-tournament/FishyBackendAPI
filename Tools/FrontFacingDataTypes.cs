@@ -3,20 +3,7 @@ namespace FishyAPI.Tools;
 
 public static class FrontFacingDataTypes
 {
-    public struct User
-    {
-        public ulong UID { get; set; }
-        public ulong OptBLUID { get; set; }
-        public string Username { get; set; }
-        public string UserPfpLink { get; set; }
-        public string UserBio { get; set; }
-        public ulong DiscordID { get; set; }
-        public string DiscordUsername { get; set; }
-        public DateTime RegistrationDate { get; set; }
-        public string Role { get; set; }
-    }
-    
-    public struct Map
+    public struct FfMap
     {
         public string BSMapID { get; set; }
         public string MapName { get; set; }
@@ -26,15 +13,15 @@ public static class FrontFacingDataTypes
         public string Difficulty { get; set; }
     }
     
-    public struct MapPool
+    public struct FfMapPool
     {
         public string MapPoolName { get; set; }
         public string MapPoolDescription { get; set; }
-        public List<Map> Maps { get; set; }
+        public List<FfMap> Maps { get; set; }
         public int Season { get; set; }
     }
     
-    public struct Match
+    public struct FfMatch
     {
         public ulong MapPoolID { get; set; }
         public ulong Player1ID { get; set; }
@@ -44,12 +31,12 @@ public static class FrontFacingDataTypes
         public int Player1Score { get; set; }
         public int Player2Score { get; set; }
         public DateTime MatchDate { get; set; }
-        public List<MatchScore> Scores { get; set; }
+        public List<FfMatchScore> Scores { get; set; }
         public int Season { get; set; }
         
     }
 
-    public struct MatchScore
+    public struct FfMatchScore
     {
         public ulong UID { get; set; }
         public ulong MapID { get; set; }
@@ -59,7 +46,7 @@ public static class FrontFacingDataTypes
         public int Misses { get; set; }
     }
     
-    public struct QualifierScore
+    public struct FfQualifierScore
     {
         public ulong UID { get; set; }
         public ulong MapID { get; set; }

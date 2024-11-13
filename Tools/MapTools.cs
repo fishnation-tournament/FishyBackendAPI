@@ -165,15 +165,31 @@ public static class MapTools
         return maps;
     }
     
+    public static DataTypes.Map AddMap(SQLInteraction interactionHelper, FrontFacingDataTypes.FfMap ffMap) //POST
+    {
+        string query = "INSERT INTO maps (BSMapID, MapName, MapImageLink, MPID, Season, Difficulty) VALUES ('" + ffMap.BSMapID + "', '" + ffMap.MapName + "', '" + ffMap.MapImageLink + "', " + ffMap.MapPoolID + ", " + ffMap.Season + ", " + ffMap.Difficulty + ")";
+        interactionHelper.SendCommand(query);
+        
+        string getIdQuery = "SELECT LAST_INSERT_ID() FROM maps";
+        var reader = interactionHelper.GetReader(getIdQuery);
+        DataTypes.Map mapOut = new DataTypes.Map();
+        if (reader.Read())
+        {
+            mapOut.MID = reader.GetUInt64(0);
+            mapOut.BSMapID = reader.GetString(1);
+            mapOut.MapName = reader.GetString(2);
+            mapOut.MapImageLink = reader.GetString(3);
+            mapOut.MapPoolID = reader.GetUInt64(4);
+            mapOut.Season = reader.GetInt32(5);
+            mapOut.Difficulty = reader.GetString(6);
+        }
+        reader.Close();
+        return mapOut;
+    }
+    
     public static void UpdateMap(SQLInteraction interactionHelper, DataTypes.Map map) //PUT
     {
         string query = "UPDATE maps SET BSMapID = '" + map.BSMapID + "', MapName = '" + map.MapName + "', MapImageLink = '" + map.MapImageLink + "', MPID = " + map.MapPoolID + ", Season = " + map.Season + ", Difficulty = '" + map.Difficulty + "' WHERE MapID = " + map.MID;
-        interactionHelper.SendCommand(query);
-    }
-    
-    public static void AddMap(SQLInteraction interactionHelper, DataTypes.Map map) //POST
-    {
-        string query = "INSERT INTO maps (BSMapID, MapName, MapImageLink, MPID, Season, Difficulty) VALUES ('" + map.BSMapID + "', '" + map.MapName + "', '" + map.MapImageLink + "', " + map.MapPoolID + ", " + map.Season + ", " + map.Difficulty + ")";
         interactionHelper.SendCommand(query);
     }
     
@@ -183,10 +199,24 @@ public static class MapTools
         interactionHelper.SendCommand(query);
     }
     
-    public static void AddMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool) //POST
+    public static DataTypes.MapPool AddMapPool(SQLInteraction interactionHelper, FrontFacingDataTypes.FfMapPool ffMapPool) //POST
     {
-        string query = "INSERT INTO map_pools (MapPoolName, MapPoolDescription, Season) VALUES ('" + mapPool.MapPoolName + "', '" + mapPool.MapPoolDescription + "', " + mapPool.Season + ")";
+        string query = "INSERT INTO map_pools (MapPoolName, MapPoolDescription, Season) VALUES ('" + ffMapPool.MapPoolName + "', '" + ffMapPool.MapPoolDescription + "', " + ffMapPool.Season + ")";
         interactionHelper.SendCommand(query);
+        
+        string getIdQuery = "SELECT LAST_INSERT_ID() FROM map_pools";
+        var reader = interactionHelper.GetReader(getIdQuery);
+        DataTypes.MapPool mapPoolOut = new DataTypes.MapPool();
+        if (reader.Read())
+        {
+            mapPoolOut.MapPoolID = reader.GetUInt64(0);
+            mapPoolOut.MapPoolName = reader.GetString(1);
+            mapPoolOut.MapPoolDescription = reader.GetString(2);
+            mapPoolOut.Season = reader.GetInt32(3);
+        }
+        
+        reader.Close();
+        return mapPoolOut;
     }
     
     public static void UpdateMapPool(SQLInteraction interactionHelper, DataTypes.MapPool mapPool) //PUT
