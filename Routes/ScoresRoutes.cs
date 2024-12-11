@@ -1,7 +1,7 @@
 using FishyAPI.Tools;
 namespace FishyAPI.Routes;
 
-public class ScoresRoutes
+public static class ScoresRoutes
 {
     public static void RegisterScoresRoutes(WebApplication endpoints, SQLInteraction interactionHelper)
     {

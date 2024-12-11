@@ -2,7 +2,7 @@ using FishyAPI.Tools;
 
 namespace FishyAPI.Routes;
 
-public class UserRoutes
+public static class UserRoutes
 {
     public static void MapUserRoutes(WebApplication endpoints, SQLInteraction interactionHelper)
     {

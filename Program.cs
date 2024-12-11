@@ -1,6 +1,7 @@
 using FishyAPI.Tools;
 using FishyAPI.Tools.DBInteractions;
 using FishyAPI.Routes;
+using FishyAPI.Tools.Authentication;
 
 DotNetEnv.Env.TraversePath().Load("./.env");
 Console.WriteLine("Attempting to connect to the database");
@@ -41,8 +42,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+Tokenizer apiTokenizer = new Tokenizer(Environment.GetEnvironmentVariable("TOKEN_SECRET"));
+
 MapRoutes.MapMapRoutes(app, interactionHelper);
 ScoresRoutes.RegisterScoresRoutes(app, interactionHelper);
 UserRoutes.MapUserRoutes(app, interactionHelper);
+DiscordAuth.MapAuthRoutes(app, apiTokenizer);
 
 app.Run();
