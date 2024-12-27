@@ -34,24 +34,24 @@ public static class UserRoutes
         {
             List<DataTypes.User> users = UserTools.GetUsersByRole(interactionHelper, Role);
             return users;
-        }).WithName("GetUsersByRole").WithOpenApi();
+        }).WithName("GetUsersByRole").WithOpenApi().RequireAuthorization(["Admin", "Organizer", "User"]);
         
         endpoints.MapPost("/Users/AddUser", (DataTypes.User user) =>
         {
             UserTools.AddUser(interactionHelper, user);
             return Results.Created($"/Users/GetUserById/{user.UID}", user);
-        }).WithName("AddUser").WithOpenApi();
+        }).WithName("AddUser").WithOpenApi().RequireAuthorization(["Admin", "Organizer"]);
         
         endpoints.MapPut("/Users/UpdateUser", (DataTypes.User user) =>
         {
             UserTools.UpdateUser(interactionHelper, user);
             return Results.Created($"/Users/GetUserById/{user.UID}", user);
-        }).WithName("UpdateUser").WithOpenApi();
+        }).WithName("UpdateUser").WithOpenApi().RequireAuthorization(["Admin", "Organizer"]);
         
         endpoints.MapDelete("/Users/DeleteUser/{UID}", (ulong UID) =>
         {
             UserTools.DeleteUser(interactionHelper, UID);
             return Results.NoContent();
-        }).WithName("DeleteUser").WithOpenApi();
+        }).WithName("DeleteUser").WithOpenApi().RequireAuthorization(["Admin", "Organizer"]);
     }
 }

@@ -28,6 +28,17 @@ public static class ScoresRoutes
             List<DataTypes.Match> matches = MatchTools.GetMatchesBySeason(interactionHelper, Season);
             return matches;
         }).WithName("GetMatchesBySeason").WithOpenApi();
-
+        
+        endpoints.MapPost("/Scores/AddQualifierScore", (FrontFacingDataTypes.FrontFacingQualifierScore score) =>
+        {
+            ScoreTools.CreateQualifierScore(interactionHelper, score);
+            return Results.Created($"/Scores/Qualifiers/{score.QualifierID}", score);
+        }).WithName("AddQualifierScore").WithOpenApi().RequireAuthorization(["Admin"]);
+        
+        endpoints.MapPost("/Scores/AddMatchScore", (FrontFacingDataTypes.FrontFacingMatchScore score) =>
+        {
+            ScoreTools.CreateMatchScore(interactionHelper, score);
+            return Results.Created($"/Matches/GetMatchById/{score.MatchID}", score);
+        }).WithName("AddMatchScore").WithOpenApi().RequireAuthorization(["Admin"]);
     }
 }

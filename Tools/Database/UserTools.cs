@@ -108,4 +108,17 @@ public static class UserTools
         string query = $"DELETE FROM users WHERE UID = {UID}";
         interactionHelper.SendCommand(query);
     }
+    
+    public static bool CheckUserExistsDID(SQLInteraction interactionHelper, ulong DiscordID)
+    {
+        string query = $"SELECT * FROM users WHERE DiscordID = {DiscordID}";
+        var reader = interactionHelper.GetReader(query);
+        if (reader.HasRows)
+        {
+            reader.Close();
+            return true;
+        }
+        reader.Close();
+        return false;
+    }
 }
