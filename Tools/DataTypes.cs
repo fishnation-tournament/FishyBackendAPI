@@ -14,6 +14,7 @@ public static class DataTypes
         public string DiscordUsername { get; set; }
         public DateTime RegistrationDate { get; set; }
         public string Role { get; set; }
+        public string FrontendRole { get; set; }
     }
     
     public struct Map

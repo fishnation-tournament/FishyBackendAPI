@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using FishyAPI.Tools;
@@ -30,39 +31,55 @@ SQLInteraction interactionHelper = new SQLInteraction(dbConn.Connection);
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options =>
+if (!builder.Environment.IsDevelopment())
 {
-    options.ConfigureHttpsDefaults(httpsOptions =>
+    builder.WebHost.ConfigureKestrel(options =>
     {
-        httpsOptions.ServerCertificate = new X509Certificate2(
-            Environment.GetEnvironmentVariable("FULLCHAIN_PATH"),
-            Environment.GetEnvironmentVariable("PRIVATEKEY_PATH")
-        );
+        options.ListenAnyIP(80);
+        options.ListenAnyIP(443, httpsOptions =>
+        {
+            try
+            {
+                var certificate = new X509Certificate2(
+                    Environment.GetEnvironmentVariable("CERT_PATH"),
+                    Environment.GetEnvironmentVariable("CERT_PASSWORD")
+                );
+                httpsOptions.UseHttps(certificate);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not find certificate files at {Environment.GetEnvironmentVariable("FULLCHAIN_PATH")} and {Environment.GetEnvironmentVariable("PRIVATEKEY_PATH")}");
+                Console.WriteLine($"Failed to load certificate: {ex.Message}");
+                throw;
+            }
+        });
     });
-});
+    
+    builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Environment.GetEnvironmentVariable("SECRET_KEY")))
+            };
+        });
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Environment.GetEnvironmentVariable("SECRET_KEY")))
-    };
-});
+    builder.Services.AddAuthorization(options =>
+    {   options.AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"));
+        options.AddPolicy("Organizer", policy => policy.RequireClaim(ClaimTypes.Role, "Organizer", "Admin"));
+        options.AddPolicy("User", policy => policy.RequireClaim(ClaimTypes.Role, "User", "Organizer", "Admin"));
+    });
 
-builder.Services.AddAuthorization(options =>
-{   options.AddPolicy("Admin", policy => policy.RequireClaim("Role", "Admin"));
-    options.AddPolicy("Organizer", policy => policy.RequireClaim("Role", "Organizer"));
-    options.AddPolicy("User", policy => policy.RequireClaim("Role", "User"));
-});
+
+}
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -71,18 +88,19 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
 
-Tokenizer apiTokenizer = new Tokenizer(Environment.GetEnvironmentVariable("TOKEN_SECRET"));
+if(!app.Environment.IsDevelopment())
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
+
+
+Tokenizer apiTokenizer = new Tokenizer(Environment.GetEnvironmentVariable("SECRET_KEY"));
 
 MapRoutes.MapMapRoutes(app, interactionHelper);
 ScoresRoutes.RegisterScoresRoutes(app, interactionHelper);

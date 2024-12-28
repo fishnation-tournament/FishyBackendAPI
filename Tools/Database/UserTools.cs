@@ -19,6 +19,7 @@ public static class UserTools
             user.DiscordUsername = reader.GetString(6);
             user.RegistrationDate = reader.GetDateTime(7);
             user.Role = reader.GetString(8);
+            user.FrontendRole = reader.GetString(9);
             users.Add(user);
         }
         reader.Close();
@@ -40,6 +41,7 @@ public static class UserTools
             user.DiscordUsername = reader.GetString(6);
             user.RegistrationDate = reader.GetDateTime(7);
             user.Role = reader.GetString(8);
+            user.FrontendRole = reader.GetString(9);
         }
         reader.Close();
         
@@ -93,13 +95,13 @@ public static class UserTools
     
     public static void AddUser(SQLInteraction interactionHelper, DataTypes.User user)
     {
-        string query = "INSERT INTO users (UID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, RegistrationDate, Role) VALUES (" + user.UID + ", " + user.OptBLUID + ", '" + user.Username + "', '" + user.UserPfpLink + "', '" + user.UserBio + "', " + user.DiscordID + ", '" + user.DiscordUsername + "', '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "')";
+        string query = "INSERT INTO users (UID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, RegistrationDate, Role, FrontendRole) VALUES (" + user.UID + ", " + user.OptBLUID + ", '" + user.Username + "', '" + user.UserPfpLink + "', '" + user.UserBio + "', " + user.DiscordID + ", '" + user.DiscordUsername + "', '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "', '" + user.FrontendRole + "')";
         interactionHelper.SendCommand(query);
     }
     
     public static void UpdateUser(SQLInteraction interactionHelper, DataTypes.User user)
     {
-        string query = "UPDATE users SET OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "' WHERE UID = " + user.UID;
+        string query = "UPDATE users SET OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UID = " + user.UID;
         interactionHelper.SendCommand(query);
     }
     

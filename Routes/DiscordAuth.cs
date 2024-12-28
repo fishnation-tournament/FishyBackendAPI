@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Web;
 using FishyAPI.Tools;
 using FishyAPI.Tools.Authentication;
+using Json;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FishyAPI.Routes;
@@ -26,6 +27,7 @@ public static class DiscordAuth
             var discordAuthUrl = $"https://discord.com/api/oauth2/authorize?{parameterString}";
 
             context.Response.Redirect(discordAuthUrl);
+            return Results.Ok();
         }).WithName("DiscordAuth").WithOpenApi();
 
         app.MapGet("/Auth/Discord/Callback", async (HttpContext context) =>
@@ -46,39 +48,48 @@ public static class DiscordAuth
             }));
 
             var tokenContent = await tokenResponse.Content.ReadAsStringAsync();
-            var tokenData = JsonSerializer.Deserialize<Dictionary<string, string>>(tokenContent);
+            var tokenData = JsonParser.FromJson(tokenContent);
 
-            var accessToken = tokenData["access_token"];
+            var accessToken = tokenData["access_token"].ToString();
 
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(tokenData["token_type"].ToString(), accessToken);
             var userResponse = await httpClient.GetAsync("https://discord.com/api/users/@me");
 
             var userContent = await userResponse.Content.ReadAsStringAsync();
-            var userData = JsonSerializer.Deserialize<Dictionary<string, string>>(userContent);
+            Console.WriteLine("User content is " + userContent);
+            var userData = JsonParser.FromJson(userContent);
+            
+            Console.WriteLine($"Content is {Newtonsoft.Json.JsonConvert.SerializeObject(userData)}");
 
             // Generate JWT token
-            string token = apiToken.GenerateToken(userData["id"], "basicClient");
+            Console.WriteLine(userData["id"].ToString());
+            string token = "";
 
-            if(UserTools.CheckUserExistsDID(interactionHelper, ulong.Parse(userData["id"])))
+            if(UserTools.CheckUserExistsDID(interactionHelper, ulong.Parse(userData["id"].ToString())))
             {
+                var user = UserTools.GetUserByDiscordId(interactionHelper, ulong.Parse(userData["id"].ToString()));
+                Console.WriteLine($"User {user.Username} already exists with role {user.Role}");
+                token = apiToken.GenerateToken(userData["id"].ToString(), user.Role);
                 return Results.Ok(new { token });
             }
+            
+            token = apiToken.GenerateToken(userData["id"].ToString(), "User");
             
             UserTools.AddUser(interactionHelper, new DataTypes.User
             {
                 UID = 1,
                 OptBLUID = 1,
-                Username = userData["username"],
-                UserPfpLink = $"https://cdn.discordapp.com/avatars/{userData["id"]}/{userData["avatar"]}",
+                Username = userData["username"].ToString(),
+                UserPfpLink = $"https://cdn.discordapp.com/avatars/{userData["id"].ToString()}/{userData["avatar"].ToString()}",
                 UserBio = "",
-                DiscordID = ulong.Parse(userData["id"]),
-                DiscordUsername = userData["username"],
+                DiscordID = ulong.Parse(userData["id"].ToString()),
+                DiscordUsername = userData["username"].ToString(),
                 RegistrationDate = DateTime.Now,
-                Role = "basicClient"
+                Role = "User"
             });   
             
             // Return the token
             return Results.Ok(new { token });
-        }).WithName("DiscordAuthCallback").WithOpenApi();
+        }).WithName("DiscordAuthCallback").WithOpenApi().ExcludeFromDescription();;
     }
 }

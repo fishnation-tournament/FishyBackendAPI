@@ -57,36 +57,36 @@ public static class MapRoutes
         {
             DataTypes.MapPool newMapPool = MapTools.AddMapPool(interactionHelper, mapPool);
             return Results.Created($"/Maps/GetMapPoolById/{newMapPool.MapPoolID}", newMapPool);
-        }).WithName("AddMapPool").WithOpenApi().RequireAuthorization(["Admin", "Organizer"]);
-        
+        }).WithName("AddMapPool").WithOpenApi().RequireAuthorization("Organizer");
+
         endpoints.MapPost("/Maps/AddMap", async (FrontFacingDataTypes.FrontFacingMap map) =>
         {
             DataTypes.Map newMap = MapTools.AddMap(interactionHelper, map);
             return Results.Created($"/Maps/GetMapById/{newMap.MID}", newMap);
-        }).WithName("AddMap").WithOpenApi().RequireAuthorization(["Admin", "Organizer"]);
+        }).WithName("AddMap").WithOpenApi().RequireAuthorization("Organizer");
         
         endpoints.MapPut("/Maps/UpdateMapPool", async (DataTypes.MapPool mapPool) =>
         {
             MapTools.UpdateMapPool(interactionHelper, mapPool);
             return Results.Created($"/Maps/GetMapPoolById/{mapPool.MapPoolID}", mapPool);
-        }).WithName("UpdateMapPool").WithOpenApi().RequireAuthorization(["Admin", "Organizer"]);
+        }).WithName("UpdateMapPool").WithOpenApi().RequireAuthorization("Organizer");
         
         endpoints.MapPut("/Maps/UpdateMap", async (DataTypes.Map map) =>
         {
             MapTools.UpdateMap(interactionHelper, map);
             return Results.Created($"/Maps/GetMapById/{map.MID}", map);
-        }).WithName("UpdateMap").WithOpenApi().RequireAuthorization(["Admin", "Organizer"]);
+        }).WithName("UpdateMap").WithOpenApi().RequireAuthorization("Organizer");
         
         endpoints.MapDelete("/Maps/DeleteMapPool/{MapPoolID}", (ulong MapPoolID) =>
         {
             MapTools.DeleteMapPool(interactionHelper, MapPoolID);
             return Results.NoContent();
-        }).WithName("DeleteMapPool").WithOpenApi().RequireAuthorization(["Admin", "Organizer"]);
+        }).WithName("DeleteMapPool").WithOpenApi().RequireAuthorization("Organizer");
         
         endpoints.MapDelete("/Maps/DeleteMap/{MID}", (ulong MID) =>
         {
             MapTools.DeleteMap(interactionHelper, MID);
             return Results.NoContent();
-        }).WithName("DeleteMap").WithOpenApi().RequireAuthorization(["Admin", "Organizer"]);
+        }).WithName("DeleteMap").WithOpenApi().RequireAuthorization("Organizer");
     }
 }
