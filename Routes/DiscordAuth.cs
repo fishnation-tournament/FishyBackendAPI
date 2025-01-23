@@ -13,7 +13,7 @@ public static class DiscordAuth
 {
     public static void MapAuthRoutes(WebApplication app, Tokenizer apiToken, SQLInteraction interactionHelper)
     {
-        app.MapGet("/Auth/Discord", async (HttpContext context) =>
+        app.MapGet("/Auth/Discord", async void (HttpContext context) =>
         {
             NameValueCollection parameters = HttpUtility.ParseQueryString(string.Empty);
             parameters["client_id"] = Environment.GetEnvironmentVariable("DISCORD_APPID");
@@ -27,7 +27,6 @@ public static class DiscordAuth
             var discordAuthUrl = $"https://discord.com/api/oauth2/authorize?{parameterString}";
 
             context.Response.Redirect(discordAuthUrl);
-            return Results.Ok();
         }).WithName("DiscordAuth").WithOpenApi();
 
         app.MapGet("/Auth/Discord/Callback", async (HttpContext context) =>
