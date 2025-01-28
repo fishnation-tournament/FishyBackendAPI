@@ -9,23 +9,23 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 DotNetEnv.Env.TraversePath().Load("./.env");
-Console.WriteLine("Attempting to connect to the database");
-//Establish connection to the database
-var dbConn = DBConnection.Instance();
-dbConn.Server = Environment.GetEnvironmentVariable("DATABASE_SERVER");
-dbConn.DatabaseName = Environment.GetEnvironmentVariable("DATABASE_NAME");
-dbConn.UserName = Environment.GetEnvironmentVariable("DATABASE_USER");
-dbConn.Password = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+Console.WriteLine("Testing Credentials for SQL Server");
 
-if (dbConn.IsConnect())
+ConnectionManager connManager = new ConnectionManager(
+    Environment.GetEnvironmentVariable("DATABASE_SERVER"),
+    Environment.GetEnvironmentVariable("DATABASE_NAME"),
+    Environment.GetEnvironmentVariable("DATABASE_USER"),
+    Environment.GetEnvironmentVariable("DATABASE_PASSWORD"));
+
+var dbConn = connManager.IssueConnection();
+
+if (dbConn == null)
 {
-    Console.WriteLine("Connected to the database");
-}
-else
-{
-    Console.WriteLine("Failed to connect to the database");
+    Console.WriteLine("Failed to connect to database");
     return;
 }
+
+dbConn.Close();
 
 SQLInteraction interactionHelper = new SQLInteraction(dbConn.Connection);
 
@@ -105,6 +105,6 @@ Tokenizer apiTokenizer = new Tokenizer(Environment.GetEnvironmentVariable("SECRE
 MapRoutes.MapMapRoutes(app, interactionHelper);
 ScoresRoutes.RegisterScoresRoutes(app, interactionHelper);
 UserRoutes.MapUserRoutes(app, interactionHelper);
-DiscordAuth.MapAuthRoutes(app, apiTokenizer, interactionHelper);
+DiscordAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 
 app.Run();

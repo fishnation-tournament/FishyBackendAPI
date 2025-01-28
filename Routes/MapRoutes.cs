@@ -1,9 +1,10 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.DBInteractions;
 namespace FishyAPI.Routes;
 
 public static class MapRoutes
 {
-    public static void MapMapRoutes(WebApplication endpoints, SQLInteraction interactionHelper)
+    public static void MapMapRoutes(WebApplication endpoints, ConnectionManager connManager)
     {
         endpoints.MapGet("/Maps/GetMaps", () =>
         {

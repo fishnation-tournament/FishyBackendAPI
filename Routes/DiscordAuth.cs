@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Web;
 using FishyAPI.Tools;
 using FishyAPI.Tools.Authentication;
+using FishyAPI.Tools.DBInteractions;
 using Json;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +12,7 @@ namespace FishyAPI.Routes;
 
 public static class DiscordAuth
 {
-    public static void MapAuthRoutes(WebApplication app, Tokenizer apiToken, SQLInteraction interactionHelper)
+    public static void MapAuthRoutes(WebApplication app, Tokenizer apiToken, ConnectionManager connManager)
     {
         app.MapGet("/Auth/Discord", async void (HttpContext context) =>
         {
@@ -63,6 +64,9 @@ public static class DiscordAuth
             // Generate JWT token
             Console.WriteLine(userData["id"].ToString());
             string token = "";
+            
+            var dbConn = connManager.IssueConnection();
+            var interactionHelper = new SQLInteraction(dbConn.Connection);
 
             if(UserTools.CheckUserExistsDID(interactionHelper, ulong.Parse(userData["id"].ToString())))
             {
@@ -86,6 +90,8 @@ public static class DiscordAuth
                 RegistrationDate = DateTime.Now,
                 Role = "User"
             });   
+            
+            dbConn.Close();
             
             // Return the token
             return Results.Ok(new { token });

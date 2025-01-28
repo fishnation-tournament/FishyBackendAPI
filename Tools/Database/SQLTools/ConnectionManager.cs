@@ -5,7 +5,7 @@ namespace FishyAPI.Tools.DBInteractions;
 
 public class ConnectionManager
 {
-    private ConnectionManager(string server, string databaseName, string userName, string password)
+    public ConnectionManager(string server, string databaseName, string userName, string password)
     {
         Server = server;
         DatabaseName = databaseName;
@@ -18,7 +18,7 @@ public class ConnectionManager
     private static string UserName;
     private static string Password;
 
-    public static MySqlConnection IssueConnection()
+    public DBConnection IssueConnection()
     {
         var dbConn = DBConnection.Instance();
         dbConn.Server = Server;
@@ -28,7 +28,7 @@ public class ConnectionManager
         
         if (dbConn.IsConnect())
         {
-            return dbConn.Connection;
+            return dbConn;
         }
 
         return null;
