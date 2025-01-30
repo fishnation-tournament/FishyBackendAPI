@@ -27,8 +27,6 @@ if (dbConn == null)
 
 dbConn.Close();
 
-SQLInteraction interactionHelper = new SQLInteraction(dbConn.Connection);
-
 var builder = WebApplication.CreateBuilder(args);
 
 if (!builder.Environment.IsDevelopment())
@@ -102,9 +100,9 @@ if(!app.Environment.IsDevelopment())
 
 Tokenizer apiTokenizer = new Tokenizer(Environment.GetEnvironmentVariable("SECRET_KEY"));
 
-MapRoutes.MapMapRoutes(app, interactionHelper);
-ScoresRoutes.RegisterScoresRoutes(app, interactionHelper);
-UserRoutes.MapUserRoutes(app, interactionHelper);
+MapRoutes.MapMapRoutes(app, connManager);
+ScoresRoutes.RegisterScoresRoutes(app, connManager);
+UserRoutes.MapUserRoutes(app, connManager);
 DiscordAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 
 app.Run();
