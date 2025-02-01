@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using FishyAPI.Tools.Database.SQLTools;
+using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Tools
 {
@@ -13,6 +14,7 @@ namespace FishyAPI.Tools
         
         public void SendCommand(string query)
         {
+            SQLInjectionPrevention.FormatSQLString(query);
             var cmd = new MySqlCommand(query, dbConn);
             cmd.ExecuteNonQuery();
             
@@ -20,6 +22,7 @@ namespace FishyAPI.Tools
 
         public MySqlDataReader GetReader(string query)
         {
+            SQLInjectionPrevention.FormatSQLString(query);
             var cmd = new MySqlCommand(query, dbConn);
             MySqlDataReader reader = cmd.ExecuteReader();
             
