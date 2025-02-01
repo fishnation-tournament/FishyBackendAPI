@@ -19,7 +19,7 @@ public static class UserTools
             user.DiscordUsername = reader.GetString(6);
             user.RegistrationDate = reader.GetDateTime(7);
             user.Role = reader.GetString(8);
-            user.FrontendRole = reader.GetString(9);
+            user.FrontendRole = reader.IsDBNull(9) ? "Null" : reader.GetString(9 );
             users.Add(user);
         }
         reader.Close();
@@ -41,7 +41,7 @@ public static class UserTools
             user.DiscordUsername = reader.GetString(6);
             user.RegistrationDate = reader.GetDateTime(7);
             user.Role = reader.GetString(8);
-            user.FrontendRole = reader.GetString(9);
+            user.FrontendRole = reader.IsDBNull(9) ? "Null" : reader.GetString(9 );
         }
         reader.Close();
         

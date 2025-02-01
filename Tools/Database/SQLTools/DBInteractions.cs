@@ -4,9 +4,6 @@ namespace FishyAPI.Tools.DBInteractions
 {
     public class DBConnection
     {
-        private DBConnection()
-        {
-        }
 
         public string Server { get; set; }
         public string DatabaseName { get; set; }
@@ -14,14 +11,6 @@ namespace FishyAPI.Tools.DBInteractions
         public string Password { get; set; }
 
         public MySqlConnection Connection { get; set;}
-
-        private static DBConnection _instance = null;
-        public static DBConnection Instance()
-        {
-            if (_instance == null)
-                _instance = new DBConnection();
-            return _instance;
-        }
     
         public bool IsConnect()
         {

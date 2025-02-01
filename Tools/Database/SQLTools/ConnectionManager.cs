@@ -20,7 +20,7 @@ public class ConnectionManager
 
     public DBConnection IssueConnection()
     {
-        var dbConn = DBConnection.Instance();
+        var dbConn = new DBConnection();
         dbConn.Server = Server;
         dbConn.DatabaseName = DatabaseName;
         dbConn.UserName = UserName;
@@ -28,6 +28,7 @@ public class ConnectionManager
         
         if (dbConn.IsConnect())
         {
+            Console.WriteLine("Connection Established to " + DatabaseName + " on " + Server);
             return dbConn;
         }
 
