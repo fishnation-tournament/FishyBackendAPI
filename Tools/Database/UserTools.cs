@@ -11,15 +11,15 @@ public static class UserTools
         {
             DataTypes.User user = new DataTypes.User();
             user.UID = reader.GetUInt64(0);
-            user.OptBLUID = reader.GetUInt64(1);
+            user.OptBLUID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
             user.Username = reader.GetString(2);
-            user.UserPfpLink = reader.GetString(3);
-            user.UserBio = reader.GetString(4);
-            user.DiscordID = reader.GetUInt64(5);
+            user.UserPfpLink = reader.IsDBNull(3) ? null : reader.GetString(3);
+            user.UserBio = reader.IsDBNull(4) ? null : reader.GetString(4);
+            user.DiscordID = reader.IsDBNull(5) ? null : reader.GetUInt64(5);
             user.DiscordUsername = reader.GetString(6);
             user.RegistrationDate = reader.GetDateTime(7);
-            user.Role = reader.GetString(8);
-            user.FrontendRole = reader.IsDBNull(9) ? "Null" : reader.GetString(9 );
+            user.Role = reader.IsDBNull(8) ? null : reader.GetString(8);
+            user.FrontendRole = reader.IsDBNull(9) ? null : reader.GetString(9 );
             users.Add(user);
         }
         reader.Close();
@@ -33,15 +33,15 @@ public static class UserTools
         while (reader.Read())
         {
             user.UID = reader.GetUInt64(0);
-            user.OptBLUID = reader.GetUInt64(1);
+            user.OptBLUID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
             user.Username = reader.GetString(2);
-            user.UserPfpLink = reader.GetString(3);
-            user.UserBio = reader.GetString(4);
-            user.DiscordID = reader.GetUInt64(5);
+            user.UserPfpLink = reader.IsDBNull(3) ? null : reader.GetString(3);
+            user.UserBio = reader.IsDBNull(4) ? null : reader.GetString(4);
+            user.DiscordID = reader.IsDBNull(5) ? null : reader.GetUInt64(5);
             user.DiscordUsername = reader.GetString(6);
             user.RegistrationDate = reader.GetDateTime(7);
-            user.Role = reader.GetString(8);
-            user.FrontendRole = reader.IsDBNull(9) ? "Null" : reader.GetString(9 );
+            user.Role = reader.IsDBNull(8) ? null : reader.GetString(8);
+            user.FrontendRole = reader.IsDBNull(9) ? null : reader.GetString(9 );
         }
         reader.Close();
         

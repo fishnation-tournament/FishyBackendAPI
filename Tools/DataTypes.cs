@@ -6,15 +6,15 @@ public static class DataTypes
     public struct User
     {
         public ulong UID { get; set; }
-        public ulong OptBLUID { get; set; }
+        public ulong? OptBLUID { get; set; }
         public string Username { get; set; }
-        public string UserPfpLink { get; set; }
-        public string UserBio { get; set; }
-        public ulong DiscordID { get; set; }
-        public string DiscordUsername { get; set; }
+        public string? UserPfpLink { get; set; }
+        public string? UserBio { get; set; }
+        public ulong? DiscordID { get; set; }
+        public string? DiscordUsername { get; set; }
         public DateTime RegistrationDate { get; set; }
-        public string Role { get; set; }
-        public string FrontendRole { get; set; }
+        public string? Role { get; set; }
+        public string? FrontendRole { get; set; }
     }
     
     public struct Map
@@ -44,10 +44,10 @@ public static class DataTypes
         public ulong Player1ID { get; set; }
         public ulong Player2ID { get; set; }
         public bool Complete { get; set; }
-        public ulong WinnerID { get; set; }
-        public int Player1Score { get; set; }
-        public int Player2Score { get; set; }
-        public DateTime MatchDate { get; set; }
+        public ulong? WinnerID{ get; set; }
+        public int? Player1Score { get; set; }
+        public int? Player2Score { get; set; }
+        public DateTime? MatchDate { get; set; }
         public List<MatchScore> Scores { get; set; }
         public int Season { get; set; }
         

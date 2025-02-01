@@ -12,11 +12,11 @@ public class MatchTools
             match.MID = reader.GetUInt64(0);
             match.Player1ID = reader.GetUInt64(1);
             match.Player2ID = reader.GetUInt64(2);
-            match.Player1Score = reader.GetInt32(3);
-            match.Player2Score = reader.GetInt32(4);
-            match.MatchDate = reader.GetDateTime(5);
+            match.Player1Score = reader.IsDBNull(3) ? null : reader.GetInt32(3);
+            match.Player2Score = reader.IsDBNull(4) ? null : reader.GetInt32(4);
+            match.MatchDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5);
             match.Complete = reader.GetBoolean(6);
-            match.WinnerID = reader.GetUInt64(7);
+            match.WinnerID = reader.IsDBNull(7) ? null : reader.GetUInt64(7);
             match.Season = reader.GetInt32(8);
             match.MapPoolID = reader.GetUInt64(9);
             match.Scores = new List<DataTypes.MatchScore>();
@@ -91,7 +91,7 @@ public class MatchTools
     
     public static void UpdateMatch(SQLInteraction interactionHelper, DataTypes.Match match)
     {
-        string query = $"UPDATE matches SET Player1UID = {match.Player1ID}, Player2UID = {match.Player2ID}, Player1Points = {match.Player1Score}, Player2Points = {match.Player2Score}, MatchDateTime = '{match.MatchDate.ToString("yyyy-MM-dd HH:mm:ss")}', MatchComplete = {match.Complete}, WinnerUID = {match.WinnerID}, Season = {match.Season}, MPID = {match.MapPoolID} WHERE MatchID = {match.MID}";
+        string query = $"UPDATE matches SET Player1UID = {match.Player1ID}, Player2UID = {match.Player2ID}, Player1Points = {match.Player1Score}, Player2Points = {match.Player2Score}, MatchDateTime = '{match.MatchDate?.ToString("yyyy-MM-dd HH:mm:ss")}', MatchComplete = {match.Complete}, WinnerUID = {match.WinnerID}, Season = {match.Season}, MPID = {match.MapPoolID} WHERE MatchID = {match.MID}";
         interactionHelper.SendCommand(query);
     }
     
