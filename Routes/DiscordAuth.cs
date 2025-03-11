@@ -80,15 +80,16 @@ public static class DiscordAuth
             
             UserTools.AddUser(interactionHelper, new DataTypes.User
             {
-                UID = 1,
-                OptBLUID = 1,
+                SSID = null,
+                OptBLUID = null,
                 Username = userData["username"].ToString(),
                 UserPfpLink = $"https://cdn.discordapp.com/avatars/{userData["id"].ToString()}/{userData["avatar"].ToString()}",
                 UserBio = "",
                 DiscordID = ulong.Parse(userData["id"].ToString()),
                 DiscordUsername = userData["username"].ToString(),
                 RegistrationDate = DateTime.Now,
-                Role = "User"
+                Role = "User",
+                FrontendRole = "Player"
             });   
             
             dbConn.Close();

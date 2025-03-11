@@ -11,15 +11,16 @@ public static class UserTools
         {
             DataTypes.User user = new DataTypes.User();
             user.UID = reader.GetUInt64(0);
-            user.OptBLUID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
-            user.Username = reader.GetString(2);
-            user.UserPfpLink = reader.IsDBNull(3) ? null : reader.GetString(3);
-            user.UserBio = reader.IsDBNull(4) ? null : reader.GetString(4);
-            user.DiscordID = reader.IsDBNull(5) ? null : reader.GetUInt64(5);
-            user.DiscordUsername = reader.GetString(6);
-            user.RegistrationDate = reader.GetDateTime(7);
-            user.Role = reader.IsDBNull(8) ? null : reader.GetString(8);
-            user.FrontendRole = reader.IsDBNull(9) ? null : reader.GetString(9 );
+            user.SSID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
+            user.OptBLUID = reader.IsDBNull(2) ? null : reader.GetUInt64(2);
+            user.Username = reader.GetString(3);
+            user.UserPfpLink = reader.IsDBNull(4) ? null : reader.GetString(4);
+            user.UserBio = reader.IsDBNull(5) ? null : reader.GetString(5);
+            user.DiscordID = reader.IsDBNull(6) ? null : reader.GetUInt64(6);
+            user.DiscordUsername = reader.GetString(7);
+            user.RegistrationDate = reader.GetDateTime(8);
+            user.Role = reader.IsDBNull(9) ? null : reader.GetString(9);
+            user.FrontendRole = reader.IsDBNull(10) ? null : reader.GetString(10);
             users.Add(user);
         }
         reader.Close();
@@ -33,15 +34,16 @@ public static class UserTools
         while (reader.Read())
         {
             user.UID = reader.GetUInt64(0);
-            user.OptBLUID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
-            user.Username = reader.GetString(2);
-            user.UserPfpLink = reader.IsDBNull(3) ? null : reader.GetString(3);
-            user.UserBio = reader.IsDBNull(4) ? null : reader.GetString(4);
-            user.DiscordID = reader.IsDBNull(5) ? null : reader.GetUInt64(5);
-            user.DiscordUsername = reader.GetString(6);
-            user.RegistrationDate = reader.GetDateTime(7);
-            user.Role = reader.IsDBNull(8) ? null : reader.GetString(8);
-            user.FrontendRole = reader.IsDBNull(9) ? null : reader.GetString(9 );
+            user.SSID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
+            user.OptBLUID = reader.IsDBNull(2) ? null : reader.GetUInt64(2);
+            user.Username = reader.GetString(3);
+            user.UserPfpLink = reader.IsDBNull(4) ? null : reader.GetString(4);
+            user.UserBio = reader.IsDBNull(5) ? null : reader.GetString(5);
+            user.DiscordID = reader.IsDBNull(6) ? null : reader.GetUInt64(6);
+            user.DiscordUsername = reader.GetString(7);
+            user.RegistrationDate = reader.GetDateTime(8);
+            user.Role = reader.IsDBNull(9) ? null : reader.GetString(9);
+            user.FrontendRole = reader.IsDBNull(10) ? null : reader.GetString(10);
         }
         reader.Close();
         
@@ -64,6 +66,25 @@ public static class UserTools
             var user = ReadSingleResult(reader);
             return user;
         }
+    }
+    
+    public static DataTypes.User GetUserBySSID(SQLInteraction interactionHelper, ulong SSID)
+    {
+        string query = $"SELECT * FROM users WHERE SSID = {SSID}";
+        using (var reader = interactionHelper.GetReader(query))
+        {
+            var user = ReadSingleResult(reader);
+            return user;
+        }
+    }
+    
+    public static List<DataTypes.User> GetUsersByOptBLUID(SQLInteraction interactionHelper, ulong OptBLUID)
+    {
+        string query = $"SELECT * FROM users WHERE OptBLUID = {OptBLUID}";
+        var reader = interactionHelper.GetReader(query);
+        List<DataTypes.User> users = ReadResults(reader);
+        
+        return users;
     }
     
     public static List<DataTypes.User> GetUsersByName(SQLInteraction interactionHelper, string searchTerm)
@@ -95,13 +116,13 @@ public static class UserTools
     
     public static void AddUser(SQLInteraction interactionHelper, DataTypes.User user)
     {
-        string query = "INSERT INTO users (UID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, RegistrationDate, Role, FrontendRole) VALUES (" + user.UID + ", " + user.OptBLUID + ", '" + user.Username + "', '" + user.UserPfpLink + "', '" + user.UserBio + "', " + user.DiscordID + ", '" + user.DiscordUsername + "', '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "', '" + user.FrontendRole + "')";
+        string query = "INSERT INTO users (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, RegistrationDate, Role, FrontendRole) VALUES (" + user.SSID + ", " + user.OptBLUID + ", '" + user.Username + "', '" + user.UserPfpLink + "', '" + user.UserBio + "', " + user.DiscordID + ", '" + user.DiscordUsername + "', '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "', '" + user.FrontendRole + "')";
         interactionHelper.SendCommand(query);
     }
     
     public static void UpdateUser(SQLInteraction interactionHelper, DataTypes.User user)
     {
-        string query = "UPDATE users SET OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UID = " + user.UID;
+        string query = "UPDATE users SET SSID = " + user.SSID + " OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UID = " + user.UID;
         interactionHelper.SendCommand(query);
     }
     

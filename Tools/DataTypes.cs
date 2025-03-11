@@ -6,6 +6,7 @@ public static class DataTypes
     public struct User
     {
         public ulong UID { get; set; }
+        public ulong? SSID { get; set; }
         public ulong? OptBLUID { get; set; }
         public string Username { get; set; }
         public string? UserPfpLink { get; set; }
