@@ -30,7 +30,7 @@ public static class DiscordAuth
             context.Response.Redirect(discordAuthUrl);
         }).WithName("DiscordAuth").WithOpenApi();
 
-        app.MapGet("/Auth/Discord/Callback", async (HttpContext context) =>
+        app.MapGet("/Auth/Discord/Callback", async void (HttpContext context) =>
         {
             var code = context.Request.Query["code"];
             var clientId = Environment.GetEnvironmentVariable("DISCORD_APPID");
@@ -73,10 +73,12 @@ public static class DiscordAuth
                 var user = UserTools.GetUserByDiscordId(interactionHelper, ulong.Parse(userData["id"].ToString()));
                 Console.WriteLine($"User {user.Username} already exists with role {user.Role}");
                 token = apiToken.GenerateToken(userData["id"].ToString(), user.Role);
-                return Results.Ok(new { token });
+                var websiteRedirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
+                context.Response.Redirect(websiteRedirect);
             }
             
             token = apiToken.GenerateToken(userData["id"].ToString(), "User");
+            var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
             
             UserTools.AddUser(interactionHelper, new DataTypes.User
             {
@@ -95,7 +97,7 @@ public static class DiscordAuth
             dbConn.Close();
             
             // Return the token
-            return Results.Ok(new { token });
+            context.Response.Redirect(Redirect);
         }).WithName("DiscordAuthCallback").WithOpenApi().ExcludeFromDescription();;
     }
 }
