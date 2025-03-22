@@ -72,15 +72,13 @@ public static class DiscordAuth
             {
                 var user = UserTools.GetUserByDiscordId(interactionHelper, ulong.Parse(userData["id"].ToString()));
                 Console.WriteLine($"User {user.Username} already exists with role {user.Role}");
-                token = apiToken.GenerateToken(userData["id"].ToString(), user.Role);
+                token = apiToken.GenerateToken(user, user.Role);
                 var websiteRedirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
             }
             
-            token = apiToken.GenerateToken(userData["id"].ToString(), "User");
-            var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
             
-            UserTools.AddUser(interactionHelper, new DataTypes.User
+            DataTypes.User newUser = new DataTypes.User
             {
                 SSID = null,
                 OptBLUID = null,
@@ -92,7 +90,12 @@ public static class DiscordAuth
                 RegistrationDate = DateTime.Now,
                 Role = "User",
                 FrontendRole = "Player"
-            });   
+            };
+
+            UserTools.AddUser(interactionHelper, newUser);
+            
+            token = apiToken.GenerateToken(newUser, "User");
+            var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
             
             dbConn.Close();
             

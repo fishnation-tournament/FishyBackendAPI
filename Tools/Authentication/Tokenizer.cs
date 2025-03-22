@@ -13,12 +13,14 @@ public class Tokenizer
         this.secretKey = secretKey;
     }
     
-    public string GenerateToken(string userId, string role)
+    public string GenerateToken(DataTypes.User user, string role)
     {
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId),
+            new Claim(JwtRegisteredClaimNames.Sub, user.UID.ToString()),
+            new Claim( JwtRegisteredClaimNames.Sub, user.DiscordID.ToString()),
             new Claim(ClaimTypes.Role, role)
+            
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
