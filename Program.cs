@@ -11,11 +11,22 @@ using Microsoft.IdentityModel.Tokens;
 DotNetEnv.Env.TraversePath().Load("./.env");
 Console.WriteLine("Testing Credentials for SQL Server");
 
+//Envireonment Variables
+var DBServer = Environment.GetEnvironmentVariable("DATABASE_SERVER");
+var DBName = Environment.GetEnvironmentVariable("DATABASE_NAME");
+var DBUser = Environment.GetEnvironmentVariable("DATABASE_USER");
+var DBPassword = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+var CertPath = Environment.GetEnvironmentVariable("CERT_PATH");
+var CertKey = Environment.GetEnvironmentVariable("CERT_KEY");
+var SecretKey = Environment.GetEnvironmentVariable("SECRET_KEY");
+
+
+
 ConnectionManager connManager = new ConnectionManager(
-    Environment.GetEnvironmentVariable("DATABASE_SERVER"),
-    Environment.GetEnvironmentVariable("DATABASE_NAME"),
-    Environment.GetEnvironmentVariable("DATABASE_USER"),
-    Environment.GetEnvironmentVariable("DATABASE_PASSWORD"));
+    DBServer,
+    DBName,
+    DBUser,
+    DBPassword);
 
 var dbConn = connManager.IssueConnection();
 
@@ -38,15 +49,15 @@ if (!builder.Environment.IsDevelopment())
         {
             try
             {
+                var certPem = File.ReadAllText(CertPath);
+                var keyPem = File.ReadAllText(CertKey);
                 var certificate = new X509Certificate2(
-                    Environment.GetEnvironmentVariable("CERT_PATH"),
-                    Environment.GetEnvironmentVariable("CERT_PASSWORD")
-                );
+                    X509Certificate2.CreateFromPem(certPem, keyPem));
                 httpsOptions.UseHttps(certificate);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Could not find certificate files at {Environment.GetEnvironmentVariable("FULLCHAIN_PATH")} and {Environment.GetEnvironmentVariable("PRIVATEKEY_PATH")}");
+                Console.WriteLine($"Could not find certificate files at {CertPath} and {CertKey}");
                 Console.WriteLine($"Failed to load certificate: {ex.Message}");
                 throw;
             }
@@ -66,7 +77,7 @@ if (!builder.Environment.IsDevelopment())
                 ValidateAudience = false,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Environment.GetEnvironmentVariable("SECRET_KEY")))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(SecretKey))
             };
         });
 
@@ -98,7 +109,7 @@ if(!app.Environment.IsDevelopment())
 }
 
 
-Tokenizer apiTokenizer = new Tokenizer(Environment.GetEnvironmentVariable("SECRET_KEY"));
+Tokenizer apiTokenizer = new Tokenizer(SecretKey);
 
 MapRoutes.MapMapRoutes(app, connManager);
 ScoresRoutes.RegisterScoresRoutes(app, connManager);
