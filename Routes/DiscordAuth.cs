@@ -14,7 +14,7 @@ public static class DiscordAuth
 {
     public static void MapAuthRoutes(WebApplication app, Tokenizer apiToken, ConnectionManager connManager)
     {
-        app.MapGet("/Auth/Discord", async void (HttpContext context) =>
+        app.MapGet("/Auth/Discord", async Task (HttpContext context) =>
         {
             NameValueCollection parameters = HttpUtility.ParseQueryString(string.Empty);
             parameters["client_id"] = Environment.GetEnvironmentVariable("DISCORD_APPID");
@@ -30,7 +30,7 @@ public static class DiscordAuth
             context.Response.Redirect(discordAuthUrl);
         }).WithName("DiscordAuth").WithOpenApi();
 
-        app.MapGet("/Auth/Discord/Callback", async void (HttpContext context) =>
+        app.MapGet("/Auth/Discord/Callback", async Task (HttpContext context) =>
         {
             var code = context.Request.Query["code"];
             var clientId = Environment.GetEnvironmentVariable("DISCORD_APPID");
@@ -75,6 +75,7 @@ public static class DiscordAuth
                 token = apiToken.GenerateToken(user, user.Role);
                 var websiteRedirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
+                return;
             }
             
             

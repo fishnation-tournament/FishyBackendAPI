@@ -52,6 +52,28 @@ public static class UserRoutes
             return users;
         }).WithName("GetUsersByRole").WithOpenApi().RequireAuthorization("User");
         
+        endpoints.MapGet("/Users/GetSelf", (HttpContext context) =>
+        {
+            if(context.User.Identity == null || !context.User.Identity.IsAuthenticated)
+            {
+                return Results.Unauthorized();
+            }
+            
+            var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
+            if(uidClaim == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            ulong uid = ulong.Parse(uidClaim.Value);
+            
+            DBConnection conn = connManager.IssueConnection();
+            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
+            DataTypes.User user = UserTools.GetUserById(interactionHelper, uid);
+            conn.Close();
+            return Results.Ok(user);
+        }).WithName("GetSelf").WithOpenApi().RequireAuthorization("User");
+        
         endpoints.MapPost("/Users/AddUser", (DataTypes.User user) =>
         {
             DBConnection conn = connManager.IssueConnection();
