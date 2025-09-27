@@ -27,8 +27,8 @@ public class Tokenizer
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            "Self",
-            "Self",
+            "Fishnation",
+            "TournamentUser",
             claims,
             expires: DateTime.Now.AddHours(2),
             signingCredentials: creds);

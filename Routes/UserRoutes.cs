@@ -71,7 +71,7 @@ public static class UserRoutes
             SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
             DataTypes.User user = UserTools.GetUserById(interactionHelper, uid);
             conn.Close();
-            return Results.Ok(user);
+            return Results.Json(user);
         }).WithName("GetSelf").WithOpenApi().RequireAuthorization("User");
         
         endpoints.MapPost("/Users/AddUser", (DataTypes.User user) =>
