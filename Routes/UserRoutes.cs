@@ -13,6 +13,7 @@ public static class UserRoutes
             SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
             List<DataTypes.User> users = UserTools.GetUsers(interactionHelper);
             conn.Close();
+            Console.WriteLine(users[0].SSID);
             return users;
         }).WithName("GetUsers").WithOpenApi();
 

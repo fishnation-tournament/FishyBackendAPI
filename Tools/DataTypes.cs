@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 namespace FishyAPI.Tools;
 
 public static class DataTypes
@@ -6,12 +7,20 @@ public static class DataTypes
     public struct User
     {
         public ulong UID { get; set; }
+        
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? SSID { get; set; }
+        
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? OptBLUID { get; set; }
+        
         public string Username { get; set; }
         public string? UserPfpLink { get; set; }
         public string? UserBio { get; set; }
+        
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? DiscordID { get; set; }
+        
         public string? DiscordUsername { get; set; }
         public DateTime RegistrationDate { get; set; }
         public string? Role { get; set; }
