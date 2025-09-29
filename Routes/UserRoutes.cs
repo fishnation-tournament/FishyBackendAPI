@@ -55,16 +55,7 @@ public static class UserRoutes
         
         endpoints.MapGet("/Users/GetSelf", (HttpContext context) =>
         {
-            if(context.User.Identity == null || !context.User.Identity.IsAuthenticated)
-            {
-                return Results.Unauthorized();
-            }
-            
             var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
-            if(uidClaim == null)
-            {
-                return Results.Unauthorized();
-            }
 
             ulong uid = ulong.Parse(uidClaim.Value);
             

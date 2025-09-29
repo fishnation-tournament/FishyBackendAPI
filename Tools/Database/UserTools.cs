@@ -60,7 +60,7 @@ public static class UserTools
     
     public static DataTypes.User GetUserById(SQLInteraction interactionHelper, ulong UID)
     {
-        string query = $"SELECT * FROM users WHERE UID = {UID}";
+        string query = $"SELECT * FROM users WHERE UserID = {UID}";
         using (var reader = interactionHelper.GetReader(query))
         {
             var user = ReadSingleResult(reader);
@@ -116,19 +116,28 @@ public static class UserTools
     
     public static void AddUser(SQLInteraction interactionHelper, DataTypes.User user)
     {
-        string query = "INSERT INTO users (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, RegistrationDate, Role, FrontendRole) VALUES (" + user.SSID + ", " + user.OptBLUID + ", '" + user.Username + "', '" + user.UserPfpLink + "', '" + user.UserBio + "', " + user.DiscordID + ", '" + user.DiscordUsername + "', '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "', '" + user.FrontendRole + "')";
+        
+        string query = "INSERT INTO users (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, RegistrationDate, Role, FrontendRole) VALUES (" + 
+                       (user.SSID.HasValue ? user.SSID.Value.ToString() : "null") + ", " + 
+                       (user.OptBLUID.HasValue ? user.OptBLUID.Value.ToString() : "null") + ", '" + 
+                       user.Username + "', '" + 
+                       user.UserPfpLink + "', '" + 
+                       user.UserBio + "', " + 
+                       user.DiscordID + ", '" + 
+                       user.DiscordUsername + "', '" + 
+                       user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "', '" + user.FrontendRole + "')";
         interactionHelper.SendCommand(query);
     }
     
     public static void UpdateUser(SQLInteraction interactionHelper, DataTypes.User user)
     {
-        string query = "UPDATE users SET SSID = " + user.SSID + " OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UID = " + user.UID;
+        string query = "UPDATE users SET SSID = " + user.SSID + " OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UserID = " + user.UID;
         interactionHelper.SendCommand(query);
     }
     
     public static void DeleteUser(SQLInteraction interactionHelper, ulong UID)
     {
-        string query = $"DELETE FROM users WHERE UID = {UID}";
+        string query = $"DELETE FROM users WHERE UserID = {UID}";
         interactionHelper.SendCommand(query);
     }
     

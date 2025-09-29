@@ -18,12 +18,13 @@ public class Tokenizer
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.UID.ToString()),
-            new Claim( JwtRegisteredClaimNames.Sub, user.DiscordID.ToString()),
+            new Claim("uid", user.UID.ToString()),
+            new Claim("discord_id", user.DiscordID?.ToString() ?? ""),
             new Claim(ClaimTypes.Role, role)
             
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(

@@ -40,55 +40,47 @@ dbConn.Close();
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (!builder.Environment.IsDevelopment())
+
+builder.WebHost.ConfigureKestrel(options =>
 {
-    builder.WebHost.ConfigureKestrel(options =>
+    options.ListenAnyIP(80);
+    options.ListenAnyIP(443, httpsOptions =>
     {
-        options.ListenAnyIP(80);
-        options.ListenAnyIP(443, httpsOptions =>
+        try
         {
-            try
-            {
-                var certPem = File.ReadAllText(CertPath);
-                var keyPem = File.ReadAllText(CertKey);
-                var certificate = new X509Certificate2(
-                    X509Certificate2.CreateFromPem(certPem, keyPem));
-                httpsOptions.UseHttps(certificate);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Could not find certificate files at {CertPath} and {CertKey}");
-                Console.WriteLine($"Failed to load certificate: {ex.Message}");
-                throw;
-            }
-        });
+            var certPem = File.ReadAllText(CertPath);
+            var keyPem = File.ReadAllText(CertKey);
+            var certificate = new X509Certificate2(
+                X509Certificate2.CreateFromPem(certPem, keyPem));
+            httpsOptions.UseHttps(certificate);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not find certificate files at {CertPath} and {CertKey}");
+            Console.WriteLine($"Failed to load certificate: {ex.Message}");
+            throw;
+        }
     });
-    
-    builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(SecretKey))
-            };
-        });
+});
 
-    builder.Services.AddAuthorization(options =>
-    {   options.AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"));
-        options.AddPolicy("Organizer", policy => policy.RequireClaim(ClaimTypes.Role, "Organizer", "Admin"));
-        options.AddPolicy("User", policy => policy.RequireClaim(ClaimTypes.Role, "User", "Organizer", "Admin"));
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false, ValidateAudience = false, ValidateLifetime = true, ValidateIssuerSigningKey = true, IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(SecretKey))
+        };
     });
 
-
-}
+builder.Services.AddAuthorization(options =>
+{   options.AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"));
+    options.AddPolicy("Organizer", policy => policy.RequireClaim(ClaimTypes.Role, "Organizer", "Admin"));
+    options.AddPolicy("User", policy => policy.RequireClaim(ClaimTypes.Role, "User", "Organizer", "Admin"));
+});
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -102,12 +94,8 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-if(!app.Environment.IsDevelopment())
-{
-    app.UseAuthentication();
-    app.UseAuthorization();
-}
-
+app.UseAuthentication();
+app.UseAuthorization();
 
 Tokenizer apiTokenizer = new Tokenizer(SecretKey);
 
