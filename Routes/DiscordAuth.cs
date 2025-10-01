@@ -85,7 +85,7 @@ public static class DiscordAuth
                 OptBLUID = null,
                 Username = userData["username"].ToString(),
                 UserPfpLink = $"https://cdn.discordapp.com/avatars/{userData["id"].ToString()}/{userData["avatar"].ToString()}",
-                UserBio = "null",
+                UserBio = "",
                 DiscordID = ulong.Parse(userData["id"].ToString()),
                 DiscordUsername = userData["username"].ToString(),
                 RegistrationDate = DateTime.Now,
