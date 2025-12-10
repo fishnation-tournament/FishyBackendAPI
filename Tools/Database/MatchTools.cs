@@ -9,7 +9,7 @@ public class MatchTools
         while (reader.Read())
         {
             DataTypes.Match match = new DataTypes.Match();
-            match.MID = reader.GetUInt64(0);
+            match.MatchID = reader.GetUInt64(0);
             match.Player1ID = reader.GetUInt64(1);
             match.Player2ID = reader.GetUInt64(2);
             match.Player1Score = reader.IsDBNull(3) ? null : reader.GetInt32(3);
@@ -27,7 +27,7 @@ public class MatchTools
         for(int i = 0; i < matches.Count; i++)
         {
             var tempMatch = matches[i];
-            tempMatch.Scores = ScoreTools.GetMatchScores(interactionHelper, tempMatch.MID);
+            tempMatch.Scores = ScoreTools.GetMatchScores(interactionHelper, tempMatch.MatchID);
             matches[i] = tempMatch;
         }
         return matches;
@@ -39,7 +39,7 @@ public class MatchTools
         
         while (reader.Read())
         {
-            match.MID = reader.GetUInt64(0);
+            match.MatchID = reader.GetUInt64(0);
             match.Player1ID = reader.GetUInt64(1);
             match.Player2ID = reader.GetUInt64(2);
             match.Player1Score = reader.GetInt32(3);
@@ -52,7 +52,7 @@ public class MatchTools
         }
         reader.Close();
         
-        match.Scores = ScoreTools.GetMatchScores(interactionHelper, match.MID);
+        match.Scores = ScoreTools.GetMatchScores(interactionHelper, match.MatchID);
         return match;
     }
     
@@ -91,7 +91,7 @@ public class MatchTools
     
     public static void UpdateMatch(SQLInteraction interactionHelper, DataTypes.Match match)
     {
-        string query = $"UPDATE matches SET Player1UID = {match.Player1ID}, Player2UID = {match.Player2ID}, Player1Points = {match.Player1Score}, Player2Points = {match.Player2Score}, MatchDateTime = '{match.MatchDate?.ToString("yyyy-MM-dd HH:mm:ss")}', MatchComplete = {match.Complete}, WinnerUID = {match.WinnerID}, Season = {match.Season}, MPID = {match.MapPoolID} WHERE MatchID = {match.MID}";
+        string query = $"UPDATE matches SET Player1UID = {match.Player1ID}, Player2UID = {match.Player2ID}, Player1Points = {match.Player1Score}, Player2Points = {match.Player2Score}, MatchDateTime = '{match.MatchDate?.ToString("yyyy-MM-dd HH:mm:ss")}', MatchComplete = {match.Complete}, WinnerUID = {match.WinnerID}, Season = {match.Season}, MPID = {match.MapPoolID} WHERE MatchID = {match.MatchID}";
         interactionHelper.SendCommand(query);
     }
     

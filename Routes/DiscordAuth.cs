@@ -79,7 +79,7 @@ public static class DiscordAuth
             }
             
             
-            DataTypes.User newUser = new DataTypes.User
+            FrontFacingDataTypes.FrontFacingUser User = new FrontFacingDataTypes.FrontFacingUser
             {
                 SSID = null,
                 OptBLUID = null,
@@ -93,7 +93,7 @@ public static class DiscordAuth
                 FrontendRole = "Unassigned"
             };
 
-            UserTools.AddUser(interactionHelper, newUser);
+            DataTypes.User newUser = UserTools.AddUser(interactionHelper, User);
             
             token = apiToken.GenerateToken(newUser, "User");
             var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";

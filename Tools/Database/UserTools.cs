@@ -114,7 +114,7 @@ public static class UserTools
         return userRes;
     }
     
-    public static void AddUser(SQLInteraction interactionHelper, DataTypes.User user)
+    public static DataTypes.User AddUser(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingUser user)
     {
         
         string query = "INSERT INTO users (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, RegistrationDate, Role, FrontendRole) VALUES (" + 
@@ -127,6 +127,13 @@ public static class UserTools
                        user.DiscordUsername + "', '" + 
                        user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "', '" + user.FrontendRole + "')";
         interactionHelper.SendCommand(query);
+        
+        string getIdQuery = "SELECT LAST_INSERT_ID() FROM users";
+        interactionHelper.SendCommand(getIdQuery);
+        var reader = interactionHelper.GetReader(getIdQuery);
+        DataTypes.User newUser = ReadSingleResult(reader);
+
+        return newUser;
     }
     
     public static void UpdateUser(SQLInteraction interactionHelper, DataTypes.User user)

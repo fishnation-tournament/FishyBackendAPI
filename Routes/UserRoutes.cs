@@ -66,13 +66,13 @@ public static class UserRoutes
             return Results.Json(user);
         }).WithName("GetSelf").WithOpenApi().RequireAuthorization("User");
         
-        endpoints.MapPost("/Users/AddUser", (DataTypes.User user) =>
+        endpoints.MapPost("/Users/AddUser", (FrontFacingDataTypes.FrontFacingUser user) =>
         {
             DBConnection conn = connManager.IssueConnection();
             SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            UserTools.AddUser(interactionHelper, user);
+            DataTypes.User newUser = UserTools.AddUser(interactionHelper, user);
             conn.Close();
-            return Results.Created($"/Users/GetUserById/{user.UID}", user);
+            return Results.Created($"/Users/GetUserById/{newUser.UID}", newUser);
         }).WithName("AddUser").WithOpenApi().RequireAuthorization("Organizer");
         
         endpoints.MapPut("/Users/UpdateUser", (DataTypes.User user) =>

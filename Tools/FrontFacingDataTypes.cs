@@ -1,8 +1,29 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 namespace FishyAPI.Tools;
 
 public static class FrontFacingDataTypes
 {
+    public struct FrontFacingUser
+    {
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+        public ulong? SSID { get; set; }
+        
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+        public ulong? OptBLUID { get; set; }
+        
+        public string Username { get; set; }
+        public string? UserPfpLink { get; set; }
+        public string? UserBio { get; set; }
+        
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+        public ulong? DiscordID { get; set; }
+        
+        public string? DiscordUsername { get; set; }
+        public DateTime RegistrationDate { get; set; }
+        public string? Role { get; set; }
+        public string? FrontendRole { get; set; }
+    }
     public struct FrontFacingMap
     {
         public string BSMapID { get; set; }
@@ -54,27 +75,5 @@ public static class FrontFacingDataTypes
         public int MaxScore { get; set; }
         public int Misses { get; set; }
         public ulong QualifierID { get; set; } 
-    }
-    
-    public struct AuthResponse
-    {
-        public int ExpiresIn { get; set; }
-        public string AccessToken { get; set; } 
-    }
-    
-    public struct DiscordUser
-    {
-        public string id { get; set; }
-        public string username { get; set; }
-        public string discriminator { get; set; }
-        public string avatar { get; set; }
-        public bool verified { get; set; }
-        public string email { get; set; }
-        public int flags { get; set; }
-        public string banner { get; set; }
-        public int accent_color { get; set; }
-        public int premium_type { get; set; }
-        public int public_flags { get; set; }
-        public Dictionary<string, string> avatar_decoration_data { get; set; }
     }
 }

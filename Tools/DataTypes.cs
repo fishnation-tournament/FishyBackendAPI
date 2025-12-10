@@ -49,8 +49,7 @@ public static class DataTypes
     
     public struct Match
     {
-        public ulong MID { get; set; }
-        public ulong MapPoolID { get; set; }
+        public ulong MatchID { get; set; }
         public ulong Player1ID { get; set; }
         public ulong Player2ID { get; set; }
         public bool Complete { get; set; }
@@ -60,6 +59,7 @@ public static class DataTypes
         public DateTime? MatchDate { get; set; }
         public List<MatchScore> Scores { get; set; }
         public int Season { get; set; }
+        public ulong MapPoolID { get; set; }
         
     }
 
