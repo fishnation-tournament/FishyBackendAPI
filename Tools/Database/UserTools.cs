@@ -21,11 +21,11 @@ public static class UserTools
             user.DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
             user.GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
             user.GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
-            user.SteamID = reader.IsDBNull(8) ? null : reader.GetUInt64(10);
-            user.SteamUsername = reader.IsDBNull(9) ? null : reader.GetString(11);
+            user.SteamID = reader.IsDBNull(10) ? null : reader.GetUInt64(10);
+            user.SteamUsername = reader.IsDBNull(11) ? null : reader.GetString(11);
             user.RegistrationDate = reader.GetDateTime(12);
-            user.Role = reader.IsDBNull(11) ? null : reader.GetString(13);
-            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(14);
+            user.Role = reader.IsDBNull(13) ? null : reader.GetString(13);
+            user.FrontendRole = reader.IsDBNull(14) ? null : reader.GetString(14);
 
             users.Add(user);
         }
@@ -49,11 +49,11 @@ public static class UserTools
             user.DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
             user.GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
             user.GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
-            user.SteamID = reader.IsDBNull(8) ? null : reader.GetUInt64(10);
-            user.SteamUsername = reader.IsDBNull(9) ? null : reader.GetString(11);
+            user.SteamID = reader.IsDBNull(10) ? null : reader.GetUInt64(10);
+            user.SteamUsername = reader.IsDBNull(11) ? null : reader.GetString(11);
             user.RegistrationDate = reader.GetDateTime(12);
-            user.Role = reader.IsDBNull(11) ? null : reader.GetString(13);
-            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(14);
+            user.Role = reader.IsDBNull(13) ? null : reader.GetString(13);
+            user.FrontendRole = reader.IsDBNull(14) ? null : reader.GetString(14);
         }
         reader.Close();
 
