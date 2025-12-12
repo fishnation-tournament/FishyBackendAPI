@@ -123,7 +123,27 @@ public static class UserTools
         
         return userRes;
     }
-
+    
+    public static DataTypes.User AddUser(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingUser user)
+    {
+        string sanitizedGoogleID = user.GoogleID != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleID) : null;
+        string sanitizedGoogleEmail = user.GoogleEmail != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleEmail) : null;
+        
+        string query = "INSERT INTO users (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, SteamID, SteamUsername, RegistrationDate, Role, FrontendRole) VALUES (" + 
+                       (user.SSID.HasValue ? user.SSID.Value.ToString() : "null") + ", " + 
+                       (user.OptBLUID.HasValue ? user.OptBLUID.Value.ToString() : "null") + ", '" + 
+                       user.Username + "', '" + 
+                       user.UserPfpLink + "', '" + 
+                       user.UserBio + "', " + 
+                       (user.DiscordID.HasValue ? user.DiscordID.Value.ToString() : "null") + ", " +
+                       (user.DiscordUsername != null ? "'" + user.DiscordUsername + "'" : "null") + ", " +
+                       (sanitizedGoogleID != null ? "'" + sanitizedGoogleID + "'" : "null") + ", " +
+                       (sanitizedGoogleEmail != null ? "'" + sanitizedGoogleEmail + "'" : "null") + ", '" +
+                       (user.SteamID.HasValue ? user.SteamID.Value.ToString() : "null") + ", " +
+                       (user.SteamUsername != null ? "'" + user.SteamUsername + "'" : "null") + ", '" +
+                       user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" +
+                       user.Role + "', '" +
+                       user.FrontendRole + "')";
         interactionHelper.SendCommand(query);
         
         string getIdQuery = "SELECT LAST_INSERT_ID() FROM users";
@@ -185,7 +205,6 @@ public static class UserTools
         reader.Close();
         return false;
     }
-}
 
     public static bool CheckUserExistsSteamID(SQLInteraction interactionHelper, ulong SteamID)
     {
