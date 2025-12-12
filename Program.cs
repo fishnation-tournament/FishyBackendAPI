@@ -103,5 +103,6 @@ MapRoutes.MapMapRoutes(app, connManager);
 ScoresRoutes.RegisterScoresRoutes(app, connManager);
 UserRoutes.MapUserRoutes(app, connManager);
 DiscordAuth.MapAuthRoutes(app, apiTokenizer, connManager);
+GoogleAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 
 app.Run();
