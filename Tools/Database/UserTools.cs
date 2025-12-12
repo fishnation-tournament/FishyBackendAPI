@@ -124,6 +124,14 @@ public static class UserTools
         return userRes;
     }
     
+    public static DataTypes.User GetUserBySteamId(SQLInteraction interactionHelper, ulong SteamID)
+    {
+        string query = $"SELECT * FROM users WHERE SteamID = {SteamID}";
+        using MySqlDataReader reader = interactionHelper.GetReader(query);
+        DataTypes.User userRes = ReadSingleResult(reader);
+        return userRes;
+    }
+    
     public static DataTypes.User AddUser(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingUser user)
     {
         string sanitizedGoogleID = user.GoogleID != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleID) : null;
