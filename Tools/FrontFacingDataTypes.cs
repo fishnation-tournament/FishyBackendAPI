@@ -11,17 +11,20 @@ public static class FrontFacingDataTypes
         
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? OptBLUID { get; set; }
-        
         public string Username { get; set; }
         public string? UserPfpLink { get; set; }
         public string? UserBio { get; set; }
-        
+
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? DiscordID { get; set; }
-        
         public string? DiscordUsername { get; set; }
         public string? GoogleID { get; set; }
         public string? GoogleEmail { get; set; }
+
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+        public ulong? SteamID { get; set; }
+        public string? SteamUsername { get; set; }
+
         public DateTime RegistrationDate { get; set; }
         public string? Role { get; set; }
         public string? FrontendRole { get; set; }
@@ -35,7 +38,7 @@ public static class FrontFacingDataTypes
         public int Season { get; set; }
         public string Difficulty { get; set; }
     }
-    
+
     public struct FrontFacingMapPool
     {
         public string MapPoolName { get; set; }
@@ -43,7 +46,7 @@ public static class FrontFacingDataTypes
         public List<FrontFacingMap> Maps { get; set; }
         public int Season { get; set; }
     }
-    
+
     public struct FrontFacingMatch
     {
         public ulong MapPoolID { get; set; }
@@ -56,7 +59,7 @@ public static class FrontFacingDataTypes
         public DateTime MatchDate { get; set; }
         public List<FrontFacingMatchScore> Scores { get; set; }
         public int Season { get; set; }
-        
+
     }
 
     public struct FrontFacingMatchScore
@@ -68,7 +71,7 @@ public static class FrontFacingDataTypes
         public int MaxScore { get; set; }
         public int Misses { get; set; }
     }
-    
+
     public struct FrontFacingQualifierScore
     {
         public ulong UID { get; set; }
@@ -76,6 +79,6 @@ public static class FrontFacingDataTypes
         public int Score { get; set; }
         public int MaxScore { get; set; }
         public int Misses { get; set; }
-        public ulong QualifierID { get; set; } 
+        public ulong QualifierID { get; set; }
     }
 }
