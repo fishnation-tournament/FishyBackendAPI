@@ -22,6 +22,8 @@ public static class DataTypes
         public ulong? DiscordID { get; set; }
         
         public string? DiscordUsername { get; set; }
+        public string? GoogleID { get; set; }
+        public string? GoogleEmail { get; set; }
         public DateTime RegistrationDate { get; set; }
         public string? Role { get; set; }
         public string? FrontendRole { get; set; }
