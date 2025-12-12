@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using FishyAPI.Tools.Database.SQLTools;
+using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Tools;
 
@@ -120,6 +121,8 @@ public static class UserTools
     
     public static DataTypes.User AddUser(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingUser user)
     {
+        string sanitizedGoogleID = user.GoogleID != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleID) : null;
+        string sanitizedGoogleEmail = user.GoogleEmail != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleEmail) : null;
         
         string query = "INSERT INTO users (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, RegistrationDate, Role, FrontendRole) VALUES (" + 
                        (user.SSID.HasValue ? user.SSID.Value.ToString() : "null") + ", " + 
@@ -129,8 +132,8 @@ public static class UserTools
                        user.UserBio + "', " + 
                        (user.DiscordID.HasValue ? user.DiscordID.Value.ToString() : "null") + ", " +
                        (user.DiscordUsername != null ? "'" + user.DiscordUsername + "'" : "null") + ", " +
-                       (user.GoogleID != null ? "'" + user.GoogleID + "'" : "null") + ", " +
-                       (user.GoogleEmail != null ? "'" + user.GoogleEmail + "'" : "null") + ", '" +
+                       (sanitizedGoogleID != null ? "'" + sanitizedGoogleID + "'" : "null") + ", " +
+                       (sanitizedGoogleEmail != null ? "'" + sanitizedGoogleEmail + "'" : "null") + ", '" +
                        user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "', '" + user.FrontendRole + "')";
         interactionHelper.SendCommand(query);
         
@@ -144,7 +147,10 @@ public static class UserTools
     
     public static void UpdateUser(SQLInteraction interactionHelper, DataTypes.User user)
     {
-        string query = "UPDATE users SET SSID = " + user.SSID + " OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', GoogleID = " + (user.GoogleID != null ? "'" + user.GoogleID + "'" : "null") + ", GoogleEmail = " + (user.GoogleEmail != null ? "'" + user.GoogleEmail + "'" : "null") + ", RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UserID = " + user.UID;
+        string sanitizedGoogleID = user.GoogleID != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleID) : null;
+        string sanitizedGoogleEmail = user.GoogleEmail != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleEmail) : null;
+        
+        string query = "UPDATE users SET SSID = " + user.SSID + ", OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', GoogleID = " + (sanitizedGoogleID != null ? "'" + sanitizedGoogleID + "'" : "null") + ", GoogleEmail = " + (sanitizedGoogleEmail != null ? "'" + sanitizedGoogleEmail + "'" : "null") + ", RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UserID = " + user.UID;
         interactionHelper.SendCommand(query);
     }
     
@@ -169,7 +175,8 @@ public static class UserTools
     
     public static DataTypes.User GetUserByGoogleId(SQLInteraction interactionHelper, string GoogleID)
     {
-        string query = "SELECT * FROM users WHERE GoogleID = '" + GoogleID + "'";
+        string sanitizedGoogleID = SQLInjectionPrevention.FormatSQLString(GoogleID);
+        string query = "SELECT * FROM users WHERE GoogleID = '" + sanitizedGoogleID + "'";
         var reader = interactionHelper.GetReader(query);
         DataTypes.User userRes = ReadSingleResult(reader);
         
@@ -178,7 +185,8 @@ public static class UserTools
     
     public static bool CheckUserExistsGID(SQLInteraction interactionHelper, string GoogleID)
     {
-        string query = $"SELECT * FROM users WHERE GoogleID = '{GoogleID}'";
+        string sanitizedGoogleID = SQLInjectionPrevention.FormatSQLString(GoogleID);
+        string query = $"SELECT * FROM users WHERE GoogleID = '{sanitizedGoogleID}'";
         var reader = interactionHelper.GetReader(query);
         if (reader.HasRows)
         {
