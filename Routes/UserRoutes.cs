@@ -13,7 +13,6 @@ public static class UserRoutes
             SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
             List<DataTypes.User> users = UserTools.GetUsers(interactionHelper);
             conn.Close();
-            Console.WriteLine(users[0].SSID);
             return users;
         }).WithName("GetUsers").WithOpenApi();
 
@@ -52,20 +51,20 @@ public static class UserRoutes
             conn.Close();
             return users;
         }).WithName("GetUsersByRole").WithOpenApi().RequireAuthorization("User");
-        
+
         endpoints.MapGet("/Users/GetSelf", (HttpContext context) =>
         {
             var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
 
             ulong uid = ulong.Parse(uidClaim.Value);
-            
+
             DBConnection conn = connManager.IssueConnection();
             SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
             DataTypes.User user = UserTools.GetUserById(interactionHelper, uid);
             conn.Close();
             return Results.Json(user);
         }).WithName("GetSelf").WithOpenApi().RequireAuthorization("User");
-        
+
         endpoints.MapPost("/Users/AddUser", (FrontFacingDataTypes.FrontFacingUser user) =>
         {
             DBConnection conn = connManager.IssueConnection();
@@ -74,7 +73,7 @@ public static class UserRoutes
             conn.Close();
             return Results.Created($"/Users/GetUserById/{newUser.UID}", newUser);
         }).WithName("AddUser").WithOpenApi().RequireAuthorization("Organizer");
-        
+
         endpoints.MapPut("/Users/UpdateUser", (DataTypes.User user) =>
         {
             DBConnection conn = connManager.IssueConnection();
@@ -83,7 +82,7 @@ public static class UserRoutes
             conn.Close();
             return Results.Created($"/Users/GetUserById/{user.UID}", user);
         }).WithName("UpdateUser").WithOpenApi().RequireAuthorization("Organizer");
-        
+
         endpoints.MapDelete("/Users/DeleteUser/{UID}", (ulong UID) =>
         {
             DBConnection conn = connManager.IssueConnection();

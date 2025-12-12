@@ -23,7 +23,7 @@ public static class DiscordAuth
             parameters["grant_type"] = "authorization_code";
             parameters["scope"] = "identify";
             parameters["redirect_uri"] = "https://api.fishnation.xyz/auth/discord/callback";
-            
+
             var parameterString = parameters.ToString();
             var discordAuthUrl = $"https://discord.com/api/oauth2/authorize?{parameterString}";
 
@@ -56,29 +56,24 @@ public static class DiscordAuth
             var userResponse = await httpClient.GetAsync("https://discord.com/api/users/@me");
 
             var userContent = await userResponse.Content.ReadAsStringAsync();
-            Console.WriteLine("User content is " + userContent);
             var userData = JsonParser.FromJson(userContent);
-            
-            Console.WriteLine($"Content is {Newtonsoft.Json.JsonConvert.SerializeObject(userData)}");
 
             // Generate JWT token
-            Console.WriteLine(userData["id"].ToString());
             string token = "";
-            
+
             var dbConn = connManager.IssueConnection();
             var interactionHelper = new SQLInteraction(dbConn.Connection);
 
-            if(UserTools.CheckUserExistsDID(interactionHelper, ulong.Parse(userData["id"].ToString())))
+            if (UserTools.CheckUserExistsDID(interactionHelper, ulong.Parse(userData["id"].ToString())))
             {
                 var user = UserTools.GetUserByDiscordId(interactionHelper, ulong.Parse(userData["id"].ToString()));
-                Console.WriteLine($"User {user.Username} already exists with role {user.Role}");
                 token = apiToken.GenerateToken(user, user.Role);
                 var websiteRedirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
                 return;
             }
-            
-            
+
+
             FrontFacingDataTypes.FrontFacingUser User = new FrontFacingDataTypes.FrontFacingUser
             {
                 SSID = null,
@@ -94,14 +89,14 @@ public static class DiscordAuth
             };
 
             DataTypes.User newUser = UserTools.AddUser(interactionHelper, User);
-            
+
             token = apiToken.GenerateToken(newUser, "User");
             var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
-            
+
             dbConn.Close();
-            
+
             // Return the token
             context.Response.Redirect(Redirect);
-        }).WithName("DiscordAuthCallback").WithOpenApi().ExcludeFromDescription();;
+        }).WithName("DiscordAuthCallback").WithOpenApi().ExcludeFromDescription();
     }
 }
