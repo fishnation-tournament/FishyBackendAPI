@@ -21,9 +21,12 @@ public static class UserTools
             user.DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
             user.GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
             user.GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
-            user.RegistrationDate = reader.GetDateTime(10);
-            user.Role = reader.IsDBNull(11) ? null : reader.GetString(11);
-            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
+            user.SteamID = reader.IsDBNull(8) ? null : reader.GetUInt64(10);
+            user.SteamUsername = reader.IsDBNull(9) ? null : reader.GetString(11);
+            user.RegistrationDate = reader.GetDateTime(12);
+            user.Role = reader.IsDBNull(11) ? null : reader.GetString(13);
+            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(14);
+
             users.Add(user);
         }
         reader.Close();
@@ -43,12 +46,14 @@ public static class UserTools
             user.UserPfpLink = reader.IsDBNull(4) ? null : reader.GetString(4);
             user.UserBio = reader.IsDBNull(5) ? null : reader.GetString(5);
             user.DiscordID = reader.IsDBNull(6) ? null : reader.GetUInt64(6);
-            user.DiscordUsername = reader.GetString(7);
+            user.DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
             user.GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
             user.GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
-            user.RegistrationDate = reader.GetDateTime(10);
-            user.Role = reader.IsDBNull(11) ? null : reader.GetString(11);
-            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
+            user.SteamID = reader.IsDBNull(8) ? null : reader.GetUInt64(10);
+            user.SteamUsername = reader.IsDBNull(9) ? null : reader.GetString(11);
+            user.RegistrationDate = reader.GetDateTime(12);
+            user.Role = reader.IsDBNull(11) ? null : reader.GetString(13);
+            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(14);
         }
         reader.Close();
         
@@ -118,23 +123,7 @@ public static class UserTools
         
         return userRes;
     }
-    
-    public static DataTypes.User AddUser(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingUser user)
-    {
-        string sanitizedGoogleID = user.GoogleID != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleID) : null;
-        string sanitizedGoogleEmail = user.GoogleEmail != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleEmail) : null;
-        
-        string query = "INSERT INTO users (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, RegistrationDate, Role, FrontendRole) VALUES (" + 
-                       (user.SSID.HasValue ? user.SSID.Value.ToString() : "null") + ", " + 
-                       (user.OptBLUID.HasValue ? user.OptBLUID.Value.ToString() : "null") + ", '" + 
-                       user.Username + "', '" + 
-                       user.UserPfpLink + "', '" + 
-                       user.UserBio + "', " + 
-                       (user.DiscordID.HasValue ? user.DiscordID.Value.ToString() : "null") + ", " +
-                       (user.DiscordUsername != null ? "'" + user.DiscordUsername + "'" : "null") + ", " +
-                       (sanitizedGoogleID != null ? "'" + sanitizedGoogleID + "'" : "null") + ", " +
-                       (sanitizedGoogleEmail != null ? "'" + sanitizedGoogleEmail + "'" : "null") + ", '" +
-                       user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + user.Role + "', '" + user.FrontendRole + "')";
+
         interactionHelper.SendCommand(query);
         
         string getIdQuery = "SELECT LAST_INSERT_ID() FROM users";
@@ -150,7 +139,7 @@ public static class UserTools
         string sanitizedGoogleID = user.GoogleID != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleID) : null;
         string sanitizedGoogleEmail = user.GoogleEmail != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleEmail) : null;
         
-        string query = "UPDATE users SET SSID = " + user.SSID + ", OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', GoogleID = " + (sanitizedGoogleID != null ? "'" + sanitizedGoogleID + "'" : "null") + ", GoogleEmail = " + (sanitizedGoogleEmail != null ? "'" + sanitizedGoogleEmail + "'" : "null") + ", RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UserID = " + user.UID;
+        string query = "UPDATE users SET SSID = " + user.SSID + ", OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + user.DiscordID + ", DiscordName = '" + user.DiscordUsername + "', GoogleID = " + (sanitizedGoogleID != null ? "'" + sanitizedGoogleID + "'" : "null") + ", GoogleEmail = " + (sanitizedGoogleEmail != null ? "'" + sanitizedGoogleEmail + "'" : "null") + ", SteamID = " + user.SteamID + ", SteamUsername = '" + user.SteamUsername + "', RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UserID = " + user.UID;
         interactionHelper.SendCommand(query);
     }
     
@@ -195,5 +184,13 @@ public static class UserTools
         }
         reader.Close();
         return false;
+    }
+}
+
+    public static bool CheckUserExistsSteamID(SQLInteraction interactionHelper, ulong SteamID)
+    {
+        string query = $"SELECT * FROM users WHERE SteamID = {SteamID}";
+        using MySqlDataReader reader = interactionHelper.GetReader(query);
+        return reader.HasRows;
     }
 }

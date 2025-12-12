@@ -40,28 +40,27 @@ dbConn.Close();
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(80);
-    options.ListenAnyIP(443, httpsOptions =>
     {
-        try
+        options.ListenAnyIP(80);
+        options.ListenAnyIP(443, httpsOptions =>
         {
-            var certPem = File.ReadAllText(CertPath);
-            var keyPem = File.ReadAllText(CertKey);
-            var certificate = new X509Certificate2(
-                X509Certificate2.CreateFromPem(certPem, keyPem));
-            httpsOptions.UseHttps(certificate);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Could not find certificate files at {CertPath} and {CertKey}");
-            Console.WriteLine($"Failed to load certificate: {ex.Message}");
-            throw;
-        }
+            try
+            {
+                var certPem = File.ReadAllText(CertPath);
+                var keyPem = File.ReadAllText(CertKey);
+                var certificate = new X509Certificate2(
+                    X509Certificate2.CreateFromPem(certPem, keyPem));
+                httpsOptions.UseHttps(certificate);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not find certificate files at {CertPath} and {CertKey}");
+                Console.WriteLine($"Failed to load certificate: {ex.Message}");
+                throw;
+            }
+        });
     });
-});
 
 builder.Services.AddAuthentication(options =>
     {
@@ -72,12 +71,17 @@ builder.Services.AddAuthentication(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = false, ValidateAudience = false, ValidateLifetime = true, ValidateIssuerSigningKey = true, IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(SecretKey))
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(SecretKey))
         };
     });
 
 builder.Services.AddAuthorization(options =>
-{   options.AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"));
+{
+    options.AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"));
     options.AddPolicy("Organizer", policy => policy.RequireClaim(ClaimTypes.Role, "Organizer", "Admin"));
     options.AddPolicy("User", policy => policy.RequireClaim(ClaimTypes.Role, "User", "Organizer", "Admin"));
 });
@@ -104,5 +108,6 @@ ScoresRoutes.RegisterScoresRoutes(app, connManager);
 UserRoutes.MapUserRoutes(app, connManager);
 DiscordAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 GoogleAuth.MapAuthRoutes(app, apiTokenizer, connManager);
+SteamAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 
 app.Run();

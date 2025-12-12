@@ -7,28 +7,32 @@ public static class DataTypes
     public struct User
     {
         public ulong UID { get; set; }
-        
+
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? SSID { get; set; }
-        
+
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? OptBLUID { get; set; }
-        
+
         public string Username { get; set; }
         public string? UserPfpLink { get; set; }
         public string? UserBio { get; set; }
-        
+
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? DiscordID { get; set; }
-        
         public string? DiscordUsername { get; set; }
         public string? GoogleID { get; set; }
         public string? GoogleEmail { get; set; }
+
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+        public ulong? SteamID { get; set; }
+        public string? SteamUsername { get; set; }
+
         public DateTime RegistrationDate { get; set; }
         public string? Role { get; set; }
         public string? FrontendRole { get; set; }
     }
-    
+
     public struct Map
     {
         public ulong MID { get; set; }
@@ -39,7 +43,7 @@ public static class DataTypes
         public int Season { get; set; }
         public string Difficulty { get; set; }
     }
-    
+
     public struct MapPool
     {
         public ulong MapPoolID { get; set; }
@@ -48,21 +52,21 @@ public static class DataTypes
         public List<Map> Maps { get; set; }
         public int Season { get; set; }
     }
-    
+
     public struct Match
     {
         public ulong MatchID { get; set; }
         public ulong Player1ID { get; set; }
         public ulong Player2ID { get; set; }
         public bool Complete { get; set; }
-        public ulong? WinnerID{ get; set; }
+        public ulong? WinnerID { get; set; }
         public int? Player1Score { get; set; }
         public int? Player2Score { get; set; }
         public DateTime? MatchDate { get; set; }
         public List<MatchScore> Scores { get; set; }
         public int Season { get; set; }
         public ulong MapPoolID { get; set; }
-        
+
     }
 
     public struct MatchScore
@@ -75,7 +79,7 @@ public static class DataTypes
         public int MaxScore { get; set; }
         public int Misses { get; set; }
     }
-    
+
     public struct QualifierScore
     {
         public ulong ScoreID { get; set; }
@@ -84,6 +88,6 @@ public static class DataTypes
         public int Score { get; set; }
         public int MaxScore { get; set; }
         public int Misses { get; set; }
-        public ulong QualifierID { get; set; } 
+        public ulong QualifierID { get; set; }
     }
 }
