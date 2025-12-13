@@ -25,10 +25,9 @@ public class ConnectionManager
         dbConn.DatabaseName = DatabaseName;
         dbConn.UserName = UserName;
         dbConn.Password = Password;
-        
+
         if (dbConn.IsConnect())
         {
-            Console.WriteLine("Connection Established to " + DatabaseName + " on " + Server);
             return dbConn;
         }
 

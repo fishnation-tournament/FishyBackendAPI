@@ -22,7 +22,7 @@ public static class GoogleAuth
             parameters["scope"] = "openid email profile";
             parameters["redirect_uri"] = "https://api.fishnation.xyz/auth/google/callback";
             parameters["access_type"] = "online";
-            
+
             var parameterString = parameters.ToString();
             var googleAuthUrl = $"https://accounts.google.com/o/oauth2/v2/auth?{parameterString}";
 
@@ -56,29 +56,24 @@ public static class GoogleAuth
             var userResponse = await httpClient.GetAsync("https://www.googleapis.com/oauth2/v2/userinfo");
 
             var userContent = await userResponse.Content.ReadAsStringAsync();
-            Console.WriteLine("User content is " + userContent);
             var userData = JsonParser.FromJson(userContent);
-            
-            Console.WriteLine($"Content is {Newtonsoft.Json.JsonConvert.SerializeObject(userData)}");
 
             // Generate JWT token
-            Console.WriteLine(userData["id"].ToString());
             string token = "";
-            
+
             var dbConn = connManager.IssueConnection();
             var interactionHelper = new SQLInteraction(dbConn.Connection);
 
-            if(UserTools.CheckUserExistsGID(interactionHelper, userData["id"].ToString()))
+            if (UserTools.CheckUserExistsGID(interactionHelper, userData["id"].ToString()))
             {
                 var user = UserTools.GetUserByGoogleId(interactionHelper, userData["id"].ToString());
-                Console.WriteLine($"User {user.Username} already exists with role {user.Role}");
                 token = apiToken.GenerateToken(user, user.Role);
                 var websiteRedirect = $"https://fishnation.xyz/auth/google/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
                 return;
             }
-            
-            
+
+
             FrontFacingDataTypes.FrontFacingUser User = new FrontFacingDataTypes.FrontFacingUser
             {
                 SSID = null,
@@ -96,14 +91,14 @@ public static class GoogleAuth
             };
 
             DataTypes.User newUser = UserTools.AddUser(interactionHelper, User);
-            
+
             token = apiToken.GenerateToken(newUser, "User");
             var Redirect = $"https://fishnation.xyz/auth/google/callback?token={token}";
-            
+
             dbConn.Close();
-            
+
             // Return the token
             context.Response.Redirect(Redirect);
-        }).WithName("GoogleAuthCallback").WithOpenApi().ExcludeFromDescription();;
+        }).WithName("GoogleAuthCallback").WithOpenApi().ExcludeFromDescription();
     }
 }
