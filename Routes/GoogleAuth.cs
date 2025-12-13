@@ -62,11 +62,10 @@ public static class GoogleAuth
             string token = "";
 
             var dbConn = connManager.IssueConnection();
-            var interactionHelper = new SQLInteraction(dbConn.Connection);
 
-            if (UserTools.CheckUserExistsGID(interactionHelper, userData["id"].ToString()))
+            if (UserTools.CheckUserExistsGID(dbConn.Connection, userData["id"].ToString()))
             {
-                var user = UserTools.GetUserByGoogleId(interactionHelper, userData["id"].ToString());
+                var user = UserTools.GetUserByGoogleId(dbConn.Connection, userData["id"].ToString());
                 token = apiToken.GenerateToken(user, user.Role);
                 var websiteRedirect = $"https://fishnation.xyz/auth/google/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
@@ -90,7 +89,7 @@ public static class GoogleAuth
                 FrontendRole = "Unassigned"
             };
 
-            DataTypes.User newUser = UserTools.AddUser(interactionHelper, User);
+            DataTypes.User newUser = UserTools.AddUser(dbConn.Connection, User);
 
             token = apiToken.GenerateToken(newUser, "User");
             var Redirect = $"https://fishnation.xyz/auth/google/callback?token={token}";

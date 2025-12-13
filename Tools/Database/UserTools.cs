@@ -59,165 +59,194 @@ public static class UserTools
 
         return user;
     }
-    public static List<DataTypes.User> GetUsers(SQLInteraction interactionHelper)
+
+    public static List<DataTypes.User> GetUsers(MySqlConnection dbConn)
     {
-        string query = "SELECT * FROM users";
-        var reader = interactionHelper.GetReader(query);
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users", dbConn);
+        using MySqlDataReader reader = cmd.ExecuteReader();
         List<DataTypes.User> users = ReadResults(reader);
 
         return users;
     }
 
-    public static DataTypes.User GetUserById(SQLInteraction interactionHelper, ulong UID)
+    public static DataTypes.User GetUserById(MySqlConnection dbConn, ulong UID)
     {
-        string query = $"SELECT * FROM users WHERE UserID = {UID}";
-        using (var reader = interactionHelper.GetReader(query))
-        {
-            var user = ReadSingleResult(reader);
-            return user;
-        }
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE UserID = @UID", dbConn);
+        cmd.Parameters.AddWithValue("@UID", UID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        DataTypes.User user = ReadSingleResult(reader);
+
+        return user;
     }
 
-    public static DataTypes.User GetUserBySSID(SQLInteraction interactionHelper, ulong SSID)
+    public static DataTypes.User GetUserBySSID(MySqlConnection dbConn, ulong SSID)
     {
-        string query = $"SELECT * FROM users WHERE SSID = {SSID}";
-        using (var reader = interactionHelper.GetReader(query))
-        {
-            var user = ReadSingleResult(reader);
-            return user;
-        }
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE SSID = @SSID", dbConn);
+        cmd.Parameters.AddWithValue("@SSID", SSID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        DataTypes.User user = ReadSingleResult(reader);
+
+        return user;
     }
 
-    public static List<DataTypes.User> GetUsersByOptBLUID(SQLInteraction interactionHelper, ulong OptBLUID)
+    public static List<DataTypes.User> GetUsersByOptBLUID(MySqlConnection dbConn, ulong OptBLUID)
     {
-        string query = $"SELECT * FROM users WHERE OptBLUID = {OptBLUID}";
-        var reader = interactionHelper.GetReader(query);
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE OptBLUID = @OptBLUID", dbConn);
+        cmd.Parameters.AddWithValue("@OptBLUID", OptBLUID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
         List<DataTypes.User> users = ReadResults(reader);
 
         return users;
     }
 
-    public static List<DataTypes.User> GetUsersByName(SQLInteraction interactionHelper, string searchTerm)
+    public static List<DataTypes.User> GetUsersByName(MySqlConnection dbConn, string searchTerm)
     {
-        string query = "SELECT * FROM users WHERE Username LIKE '%" + searchTerm + "%'";
-        var reader = interactionHelper.GetReader(query);
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE Username LIKE @searchTerm", dbConn);
+        cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
+        using MySqlDataReader reader = cmd.ExecuteReader();
         List<DataTypes.User> users = ReadResults(reader);
 
         return users;
     }
 
-    public static List<DataTypes.User> GetUsersByRole(SQLInteraction interactionHelper, string searchTerm)
+    public static List<DataTypes.User> GetUsersByRole(MySqlConnection dbConn, string searchTerm)
     {
-        string query = "SELECT * FROM users WHERE Role LIKE '%" + searchTerm + "%'";
-        var reader = interactionHelper.GetReader(query);
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE Role LIKE @searchTerm", dbConn);
+        cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
+        using MySqlDataReader reader = cmd.ExecuteReader();
         List<DataTypes.User> users = ReadResults(reader);
 
         return users;
     }
 
-    public static DataTypes.User GetUserByDiscordId(SQLInteraction interactionHelper, ulong DiscordID)
+    public static DataTypes.User GetUserByDiscordId(MySqlConnection dbConn, ulong DiscordID)
     {
-        string query = "SELECT * FROM users WHERE DiscordID = " + DiscordID;
-        var reader = interactionHelper.GetReader(query);
-        DataTypes.User userRes = ReadSingleResult(reader);
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE DiscordID = @DiscordID", dbConn);
+        cmd.Parameters.AddWithValue("@DiscordID", DiscordID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        DataTypes.User user = ReadSingleResult(reader);
 
-        return userRes;
+        return user;
     }
 
-    public static DataTypes.User GetUserBySteamId(SQLInteraction interactionHelper, ulong SteamID)
+    public static DataTypes.User GetUserBySteamId(MySqlConnection dbConn, ulong SteamID)
     {
-        string query = $"SELECT * FROM users WHERE SteamID = {SteamID}";
-        using MySqlDataReader reader = interactionHelper.GetReader(query);
-        DataTypes.User userRes = ReadSingleResult(reader);
-        return userRes;
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE SteamID = @SteamID", dbConn);
+        cmd.Parameters.AddWithValue("@SteamID", SteamID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        DataTypes.User user = ReadSingleResult(reader);
+
+        return user;
     }
 
-    public static DataTypes.User AddUser(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingUser user)
+    public static DataTypes.User AddUser(MySqlConnection dbConn, FrontFacingDataTypes.FrontFacingUser user)
     {
-        string sanitizedGoogleID = user.GoogleID != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleID) : null;
-        string sanitizedGoogleEmail = user.GoogleEmail != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleEmail) : null;
+        MySqlCommand cmd = new MySqlCommand("""
+        INSERT INTO users
+            (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, SteamID, SteamUsername, RegistrationDate, Role, FrontendRole)
+        VALUES
+            (@SSID, @OptBLUID, @Username, @UserPfpLink, @Description, @DiscordID, @DiscordName, @GoogleID, @GoogleEmail, @SteamID, @SteamUsername, @RegistrationDate, @Role, @FrontendRole)
+        """, dbConn);
+        cmd.Parameters.AddWithValue("@SSID", user.SSID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@OptBLUID", user.OptBLUID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@Username", user.Username);
+        cmd.Parameters.AddWithValue("@UserPfpLink", user.UserPfpLink ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@Description", user.UserBio ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@DiscordID", user.DiscordID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@DiscordName", user.DiscordUsername ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@GoogleID", user.GoogleID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@GoogleEmail", user.GoogleEmail ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@SteamID", user.SteamID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@SteamUsername", user.SteamUsername ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
+        cmd.Parameters.AddWithValue("@Role", user.Role ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@FrontendRole", user.FrontendRole ?? (object)DBNull.Value);
+        cmd.ExecuteNonQuery();
 
-        string query = "INSERT INTO users (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, SteamID, SteamUsername, RegistrationDate, Role, FrontendRole) VALUES (" +
-                       (user.SSID.HasValue ? user.SSID.Value.ToString() : "null") + ", " +
-                       (user.OptBLUID.HasValue ? user.OptBLUID.Value.ToString() : "null") + ", '" +
-                       user.Username + "', '" +
-                       user.UserPfpLink + "', '" +
-                       user.UserBio + "', " +
-                       (user.DiscordID.HasValue ? user.DiscordID.Value.ToString() : "null") + ", " +
-                       (user.DiscordUsername != null ? "'" + user.DiscordUsername + "'" : "null") + ", " +
-                       (sanitizedGoogleID != null ? "'" + sanitizedGoogleID + "'" : "null") + ", " +
-                       (sanitizedGoogleEmail != null ? "'" + sanitizedGoogleEmail + "'" : "null") + ", " +
-                       (user.SteamID.HasValue ? user.SteamID.Value.ToString() : "null") + ", " +
-                       (user.SteamUsername != null ? "'" + user.SteamUsername + "'" : "null") + ", '" +
-                       user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" +
-                       user.Role + "', '" +
-                       user.FrontendRole + "')";
-        interactionHelper.SendCommand(query);
-
-        string getIdQuery = "SELECT LAST_INSERT_ID() FROM users";
-        interactionHelper.SendCommand(getIdQuery);
-        var reader = interactionHelper.GetReader(getIdQuery);
+        MySqlCommand getIdQuery = new MySqlCommand("SELECT * FROM users WHERE UserID = @UserID", dbConn);
+        getIdQuery.Parameters.AddWithValue("@UserID", cmd.LastInsertedId);
+        using MySqlDataReader reader = getIdQuery.ExecuteReader();
         DataTypes.User newUser = ReadSingleResult(reader);
 
         return newUser;
     }
 
-    public static void UpdateUser(SQLInteraction interactionHelper, DataTypes.User user)
+    public static void UpdateUser(MySqlConnection dbConn, DataTypes.User user)
     {
-        string? sanitizedGoogleID = user.GoogleID != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleID) : null;
-        string? sanitizedGoogleEmail = user.GoogleEmail != null ? SQLInjectionPrevention.FormatSQLString(user.GoogleEmail) : null;
-
-        string query = "UPDATE users SET SSID = " + user.SSID + ", OptBLUID = " + user.OptBLUID + ", Username = '" + user.Username + "', UserPfpLink = '" + user.UserPfpLink + "', Description = '" + user.UserBio + "', DiscordID = " + (user.DiscordID.HasValue ? user.DiscordID.Value.ToString() : "null") + ", DiscordName = " + (user.DiscordUsername != null ? "'" + user.DiscordUsername + "'" : "null") + ", GoogleID = " + (sanitizedGoogleID != null ? "'" + sanitizedGoogleID + "'" : "null") + ", GoogleEmail = " + (sanitizedGoogleEmail != null ? "'" + sanitizedGoogleEmail + "'" : "null") + ", SteamID = " + (user.SteamID.HasValue ? user.SteamID.Value.ToString() : "null") + ", SteamUsername = " + (user.SteamUsername != null ? "'" + user.SteamUsername + "'" : "null") + ", RegistrationDate = '" + user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss") + "', Role = '" + user.Role + "', FrontendRole = '" + user.FrontendRole + "' WHERE UserID = " + user.UID;
-        interactionHelper.SendCommand(query);
+        MySqlCommand cmd = new MySqlCommand("""
+        UPDATE users SET
+            SSID = @SSID,
+            OptBLUID = @OptBLUID,
+            Username = @Username,
+            UserPfpLink = @UserPfpLink,
+            Description = @Description,
+            DiscordID = @DiscordID,
+            DiscordName = @DiscordName,
+            GoogleID = @GoogleID,
+            GoogleEmail = @GoogleEmail,
+            SteamID = @SteamID,
+            SteamUsername = @SteamUsername,
+            RegistrationDate = @RegistrationDate,
+            Role = @Role,
+            FrontendRole = @FrontendRole
+        WHERE UserID = @UserID
+        """, dbConn);
+        cmd.Parameters.AddWithValue("@SSID", user.SSID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@OptBLUID", user.OptBLUID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@Username", user.Username);
+        cmd.Parameters.AddWithValue("@UserPfpLink", user.UserPfpLink ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@Description", user.UserBio ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@DiscordID", user.DiscordID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@DiscordName", user.DiscordUsername ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@GoogleID", user.GoogleID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@GoogleEmail", user.GoogleEmail ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@SteamID", user.SteamID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@SteamUsername", user.SteamUsername ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
+        cmd.Parameters.AddWithValue("@Role", user.Role ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@FrontendRole", user.FrontendRole ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@UserID", user.UID);
+        cmd.ExecuteNonQuery();
     }
 
-    public static void DeleteUser(SQLInteraction interactionHelper, ulong UID)
+    public static void DeleteUser(MySqlConnection dbConn, ulong UID)
     {
-        string query = $"DELETE FROM users WHERE UserID = {UID}";
-        interactionHelper.SendCommand(query);
+        MySqlCommand cmd = new MySqlCommand("DELETE FROM users WHERE UserID = @UID", dbConn);
+        cmd.Parameters.AddWithValue("@UID", UID);
+        cmd.ExecuteNonQuery();
     }
 
-    public static bool CheckUserExistsDID(SQLInteraction interactionHelper, ulong DiscordID)
+    public static bool CheckUserExistsDID(MySqlConnection dbConn, ulong DiscordID)
     {
-        string query = $"SELECT * FROM users WHERE DiscordID = {DiscordID}";
-        var reader = interactionHelper.GetReader(query);
-        if (reader.HasRows)
-        {
-            reader.Close();
-            return true;
-        }
-        reader.Close();
-        return false;
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE DiscordID = @DiscordID", dbConn);
+        cmd.Parameters.AddWithValue("@DiscordID", DiscordID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        return reader.HasRows;
     }
 
-    public static DataTypes.User GetUserByGoogleId(SQLInteraction interactionHelper, string GoogleID)
+    public static DataTypes.User GetUserByGoogleId(MySqlConnection dbConn, string GoogleID)
     {
-        string sanitizedGoogleID = SQLInjectionPrevention.FormatSQLString(GoogleID);
-        string query = "SELECT * FROM users WHERE GoogleID = '" + sanitizedGoogleID + "'";
-        var reader = interactionHelper.GetReader(query);
-        DataTypes.User userRes = ReadSingleResult(reader);
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE GoogleID = @GoogleID", dbConn);
+        cmd.Parameters.AddWithValue("@GoogleID", GoogleID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        DataTypes.User user = ReadSingleResult(reader);
 
-        return userRes;
+        return user;
     }
 
-    public static bool CheckUserExistsGID(SQLInteraction interactionHelper, string GoogleID)
+    public static bool CheckUserExistsGID(MySqlConnection dbConn, string GoogleID)
     {
-        string sanitizedGoogleID = SQLInjectionPrevention.FormatSQLString(GoogleID);
-        string query = $"SELECT * FROM users WHERE GoogleID = '{sanitizedGoogleID}'";
-        var reader = interactionHelper.GetReader(query);
-        if (reader.HasRows)
-        {
-            reader.Close();
-            return true;
-        }
-        reader.Close();
-        return false;
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE GoogleID = @GoogleID", dbConn);
+        cmd.Parameters.AddWithValue("@GoogleID", GoogleID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        return reader.HasRows;
     }
 
-    public static bool CheckUserExistsSteamID(SQLInteraction interactionHelper, ulong SteamID)
+    public static bool CheckUserExistsSteamID(MySqlConnection dbConn, ulong SteamID)
     {
-        string query = $"SELECT * FROM users WHERE SteamID = {SteamID}";
-        using MySqlDataReader reader = interactionHelper.GetReader(query);
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE SteamID = @SteamID", dbConn);
+        cmd.Parameters.AddWithValue("@SteamID", SteamID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
         return reader.HasRows;
     }
 }

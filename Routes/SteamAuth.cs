@@ -91,11 +91,10 @@ public static class SteamAuth
             string token = "";
 
             DBConnection dbConn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(dbConn.Connection);
 
-            if (UserTools.CheckUserExistsSteamID(interactionHelper, steamID))
+            if (UserTools.CheckUserExistsSteamID(dbConn.Connection, steamID))
             {
-                var existingUser = UserTools.GetUserBySteamId(interactionHelper, steamID);
+                var existingUser = UserTools.GetUserBySteamId(dbConn.Connection, steamID);
                 dbConn.Close();
                 token = apiToken.GenerateToken(existingUser, existingUser.Role);
                 var websiteRedirect = $"https://fishnation.xyz/auth/steam/callback?token={token}";
@@ -106,7 +105,7 @@ public static class SteamAuth
             string steamUsername = (string)steamUserData["personaname"];
             string steamPfpLink = (string)steamUserData["avatar"];
 
-            DataTypes.User newUser = UserTools.AddUser(interactionHelper, new FrontFacingDataTypes.FrontFacingUser
+            DataTypes.User newUser = UserTools.AddUser(dbConn.Connection, new FrontFacingDataTypes.FrontFacingUser
             {
                 SSID = null,
                 OptBLUID = null,

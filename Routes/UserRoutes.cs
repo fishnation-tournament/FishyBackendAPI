@@ -10,8 +10,7 @@ public static class UserRoutes
         endpoints.MapGet("/Users/GetUsers", () =>
         {
             DBConnection conn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            List<DataTypes.User> users = UserTools.GetUsers(interactionHelper);
+            List<DataTypes.User> users = UserTools.GetUsers(conn.Connection);
             conn.Close();
             return users;
         }).WithName("GetUsers").WithOpenApi();
@@ -19,8 +18,7 @@ public static class UserRoutes
         endpoints.MapGet("/Users/GetUserById/{UID}", (ulong UID) =>
         {
             DBConnection conn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            DataTypes.User user = UserTools.GetUserById(interactionHelper, UID);
+            DataTypes.User user = UserTools.GetUserById(conn.Connection, UID);
             conn.Close();
             return user;
         }).WithName("GetUserById").WithOpenApi();
@@ -28,8 +26,7 @@ public static class UserRoutes
         endpoints.MapGet("/Users/SearchUserByName/{searchTerm}", (string searchTerm) =>
         {
             DBConnection conn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            List<DataTypes.User> users = UserTools.GetUsersByName(interactionHelper, searchTerm);
+            List<DataTypes.User> users = UserTools.GetUsersByName(conn.Connection, searchTerm);
             conn.Close();
             return users;
         }).WithName("SearchUserByName").WithOpenApi();
@@ -37,8 +34,7 @@ public static class UserRoutes
         endpoints.MapGet("/Users/GetUserByDiscordID/{DiscordID}", (ulong DiscordID) =>
         {
             DBConnection conn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            DataTypes.User user = UserTools.GetUserByDiscordId(interactionHelper, DiscordID);
+            DataTypes.User user = UserTools.GetUserByDiscordId(conn.Connection, DiscordID);
             conn.Close();
             return user;
         }).WithName("GetUserByDiscordID").WithOpenApi();
@@ -46,8 +42,7 @@ public static class UserRoutes
         endpoints.MapGet("/Users/GetUsersByRole/{Role}", (string Role) =>
         {
             DBConnection conn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            List<DataTypes.User> users = UserTools.GetUsersByRole(interactionHelper, Role);
+            List<DataTypes.User> users = UserTools.GetUsersByRole(conn.Connection, Role);
             conn.Close();
             return users;
         }).WithName("GetUsersByRole").WithOpenApi().RequireAuthorization("User");
@@ -59,8 +54,7 @@ public static class UserRoutes
             ulong uid = ulong.Parse(uidClaim.Value);
 
             DBConnection conn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            DataTypes.User user = UserTools.GetUserById(interactionHelper, uid);
+            DataTypes.User user = UserTools.GetUserById(conn.Connection, uid);
             conn.Close();
             return Results.Json(user);
         }).WithName("GetSelf").WithOpenApi().RequireAuthorization("User");
@@ -68,8 +62,7 @@ public static class UserRoutes
         endpoints.MapPost("/Users/AddUser", (FrontFacingDataTypes.FrontFacingUser user) =>
         {
             DBConnection conn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            DataTypes.User newUser = UserTools.AddUser(interactionHelper, user);
+            DataTypes.User newUser = UserTools.AddUser(conn.Connection, user);
             conn.Close();
             return Results.Created($"/Users/GetUserById/{newUser.UID}", newUser);
         }).WithName("AddUser").WithOpenApi().RequireAuthorization("Organizer");
@@ -77,8 +70,7 @@ public static class UserRoutes
         endpoints.MapPut("/Users/UpdateUser", (DataTypes.User user) =>
         {
             DBConnection conn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            UserTools.UpdateUser(interactionHelper, user);
+            UserTools.UpdateUser(conn.Connection, user);
             conn.Close();
             return Results.Created($"/Users/GetUserById/{user.UID}", user);
         }).WithName("UpdateUser").WithOpenApi().RequireAuthorization("Organizer");
@@ -86,8 +78,7 @@ public static class UserRoutes
         endpoints.MapDelete("/Users/DeleteUser/{UID}", (ulong UID) =>
         {
             DBConnection conn = connManager.IssueConnection();
-            SQLInteraction interactionHelper = new SQLInteraction(conn.Connection);
-            UserTools.DeleteUser(interactionHelper, UID);
+            UserTools.DeleteUser(conn.Connection, UID);
             conn.Close();
             return Results.NoContent();
         }).WithName("DeleteUser").WithOpenApi().RequireAuthorization("Organizer");

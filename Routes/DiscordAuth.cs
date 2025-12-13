@@ -62,11 +62,10 @@ public static class DiscordAuth
             string token = "";
 
             var dbConn = connManager.IssueConnection();
-            var interactionHelper = new SQLInteraction(dbConn.Connection);
 
-            if (UserTools.CheckUserExistsDID(interactionHelper, ulong.Parse(userData["id"].ToString())))
+            if (UserTools.CheckUserExistsDID(dbConn.Connection, ulong.Parse(userData["id"].ToString())))
             {
-                var user = UserTools.GetUserByDiscordId(interactionHelper, ulong.Parse(userData["id"].ToString()));
+                var user = UserTools.GetUserByDiscordId(dbConn.Connection, ulong.Parse(userData["id"].ToString()));
                 token = apiToken.GenerateToken(user, user.Role);
                 var websiteRedirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
@@ -88,7 +87,7 @@ public static class DiscordAuth
                 FrontendRole = "Unassigned"
             };
 
-            DataTypes.User newUser = UserTools.AddUser(interactionHelper, User);
+            DataTypes.User newUser = UserTools.AddUser(dbConn.Connection, User);
 
             token = apiToken.GenerateToken(newUser, "User");
             var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
