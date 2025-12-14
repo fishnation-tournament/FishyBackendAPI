@@ -1,5 +1,4 @@
-﻿using FishyAPI.Tools.Database.SQLTools;
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Tools;
 
