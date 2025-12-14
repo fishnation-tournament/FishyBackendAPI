@@ -3,7 +3,7 @@ namespace FishyAPI.Tools;
 
 public class MatchTools
 {
-    public static List<DataTypes.Match> ReadMatches(SQLInteraction interactionHelper, MySqlDataReader reader)
+    public static List<DataTypes.Match> ReadMatches(MySqlConnection dbConn, MySqlDataReader reader)
     {
         List<DataTypes.Match> matches = new List<DataTypes.Match>();
         while (reader.Read())
@@ -23,20 +23,20 @@ public class MatchTools
             matches.Add(match);
         }
         reader.Close();
-        
-        for(int i = 0; i < matches.Count; i++)
+
+        for (int i = 0; i < matches.Count; i++)
         {
             var tempMatch = matches[i];
-            tempMatch.Scores = ScoreTools.GetMatchScores(interactionHelper, tempMatch.MatchID);
+            tempMatch.Scores = ScoreTools.GetMatchScores(dbConn, tempMatch.MatchID);
             matches[i] = tempMatch;
         }
         return matches;
     }
-    
-    public static DataTypes.Match ReadSingleMatch(SQLInteraction interactionHelper, MySqlDataReader reader)
+
+    public static DataTypes.Match ReadSingleMatch(MySqlConnection dbConn, MySqlDataReader reader)
     {
         DataTypes.Match match = new DataTypes.Match();
-        
+
         while (reader.Read())
         {
             match.MatchID = reader.GetUInt64(0);
@@ -51,53 +51,91 @@ public class MatchTools
             match.MapPoolID = reader.GetUInt64(9);
         }
         reader.Close();
-        
-        match.Scores = ScoreTools.GetMatchScores(interactionHelper, match.MatchID);
+
+        match.Scores = ScoreTools.GetMatchScores(dbConn, match.MatchID);
         return match;
     }
-    
-    public static List<DataTypes.Match> GetMatches(SQLInteraction interactionHelper)
+
+    public static List<DataTypes.Match> GetMatches(MySqlConnection dbConn)
     {
-        string query = "SELECT * FROM matches";
-        MySqlDataReader reader = interactionHelper.GetReader(query);
-        List<DataTypes.Match> matches = ReadMatches(interactionHelper, reader);
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM matches", dbConn);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        List<DataTypes.Match> matches = ReadMatches(dbConn, reader);
 
         return matches;
     }
-    
-    public static List<DataTypes.Match> GetMatchesBySeason(SQLInteraction interactionHelper, int season)
+
+    public static List<DataTypes.Match> GetMatchesBySeason(MySqlConnection dbConn, int season)
     {
-        string query = $"SELECT * FROM matches WHERE Season = {season}";
-        MySqlDataReader reader = interactionHelper.GetReader(query);
-        List<DataTypes.Match> matches = ReadMatches(interactionHelper, reader);
-        
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM matches WHERE Season = @season", dbConn);
+        cmd.Parameters.AddWithValue("@season", season);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        List<DataTypes.Match> matches = ReadMatches(dbConn, reader);
+
         return matches;
     }
-    
-    public static DataTypes.Match GetMatchById(SQLInteraction interactionHelper, ulong MID)
+
+    public static DataTypes.Match GetMatchById(MySqlConnection dbConn, ulong MID)
     {
-        string query = $"SELECT * FROM matches WHERE MatchID = {MID} LIMIT 1";
-        MySqlDataReader reader = interactionHelper.GetReader(query);
-        DataTypes.Match match = ReadSingleMatch(interactionHelper, reader);
-        
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM matches WHERE MatchID = @MID LIMIT 1", dbConn);
+        cmd.Parameters.AddWithValue("@MID", MID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        DataTypes.Match match = ReadSingleMatch(dbConn, reader);
+
         return match;
     }
-    
-    public static void CreateMatch(SQLInteraction interactionHelper, FrontFacingDataTypes.FrontFacingMatch frontFacingMatch)
+
+    public static void CreateMatch(MySqlConnection dbConn, FrontFacingDataTypes.FrontFacingMatch frontFacingMatch)
     {
-        string query = $"INSERT INTO matches (Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, Season, MPID) VALUES ({frontFacingMatch.Player1ID}, {frontFacingMatch.Player2ID}, {frontFacingMatch.Player1Score}, {frontFacingMatch.Player2Score}, '{frontFacingMatch.MatchDate.ToString("yyyy-MM-dd HH:mm:ss")}', {frontFacingMatch.Complete}, {frontFacingMatch.WinnerID}, {frontFacingMatch.Season}, {frontFacingMatch.MapPoolID})";
-        interactionHelper.SendCommand(query);
+        MySqlCommand cmd = new MySqlCommand("""
+        INSERT INTO matches
+            (Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, Season, MapPoolID)
+        VALUES
+            (@Player1UID, @Player2UID, @Player1Points, @Player2Points, @MatchDateTime, @MatchComplete, @WinnerUID, @Season, @MapPoolID)
+        """, dbConn);
+        cmd.Parameters.AddWithValue("@Player1UID", frontFacingMatch.Player1ID);
+        cmd.Parameters.AddWithValue("@Player2UID", frontFacingMatch.Player2ID);
+        cmd.Parameters.AddWithValue("@Player1Points", frontFacingMatch.Player1Score);
+        cmd.Parameters.AddWithValue("@Player2Points", frontFacingMatch.Player2Score);
+        cmd.Parameters.AddWithValue("@MatchDateTime", frontFacingMatch.MatchDate.ToString("yyyy-MM-dd HH:mm:ss"));
+        cmd.Parameters.AddWithValue("@MatchComplete", frontFacingMatch.Complete);
+        cmd.Parameters.AddWithValue("@WinnerUID", frontFacingMatch.WinnerID);
+        cmd.Parameters.AddWithValue("@Season", frontFacingMatch.Season);
+        cmd.Parameters.AddWithValue("@MapPoolID", frontFacingMatch.MapPoolID);
     }
-    
-    public static void UpdateMatch(SQLInteraction interactionHelper, DataTypes.Match match)
+
+    public static void UpdateMatch(MySqlConnection dbConn, DataTypes.Match match)
     {
-        string query = $"UPDATE matches SET Player1UID = {match.Player1ID}, Player2UID = {match.Player2ID}, Player1Points = {match.Player1Score}, Player2Points = {match.Player2Score}, MatchDateTime = '{match.MatchDate?.ToString("yyyy-MM-dd HH:mm:ss")}', MatchComplete = {match.Complete}, WinnerUID = {match.WinnerID}, Season = {match.Season}, MPID = {match.MapPoolID} WHERE MatchID = {match.MatchID}";
-        interactionHelper.SendCommand(query);
+        MySqlCommand cmd = new MySqlCommand("""
+        UPDATE matches SET
+            Player1UID = @Player1UID,
+            Player2UID = @Player2UID,
+            Player1Points = @Player1Points,
+            Player2Points = @Player2Points,
+            MatchDateTime = @MatchDateTime,
+            MatchComplete = @MatchComplete,
+            WinnerUID = @WinnerUID,
+            Season = @Season,
+            MapPoolID = @MapPoolID,
+        WHERE MatchID = @MatchID
+        """, dbConn);
+        cmd.Parameters.AddWithValue("@Player1UID", match.Player1ID);
+        cmd.Parameters.AddWithValue("@Player2UID", match.Player2ID);
+        cmd.Parameters.AddWithValue("@Player1Points", match.Player1Score ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@Player2Points", match.Player2Score ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@MatchDateTime", match.MatchDate?.ToString("yyyy-MM-dd HH:mm:ss") ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@MatchComplete", match.Complete);
+        cmd.Parameters.AddWithValue("@WinnerUID", match.WinnerID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@Season", match.Season);
+        cmd.Parameters.AddWithValue("@MapPoolID", match.MapPoolID);
+        cmd.Parameters.AddWithValue("@MatchID", match.MatchID);
+        cmd.ExecuteNonQuery();
     }
-    
-    public static void DeleteMatch(SQLInteraction interactionHelper, ulong MID)
+
+    public static void DeleteMatch(MySqlConnection dbConn, ulong MID)
     {
-        string query = $"DELETE FROM matches WHERE MatchID = {MID}";
-        interactionHelper.SendCommand(query);
+        MySqlCommand cmd = new MySqlCommand("DELETE FROM matches WHERE MatchID = @MID", dbConn);
+        cmd.Parameters.AddWithValue("@MID", MID);
+        cmd.ExecuteNonQuery();
     }
 }
