@@ -28,15 +28,15 @@ ConnectionManager connManager = new ConnectionManager(
     DBUser,
     DBPassword);
 
-var dbConn = connManager.IssueConnection();
-
-if (dbConn == null)
+try
+{
+    using DBConnection dbConn = connManager.IssueConnection();
+}
+catch
 {
     Console.WriteLine("Failed to connect to database");
     return;
 }
-
-dbConn.Close();
 
 var builder = WebApplication.CreateBuilder(args);
 
