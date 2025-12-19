@@ -96,7 +96,7 @@ public static class SteamAuth
             {
                 var existingUser = UserTools.GetUserBySteamId(dbConn.Connection, steamID);
                 dbConn.Close();
-                token = apiToken.GenerateToken(existingUser, existingUser.Role);
+                token = apiToken.GenerateToken(existingUser, existingUser.Role, DateTime.Now.AddDays(7));
                 var websiteRedirect = $"https://fishnation.xyz/auth/steam/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
                 return;
@@ -120,7 +120,7 @@ public static class SteamAuth
             });
             dbConn.Close();
 
-            token = apiToken.GenerateToken(newUser, "User");
+            token = apiToken.GenerateToken(newUser, "User", DateTime.Now.AddDays(7));
             var Redirect = $"https://fishnation.xyz/auth/steam/callback?token={token}";
 
             context.Response.Redirect(Redirect);

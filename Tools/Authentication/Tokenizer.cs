@@ -13,7 +13,7 @@ public class Tokenizer
         this.secretKey = secretKey;
     }
     
-    public string GenerateToken(DataTypes.User user, string role)
+    public string GenerateToken(DataTypes.User user, string role, DateTime expiry)
     {
         var claims = new[]
         {
