@@ -7,6 +7,7 @@ using FishyAPI.Routes;
 using FishyAPI.Tools.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using MySql.Data.MySqlClient;
 
 DotNetEnv.Env.TraversePath().Load("./.env");
 Console.WriteLine("Testing Credentials for SQL Server");
@@ -30,7 +31,7 @@ ConnectionManager connManager = new ConnectionManager(
 
 try
 {
-    using DBConnection dbConn = connManager.IssueConnection();
+    using MySqlConnection dbConn = connManager.IssueConnection();
 }
 catch
 {

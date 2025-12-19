@@ -7,6 +7,7 @@ using FishyAPI.Tools.Authentication;
 using FishyAPI.Tools.DBInteractions;
 using Json;
 using Microsoft.AspNetCore.Mvc;
+using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Routes;
 
@@ -61,11 +62,11 @@ public static class GoogleAuth
             // Generate JWT token
             string token = "";
 
-            var dbConn = connManager.IssueConnection();
+            using MySqlConnection dbConn = connManager.IssueConnection();
 
-            if (UserTools.CheckUserExistsGID(dbConn.Connection, userData["id"].ToString()))
+            if (UserTools.CheckUserExistsGID(dbConn, userData["id"].ToString()))
             {
-                var user = UserTools.GetUserByGoogleId(dbConn.Connection, userData["id"].ToString());
+                var user = UserTools.GetUserByGoogleId(dbConn, userData["id"].ToString());
                 token = apiToken.GenerateToken(user, user.Role, DateTime.Now.AddDays(7));
                 var websiteRedirect = $"https://fishnation.xyz/auth/google/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
@@ -89,12 +90,10 @@ public static class GoogleAuth
                 FrontendRole = "Unassigned"
             };
 
-            DataTypes.User newUser = UserTools.AddUser(dbConn.Connection, User);
+            DataTypes.User newUser = UserTools.AddUser(dbConn, User);
 
             token = apiToken.GenerateToken(newUser, "User", DateTime.Now.AddDays(7));
             var Redirect = $"https://fishnation.xyz/auth/google/callback?token={token}";
-
-            dbConn.Close();
 
             // Return the token
             context.Response.Redirect(Redirect);

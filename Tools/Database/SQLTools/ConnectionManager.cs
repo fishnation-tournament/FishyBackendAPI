@@ -18,10 +18,10 @@ public class ConnectionManager
     private static string UserName;
     private static string Password;
 
-    public DBConnection IssueConnection()
+    public MySqlConnection IssueConnection()
     {
-        var dbConn = new DBConnection(Server, DatabaseName, UserName, Password);
-        dbConn.Open();
-        return dbConn;
+        MySqlConnection connection = new MySqlConnection(string.Format("Server={0}; database={1}; UID={2}; password={3}", Server, DatabaseName, UserName, Password));
+        connection.Open();
+        return connection;
     }
 }
