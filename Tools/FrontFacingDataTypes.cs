@@ -20,11 +20,6 @@ public static class FrontFacingDataTypes
         public string? DiscordUsername { get; set; }
         public string? GoogleID { get; set; }
         public string? GoogleEmail { get; set; }
-
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? SteamID { get; set; }
-        public string? SteamUsername { get; set; }
-
         public DateTime RegistrationDate { get; set; }
         public string? Role { get; set; }
         public string? FrontendRole { get; set; }

@@ -88,42 +88,31 @@ public static class SteamAuth
             }
             ulong steamID = ulong.Parse(steamIDString);
 
-            string token = "";
-
             DBConnection dbConn = connManager.IssueConnection();
 
             if (UserTools.CheckUserExistsSteamID(dbConn.Connection, steamID))
             {
-                var existingUser = UserTools.GetUserBySteamId(dbConn.Connection, steamID);
                 dbConn.Close();
-                token = apiToken.GenerateToken(existingUser, existingUser.Role, DateTime.Now.AddDays(7));
-                var websiteRedirect = $"https://fishnation.xyz/auth/steam/callback?token={token}";
+                NameValueCollection respParameters = HttpUtility.ParseQueryString(string.Empty);
+                respParameters["sysMessage"] = "You already have an account linked with this Steam account.";
+                
+                var websiteRedirect = $"https://fishnation.xyz/me?{respParameters}";
                 context.Response.Redirect(websiteRedirect);
                 return;
             }
-
-            string steamUsername = (string)steamUserData["personaname"];
-            string steamPfpLink = (string)steamUserData["avatar"];
-
-            DataTypes.User newUser = UserTools.AddUser(dbConn.Connection, new FrontFacingDataTypes.FrontFacingUser
-            {
-                SSID = null,
-                OptBLUID = null,
-                Username = steamUsername,
-                UserPfpLink = steamPfpLink,
-                UserBio = "",
-                SteamID = steamID,
-                SteamUsername = steamUsername,
-                RegistrationDate = DateTime.Now,
-                Role = "User",
-                FrontendRole = "Unassigned"
-            });
+            
+            DataTypes.User user = UserTools.GetUserById(dbConn.Connection, ulong.Parse(context.User.Claims.First(c => c.Type == "uid").Value));
+            user.SSID = steamID;
+            user.OptBLUID = steamID;
+            UserTools.UpdateUser(dbConn.Connection, user);
             dbConn.Close();
-
-            token = apiToken.GenerateToken(newUser, "User", DateTime.Now.AddDays(7));
-            var Redirect = $"https://fishnation.xyz/auth/steam/callback?token={token}";
-
-            context.Response.Redirect(Redirect);
-        }).WithName("SteamAuthCallback").WithOpenApi().ExcludeFromDescription();
+            
+            NameValueCollection respParam = HttpUtility.ParseQueryString(string.Empty);
+            respParam["sysMessage"] = "Your account has been successfully linked to your Steam account.";
+                
+            var redirect = $"https://fishnation.xyz/me?{respParam}";
+            context.Response.Redirect(redirect);
+            return;
+        }).WithName("SteamAuthCallback").WithOpenApi().ExcludeFromDescription().RequireAuthorization("User");
     }
 }

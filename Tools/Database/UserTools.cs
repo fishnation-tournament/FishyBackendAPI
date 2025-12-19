@@ -20,11 +20,9 @@ public static class UserTools
             user.DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
             user.GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
             user.GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
-            user.SteamID = reader.IsDBNull(10) ? null : reader.GetUInt64(10);
-            user.SteamUsername = reader.IsDBNull(11) ? null : reader.GetString(11);
-            user.RegistrationDate = reader.GetDateTime(12);
-            user.Role = reader.IsDBNull(13) ? null : reader.GetString(13);
-            user.FrontendRole = reader.IsDBNull(14) ? null : reader.GetString(14);
+            user.RegistrationDate = reader.GetDateTime(10);
+            user.Role = reader.IsDBNull(11) ? null : reader.GetString(11);
+            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
 
             users.Add(user);
         }
@@ -48,11 +46,9 @@ public static class UserTools
             user.DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
             user.GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
             user.GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
-            user.SteamID = reader.IsDBNull(10) ? null : reader.GetUInt64(10);
-            user.SteamUsername = reader.IsDBNull(11) ? null : reader.GetString(11);
-            user.RegistrationDate = reader.GetDateTime(12);
-            user.Role = reader.IsDBNull(13) ? null : reader.GetString(13);
-            user.FrontendRole = reader.IsDBNull(14) ? null : reader.GetString(14);
+            user.RegistrationDate = reader.GetDateTime(10);
+            user.Role = reader.IsDBNull(11) ? null : reader.GetString(11);
+            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
         }
         reader.Close();
 
@@ -128,23 +124,13 @@ public static class UserTools
         return user;
     }
 
-    public static DataTypes.User GetUserBySteamId(MySqlConnection dbConn, ulong SteamID)
-    {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE SteamID = @SteamID", dbConn);
-        cmd.Parameters.AddWithValue("@SteamID", SteamID);
-        using MySqlDataReader reader = cmd.ExecuteReader();
-        DataTypes.User user = ReadSingleResult(reader);
-
-        return user;
-    }
-
     public static DataTypes.User AddUser(MySqlConnection dbConn, FrontFacingDataTypes.FrontFacingUser user)
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO users
-            (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, SteamID, SteamUsername, RegistrationDate, Role, FrontendRole)
+            (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, RegistrationDate, Role, FrontendRole)
         VALUES
-            (@SSID, @OptBLUID, @Username, @UserPfpLink, @Description, @DiscordID, @DiscordName, @GoogleID, @GoogleEmail, @SteamID, @SteamUsername, @RegistrationDate, @Role, @FrontendRole)
+            (@SSID, @OptBLUID, @Username, @UserPfpLink, @Description, @DiscordID, @DiscordName, @GoogleID, @GoogleEmail, @RegistrationDate, @Role, @FrontendRole)
         """, dbConn);
         cmd.Parameters.AddWithValue("@SSID", user.SSID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@OptBLUID", user.OptBLUID ?? (object)DBNull.Value);
@@ -155,8 +141,6 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@DiscordName", user.DiscordUsername ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@GoogleID", user.GoogleID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@GoogleEmail", user.GoogleEmail ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@SteamID", user.SteamID ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@SteamUsername", user.SteamUsername ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
         cmd.Parameters.AddWithValue("@Role", user.Role ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@FrontendRole", user.FrontendRole ?? (object)DBNull.Value);
@@ -183,8 +167,6 @@ public static class UserTools
             DiscordName = @DiscordName,
             GoogleID = @GoogleID,
             GoogleEmail = @GoogleEmail,
-            SteamID = @SteamID,
-            SteamUsername = @SteamUsername,
             RegistrationDate = @RegistrationDate,
             Role = @Role,
             FrontendRole = @FrontendRole
@@ -199,8 +181,6 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@DiscordName", user.DiscordUsername ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@GoogleID", user.GoogleID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@GoogleEmail", user.GoogleEmail ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@SteamID", user.SteamID ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@SteamUsername", user.SteamUsername ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
         cmd.Parameters.AddWithValue("@Role", user.Role ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@FrontendRole", user.FrontendRole ?? (object)DBNull.Value);
@@ -243,7 +223,7 @@ public static class UserTools
 
     public static bool CheckUserExistsSteamID(MySqlConnection dbConn, ulong SteamID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE SteamID = @SteamID", dbConn);
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE SSID = @SteamID OR OptBLUID = @SteamID", dbConn);
         cmd.Parameters.AddWithValue("@SteamID", SteamID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         return reader.HasRows;
