@@ -2,31 +2,49 @@
 
 namespace FishyAPI.Tools.DBInteractions
 {
-    public class DBConnection
+    public class DBConnection : IDisposable
     {
+        public MySqlConnection Connection { get; }
+        private bool disposed = false;
 
-        public string Server { get; set; }
-        public string DatabaseName { get; set; }
-        public string UserName { get; set; }
-        public string Password { get; set; }
-
-        public MySqlConnection Connection { get; set;}
-    
-        public bool IsConnect()
+        public DBConnection(string Server, string DatabaseName, string UserName, string Password)
         {
-            if (Connection != null) return true;
-            if (String.IsNullOrEmpty(DatabaseName))
-                return false;
             string connstring = string.Format("Server={0}; database={1}; UID={2}; password={3}", Server, DatabaseName, UserName, Password);
             Connection = new MySqlConnection(connstring);
-            Connection.Open();
-
-            return true;
         }
-    
+
+        public void Open()
+        {
+            Connection.Open();
+        }
+
         public void Close()
         {
             Connection.Close();
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    Connection.Dispose();
+                }
+
+                disposed = true;
+            }
+        }
+
+        ~DBConnection()
+        {
+            Dispose(false);
         }
     }
 }

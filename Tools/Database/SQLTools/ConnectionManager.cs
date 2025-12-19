@@ -20,17 +20,8 @@ public class ConnectionManager
 
     public DBConnection IssueConnection()
     {
-        var dbConn = new DBConnection();
-        dbConn.Server = Server;
-        dbConn.DatabaseName = DatabaseName;
-        dbConn.UserName = UserName;
-        dbConn.Password = Password;
-
-        if (dbConn.IsConnect())
-        {
-            return dbConn;
-        }
-
-        return null;
+        var dbConn = new DBConnection(Server, DatabaseName, UserName, Password);
+        dbConn.Open();
+        return dbConn;
     }
 }
