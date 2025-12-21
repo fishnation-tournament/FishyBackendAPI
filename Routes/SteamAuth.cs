@@ -5,6 +5,7 @@ using FishyAPI.Tools;
 using FishyAPI.Tools.Authentication;
 using FishyAPI.Tools.DBInteractions;
 using Json;
+using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Routes;
 
@@ -88,28 +89,26 @@ public static class SteamAuth
             }
             ulong steamID = ulong.Parse(steamIDString);
 
-            DBConnection dbConn = connManager.IssueConnection();
+            using MySqlConnection dbConn = connManager.IssueConnection();
 
-            if (UserTools.CheckUserExistsSteamID(dbConn.Connection, steamID))
+            if (UserTools.CheckUserExistsSteamID(dbConn, steamID))
             {
-                dbConn.Close();
                 NameValueCollection respParameters = HttpUtility.ParseQueryString(string.Empty);
                 respParameters["sysMessage"] = "You already have an account linked with this Steam account.";
-                
+
                 var websiteRedirect = $"https://fishnation.xyz/me?{respParameters}";
                 context.Response.Redirect(websiteRedirect);
                 return;
             }
-            
-            DataTypes.User user = UserTools.GetUserById(dbConn.Connection, ulong.Parse(context.User.Claims.First(c => c.Type == "uid").Value));
+
+            DataTypes.User user = UserTools.GetUserById(dbConn, ulong.Parse(context.User.Claims.First(c => c.Type == "uid").Value));
             user.SSID = steamID;
             user.OptBLUID = steamID;
-            UserTools.UpdateUser(dbConn.Connection, user);
-            dbConn.Close();
-            
+            UserTools.UpdateUser(dbConn, user);
+
             NameValueCollection respParam = HttpUtility.ParseQueryString(string.Empty);
             respParam["sysMessage"] = "Your account has been successfully linked to your Steam account.";
-                
+
             var redirect = $"https://fishnation.xyz/me?{respParam}";
             context.Response.Redirect(redirect);
             return;

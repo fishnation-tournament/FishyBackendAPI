@@ -7,6 +7,7 @@ using FishyAPI.Tools.Authentication;
 using FishyAPI.Tools.DBInteractions;
 using Json;
 using Microsoft.AspNetCore.Mvc;
+using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Routes;
 
@@ -61,11 +62,11 @@ public static class DiscordAuth
             // Generate JWT token
             string token = "";
 
-            var dbConn = connManager.IssueConnection();
+            using MySqlConnection dbConn = connManager.IssueConnection();
 
-            if (UserTools.CheckUserExistsDID(dbConn.Connection, ulong.Parse(userData["id"].ToString())))
+            if (UserTools.CheckUserExistsDID(dbConn, ulong.Parse(userData["id"].ToString())))
             {
-                var user = UserTools.GetUserByDiscordId(dbConn.Connection, ulong.Parse(userData["id"].ToString()));
+                var user = UserTools.GetUserByDiscordId(dbConn, ulong.Parse(userData["id"].ToString()));
                 token = apiToken.GenerateToken(user, user.Role, DateTime.Now.AddDays(7));
                 var websiteRedirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
@@ -87,12 +88,10 @@ public static class DiscordAuth
                 FrontendRole = "Unassigned"
             };
 
-            DataTypes.User newUser = UserTools.AddUser(dbConn.Connection, User);
+            DataTypes.User newUser = UserTools.AddUser(dbConn, User);
 
             token = apiToken.GenerateToken(newUser, "User", DateTime.Now.AddDays(7));
             var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
-
-            dbConn.Close();
 
             // Return the token
             context.Response.Redirect(Redirect);

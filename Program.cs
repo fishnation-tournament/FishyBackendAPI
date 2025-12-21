@@ -7,6 +7,7 @@ using FishyAPI.Routes;
 using FishyAPI.Tools.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using MySql.Data.MySqlClient;
 
 DotNetEnv.Env.TraversePath().Load("./.env");
 Console.WriteLine("Testing Credentials for SQL Server");
@@ -28,15 +29,15 @@ ConnectionManager connManager = new ConnectionManager(
     DBUser,
     DBPassword);
 
-var dbConn = connManager.IssueConnection();
-
-if (dbConn == null)
+try
+{
+    using MySqlConnection dbConn = connManager.IssueConnection();
+}
+catch
 {
     Console.WriteLine("Failed to connect to database");
     return;
 }
-
-dbConn.Close();
 
 var builder = WebApplication.CreateBuilder(args);
 

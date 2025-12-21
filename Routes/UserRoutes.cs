@@ -1,5 +1,6 @@
 using FishyAPI.Tools;
 using FishyAPI.Tools.DBInteractions;
+using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Routes;
 
@@ -9,41 +10,36 @@ public static class UserRoutes
     {
         endpoints.MapGet("/Users/GetUsers", () =>
         {
-            DBConnection conn = connManager.IssueConnection();
-            List<DataTypes.User> users = UserTools.GetUsers(conn.Connection);
-            conn.Close();
+            using MySqlConnection conn = connManager.IssueConnection();
+            List<DataTypes.User> users = UserTools.GetUsers(conn);
             return users;
         }).WithName("GetUsers").WithOpenApi();
 
         endpoints.MapGet("/Users/GetUserById/{UID}", (ulong UID) =>
         {
-            DBConnection conn = connManager.IssueConnection();
-            DataTypes.User user = UserTools.GetUserById(conn.Connection, UID);
-            conn.Close();
+            using MySqlConnection conn = connManager.IssueConnection();
+            DataTypes.User user = UserTools.GetUserById(conn, UID);
             return user;
         }).WithName("GetUserById").WithOpenApi();
 
         endpoints.MapGet("/Users/SearchUserByName/{searchTerm}", (string searchTerm) =>
         {
-            DBConnection conn = connManager.IssueConnection();
-            List<DataTypes.User> users = UserTools.GetUsersByName(conn.Connection, searchTerm);
-            conn.Close();
+            using MySqlConnection conn = connManager.IssueConnection();
+            List<DataTypes.User> users = UserTools.GetUsersByName(conn, searchTerm);
             return users;
         }).WithName("SearchUserByName").WithOpenApi();
 
         endpoints.MapGet("/Users/GetUserByDiscordID/{DiscordID}", (ulong DiscordID) =>
         {
-            DBConnection conn = connManager.IssueConnection();
-            DataTypes.User user = UserTools.GetUserByDiscordId(conn.Connection, DiscordID);
-            conn.Close();
+            using MySqlConnection conn = connManager.IssueConnection();
+            DataTypes.User user = UserTools.GetUserByDiscordId(conn, DiscordID);
             return user;
         }).WithName("GetUserByDiscordID").WithOpenApi();
 
         endpoints.MapGet("/Users/GetUsersByRole/{Role}", (string Role) =>
         {
-            DBConnection conn = connManager.IssueConnection();
-            List<DataTypes.User> users = UserTools.GetUsersByRole(conn.Connection, Role);
-            conn.Close();
+            using MySqlConnection conn = connManager.IssueConnection();
+            List<DataTypes.User> users = UserTools.GetUsersByRole(conn, Role);
             return users;
         }).WithName("GetUsersByRole").WithOpenApi().RequireAuthorization("User");
 
@@ -53,33 +49,29 @@ public static class UserRoutes
 
             ulong uid = ulong.Parse(uidClaim.Value);
 
-            DBConnection conn = connManager.IssueConnection();
-            DataTypes.User user = UserTools.GetUserById(conn.Connection, uid);
-            conn.Close();
+            using MySqlConnection conn = connManager.IssueConnection();
+            DataTypes.User user = UserTools.GetUserById(conn, uid);
             return Results.Json(user);
         }).WithName("GetSelf").WithOpenApi().RequireAuthorization("User");
 
         endpoints.MapPost("/Users/AddUser", (FrontFacingDataTypes.FrontFacingUser user) =>
         {
-            DBConnection conn = connManager.IssueConnection();
-            DataTypes.User newUser = UserTools.AddUser(conn.Connection, user);
-            conn.Close();
+            using MySqlConnection conn = connManager.IssueConnection();
+            DataTypes.User newUser = UserTools.AddUser(conn, user);
             return Results.Created($"/Users/GetUserById/{newUser.UID}", newUser);
         }).WithName("AddUser").WithOpenApi().RequireAuthorization("Organizer");
 
         endpoints.MapPut("/Users/UpdateUser", (DataTypes.User user) =>
         {
-            DBConnection conn = connManager.IssueConnection();
-            UserTools.UpdateUser(conn.Connection, user);
-            conn.Close();
+            using MySqlConnection conn = connManager.IssueConnection();
+            UserTools.UpdateUser(conn, user);
             return Results.Created($"/Users/GetUserById/{user.UID}", user);
         }).WithName("UpdateUser").WithOpenApi().RequireAuthorization("Organizer");
 
         endpoints.MapDelete("/Users/DeleteUser/{UID}", (ulong UID) =>
         {
-            DBConnection conn = connManager.IssueConnection();
-            UserTools.DeleteUser(conn.Connection, UID);
-            conn.Close();
+            using MySqlConnection conn = connManager.IssueConnection();
+            UserTools.DeleteUser(conn, UID);
             return Results.NoContent();
         }).WithName("DeleteUser").WithOpenApi().RequireAuthorization("Organizer");
     }
