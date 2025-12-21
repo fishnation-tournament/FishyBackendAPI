@@ -23,6 +23,7 @@
 
     <ItemGroup>
       <Folder Include=".dnu\" />
+      <Folder Include="DeploymentResources\" />
     </ItemGroup>
 
 </Project>
