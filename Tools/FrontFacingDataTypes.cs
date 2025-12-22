@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 namespace FishyAPI.Tools;
 
 public static class FrontFacingDataTypes
@@ -60,6 +59,27 @@ public static class FrontFacingDataTypes
         public DateTime RegistrationDate { get; set; }
         public string? Role { get; set; }
         public string? FrontendRole { get; set; }
+    }
+
+    public struct UpdateUser
+    {
+        public string? Username { get; set; }
+        public string? UserBio { get; set; }
+
+        public DataTypes.User updateUser(DataTypes.User user)
+        {
+            if (Username != null)
+            {
+                user.Username = Username;
+            }
+
+            if (UserBio != null)
+            {
+                user.UserBio = UserBio;
+            }
+
+            return user;
+        }
     }
 
     public struct FrontFacingMap

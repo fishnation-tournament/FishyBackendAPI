@@ -46,6 +46,10 @@ public static class UserRoutes
         endpoints.MapGet("/Users/GetSelf", (HttpContext context) =>
         {
             var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
+            if (uidClaim == null)
+            {
+                return Results.Unauthorized();
+            }
 
             ulong uid = ulong.Parse(uidClaim.Value);
 
@@ -53,6 +57,24 @@ public static class UserRoutes
             FrontFacingDataTypes.FrontFacingUser user = new FrontFacingDataTypes.FrontFacingUser(UserTools.GetUserById(conn, uid));
             return Results.Json(user);
         }).WithName("GetSelf").WithOpenApi().RequireAuthorization("User");
+
+        endpoints.MapPut("/Users/UpdateFrontendUser", (HttpContext context, FrontFacingDataTypes.UpdateUser updateUser) =>
+        {
+            var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
+            if (uidClaim == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            ulong uid = ulong.Parse(uidClaim.Value);
+
+            using MySqlConnection conn = connManager.IssueConnection();
+            DataTypes.User user = updateUser.updateUser(UserTools.GetUserById(conn, uid));
+            UserTools.UpdateUser(conn, user);
+
+            FrontFacingDataTypes.FrontFacingUser frontFacingUser = new FrontFacingDataTypes.FrontFacingUser(user);
+            return Results.Json(frontFacingUser);
+        }).WithName("UpdateFrontendUser").WithOpenApi().RequireAuthorization("User");
 
         endpoints.MapPost("/Users/AddUser", (FrontFacingDataTypes.AddUser user) =>
         {
