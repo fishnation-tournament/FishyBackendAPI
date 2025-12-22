@@ -74,7 +74,7 @@ public static class GoogleAuth
             }
 
 
-            FrontFacingDataTypes.FrontFacingUser User = new FrontFacingDataTypes.FrontFacingUser
+            FrontFacingDataTypes.AddUser User = new FrontFacingDataTypes.AddUser
             {
                 SSID = null,
                 OptBLUID = null,

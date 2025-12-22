@@ -6,9 +6,46 @@ public static class FrontFacingDataTypes
 {
     public struct FrontFacingUser
     {
+        public ulong UID { get; set; }
+
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? SSID { get; set; }
-        
+
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+        public ulong? OptBLUID { get; set; }
+
+        public string Username { get; set; }
+        public string? UserPfpLink { get; set; }
+        public string? UserBio { get; set; }
+
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+        public ulong? DiscordID { get; set; }
+        public string? DiscordUsername { get; set; }
+        public DateTime RegistrationDate { get; set; }
+        public string? Role { get; set; }
+        public string? FrontendRole { get; set; }
+
+        public FrontFacingUser(DataTypes.User user)
+        {
+            UID = user.UID;
+            SSID = user.SSID;
+            OptBLUID = user.OptBLUID;
+            Username = user.Username;
+            UserPfpLink = user.UserPfpLink;
+            UserBio = user.UserBio;
+            DiscordID = user.DiscordID;
+            DiscordUsername = user.DiscordUsername;
+            RegistrationDate = user.RegistrationDate;
+            Role = user.Role;
+            FrontendRole = user.FrontendRole;
+        }
+    }
+
+    public struct AddUser
+    {
+        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+        public ulong? SSID { get; set; }
+
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? OptBLUID { get; set; }
         public string Username { get; set; }
@@ -24,6 +61,7 @@ public static class FrontFacingDataTypes
         public string? Role { get; set; }
         public string? FrontendRole { get; set; }
     }
+
     public struct FrontFacingMap
     {
         public string BSMapID { get; set; }

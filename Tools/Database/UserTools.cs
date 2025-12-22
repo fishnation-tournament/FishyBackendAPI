@@ -124,7 +124,7 @@ public static class UserTools
         return user;
     }
 
-    public static DataTypes.User AddUser(MySqlConnection dbConn, FrontFacingDataTypes.FrontFacingUser user)
+    public static DataTypes.User AddUser(MySqlConnection dbConn, FrontFacingDataTypes.AddUser user)
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO users
