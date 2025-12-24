@@ -76,6 +76,24 @@ public static class UserRoutes
             return Results.Json(frontFacingUser);
         }).WithName("UpdateSelf").WithOpenApi().RequireAuthorization("User");
 
+        endpoints.MapPost("/Users/UpdateProfiles", async (HttpContext context) =>
+        {
+            var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
+            if (uidClaim == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            ulong uid = ulong.Parse(uidClaim.Value);
+
+            using MySqlConnection conn = connManager.IssueConnection();
+            DataTypes.User user = await UserTools.GetUserById(conn, uid).UpdateProfilesAsync();
+            UserTools.UpdateUser(conn, user);
+
+            FrontFacingDataTypes.FrontFacingUser frontFacingUser = new FrontFacingDataTypes.FrontFacingUser(user);
+            return Results.Json(frontFacingUser);
+        }).WithName("UpdateProfiles").WithOpenApi().RequireAuthorization("User");
+
         endpoints.MapPost("/Users/AddUser", (FrontFacingDataTypes.AddUser user) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();

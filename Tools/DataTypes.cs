@@ -1,5 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using System.Web;
+using System.Collections.Specialized;
 namespace FishyAPI.Tools;
 
 public static class DataTypes
@@ -21,12 +22,66 @@ public static class DataTypes
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? DiscordID { get; set; }
         public string? DiscordUsername { get; set; }
+
         public string? GoogleID { get; set; }
         public string? GoogleEmail { get; set; }
+
         public DateTime RegistrationDate { get; set; }
         public string? Role { get; set; }
         public string? FrontendRole { get; set; }
+
+        public string? ScoreSaberProfile { get; set; }
+        public string? BeatLeaderProfile { get; set; }
+
+        public async Task<User> UpdateProfilesAsync()
+        {
+            UserProfiles userProfiles = await UserProfiles.GetUserProfilesAsync(SSID, OptBLUID);
+            ScoreSaberProfile = userProfiles.ScoreSaberProfile;
+            BeatLeaderProfile = userProfiles.BeatLeaderProfile;
+
+            return this;
+        }
     }
+
+    public struct UserProfiles
+    {
+        public string? ScoreSaberProfile { get; set; }
+        public string? BeatLeaderProfile { get; set; }
+
+        // No async constructors :(
+        public static async Task<UserProfiles> GetUserProfilesAsync(ulong? SSID, ulong? OptBLUID)
+        {
+            using var httpClient = new HttpClient();
+
+            UserProfiles userProfiles = new UserProfiles { ScoreSaberProfile = null, BeatLeaderProfile = null };
+
+            if (SSID != null)
+            {
+                var scoreSaberResponse = await httpClient.GetAsync($"https://scoresaber.com/api/player/{SSID}/full");
+                if (scoreSaberResponse.IsSuccessStatusCode)
+                {
+                    userProfiles.ScoreSaberProfile = await scoreSaberResponse.Content.ReadAsStringAsync();
+                }
+            }
+
+            if (OptBLUID != null)
+            {
+                NameValueCollection beatLeaderParameters = HttpUtility.ParseQueryString(string.Empty);
+                beatLeaderParameters["stats"] = "true";
+                beatLeaderParameters["keepOriginalId"] = "false";
+                beatLeaderParameters["leaderboardContext"] = "general";
+
+                var beatLeaderResponse = await httpClient.GetAsync($"https://api.beatleader.com/player/{OptBLUID}?{beatLeaderParameters}");
+                if (beatLeaderResponse.IsSuccessStatusCode)
+                {
+                    userProfiles.BeatLeaderProfile = await beatLeaderResponse.Content.ReadAsStringAsync();
+                }
+            }
+
+            return userProfiles;
+        }
+    }
+
 
     public struct Map
     {

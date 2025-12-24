@@ -23,6 +23,8 @@ public static class UserTools
             user.RegistrationDate = reader.GetDateTime(10);
             user.Role = reader.IsDBNull(11) ? null : reader.GetString(11);
             user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
+            user.ScoreSaberProfile = reader.IsDBNull(13) ? null : reader.GetString(13);
+            user.BeatLeaderProfile = reader.IsDBNull(14) ? null : reader.GetString(14);
 
             users.Add(user);
         }
@@ -49,6 +51,8 @@ public static class UserTools
             user.RegistrationDate = reader.GetDateTime(10);
             user.Role = reader.IsDBNull(11) ? null : reader.GetString(11);
             user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
+            user.ScoreSaberProfile = reader.IsDBNull(13) ? null : reader.GetString(13);
+            user.BeatLeaderProfile = reader.IsDBNull(14) ? null : reader.GetString(14);
         }
         reader.Close();
 
@@ -128,9 +132,9 @@ public static class UserTools
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO users
-            (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, RegistrationDate, Role, FrontendRole)
+            (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, RegistrationDate, Role, FrontendRole, ScoreSaberProfile, BeatLeaderProfile)
         VALUES
-            (@SSID, @OptBLUID, @Username, @UserPfpLink, @Description, @DiscordID, @DiscordName, @GoogleID, @GoogleEmail, @RegistrationDate, @Role, @FrontendRole)
+            (@SSID, @OptBLUID, @Username, @UserPfpLink, @Description, @DiscordID, @DiscordName, @GoogleID, @GoogleEmail, @RegistrationDate, @Role, @FrontendRole, @ScoreSaberProfile, @BeatLeaderProfile)
         """, dbConn);
         cmd.Parameters.AddWithValue("@SSID", user.SSID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@OptBLUID", user.OptBLUID ?? (object)DBNull.Value);
@@ -144,6 +148,8 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
         cmd.Parameters.AddWithValue("@Role", user.Role ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@FrontendRole", user.FrontendRole ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@ScoreSaberProfile", user.ScoreSaberProfile ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@BeatLeaderProfile", user.BeatLeaderProfile ?? (object)DBNull.Value);
         cmd.ExecuteNonQuery();
 
         MySqlCommand getIdQuery = new MySqlCommand("SELECT * FROM users WHERE UserID = @UserID", dbConn);
@@ -169,7 +175,9 @@ public static class UserTools
             GoogleEmail = @GoogleEmail,
             RegistrationDate = @RegistrationDate,
             Role = @Role,
-            FrontendRole = @FrontendRole
+            FrontendRole = @FrontendRole,
+            ScoreSaberProfile = @ScoreSaberProfile,
+            BeatLeaderProfile = @BeatLeaderProfile
         WHERE UserID = @UserID
         """, dbConn);
         cmd.Parameters.AddWithValue("@SSID", user.SSID ?? (object)DBNull.Value);
@@ -184,6 +192,8 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
         cmd.Parameters.AddWithValue("@Role", user.Role ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@FrontendRole", user.FrontendRole ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@ScoreSaberProfile", user.ScoreSaberProfile ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@BeatLeaderProfile", user.BeatLeaderProfile ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@UserID", user.UID);
         cmd.ExecuteNonQuery();
     }
