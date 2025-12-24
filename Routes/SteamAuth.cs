@@ -104,7 +104,7 @@ public static class SteamAuth
             DataTypes.User user = UserTools.GetUserById(dbConn, ulong.Parse(context.User.Claims.First(c => c.Type == "uid").Value));
             user.SSID = steamID;
             user.OptBLUID = steamID;
-            UserTools.UpdateUser(dbConn, user);
+            UserTools.UpdateUser(dbConn, await user.UpdateProfilesAsync());
 
             NameValueCollection respParam = HttpUtility.ParseQueryString(string.Empty);
             respParam["sysMessage"] = "Your account has been successfully linked to your Steam account.";

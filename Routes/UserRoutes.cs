@@ -94,10 +94,10 @@ public static class UserRoutes
             return Results.Json(frontFacingUser);
         }).WithName("UpdateProfiles").WithOpenApi().RequireAuthorization("User");
 
-        endpoints.MapPost("/Users/AddUser", (FrontFacingDataTypes.AddUser user) =>
+        endpoints.MapPost("/Users/AddUser", async (FrontFacingDataTypes.AddUser user) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            DataTypes.User newUser = UserTools.AddUser(conn, user);
+            DataTypes.User newUser = UserTools.AddUser(conn, await user.UpdateProfilesAsync());
             return Results.Created($"/Users/GetUserById/{newUser.UID}", newUser);
         }).WithName("AddUser").WithOpenApi().RequireAuthorization("Organizer");
 
