@@ -1,12 +1,12 @@
 using System.Collections.Specialized;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Web;
 using FishyAPI.Tools;
+using FishyAPI.Tools.DataTypes;
+using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.Authentication;
 using FishyAPI.Tools.DBInteractions;
 using Json;
-using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Routes;
@@ -74,7 +74,7 @@ public static class GoogleAuth
             }
 
 
-            FrontFacingDataTypes.AddUser User = new FrontFacingDataTypes.AddUser
+            AddUser User = new AddUser
             {
                 SSID = null,
                 OptBLUID = null,
@@ -90,7 +90,7 @@ public static class GoogleAuth
                 FrontendRole = "Unassigned"
             };
 
-            DataTypes.User newUser = UserTools.AddUser(dbConn, User);
+            User newUser = UserTools.AddUser(dbConn, User);
 
             token = apiToken.GenerateToken(newUser, "User", DateTime.Now.AddDays(7));
             var Redirect = $"https://fishnation.xyz/auth/google/callback?token={token}";

@@ -1,6 +1,8 @@
 using System.Collections.Specialized;
 using System.Web;
 using FishyAPI.Tools;
+using FishyAPI.Tools.DataTypes;
+using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.Authentication;
 using FishyAPI.Tools.DBInteractions;
 using Json;
@@ -100,7 +102,7 @@ public static class SteamAuth
                 return;
             }
 
-            DataTypes.User user = UserTools.GetUserById(dbConn, ulong.Parse(context.User.Claims.First(c => c.Type == "uid").Value));
+            User user = UserTools.GetUserById(dbConn, ulong.Parse(context.User.Claims.First(c => c.Type == "uid").Value));
             user.SSID = steamID;
             user.OptBLUID = steamID;
             UserTools.UpdateUser(dbConn, await user.UpdateProfilesAsync());
