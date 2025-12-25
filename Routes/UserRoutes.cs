@@ -76,7 +76,7 @@ public static class UserRoutes
             return Results.Json(frontFacingUser);
         }).WithName("UpdateSelf").WithOpenApi().RequireAuthorization("User");
 
-        endpoints.MapPost("/Users/UpdateProfiles", async (HttpContext context) =>
+        endpoints.MapPost("/Users/UpdateProfile", async (HttpContext context) =>
         {
             var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
             if (uidClaim == null)
@@ -92,7 +92,7 @@ public static class UserRoutes
 
             FrontFacingDataTypes.FrontFacingUser frontFacingUser = new FrontFacingDataTypes.FrontFacingUser(user);
             return Results.Json(frontFacingUser);
-        }).WithName("UpdateProfiles").WithOpenApi().RequireAuthorization("User");
+        }).WithName("UpdateProfile").WithOpenApi().RequireAuthorization("User");
 
         endpoints.MapPost("/Users/AddUser", async (FrontFacingDataTypes.AddUser user) =>
         {
