@@ -1,15 +1,17 @@
-﻿using MySql.Data.MySqlClient;
+﻿using FishyAPI.Tools.DataTypes;
+using FishyAPI.Tools.FrontFacingDataTypes;
+using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Tools;
 
 public static class UserTools
 {
-    private static List<DataTypes.User> ReadResults(MySqlDataReader reader)
+    private static List<User> ReadResults(MySqlDataReader reader)
     {
-        List<DataTypes.User> users = new List<DataTypes.User>();
+        List<User> users = new List<User>();
         while (reader.Read())
         {
-            DataTypes.User user = new DataTypes.User();
+            User user = new User();
             user.UID = reader.GetUInt64(0);
             user.SSID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
             user.OptBLUID = reader.IsDBNull(2) ? null : reader.GetUInt64(2);
@@ -33,9 +35,9 @@ public static class UserTools
         return users;
     }
 
-    private static DataTypes.User ReadSingleResult(MySqlDataReader reader)
+    private static User ReadSingleResult(MySqlDataReader reader)
     {
-        DataTypes.User user = new DataTypes.User();
+        User user = new User();
         while (reader.Read())
         {
             user.UID = reader.GetUInt64(0);
@@ -59,76 +61,76 @@ public static class UserTools
         return user;
     }
 
-    public static List<DataTypes.User> GetUsers(MySqlConnection dbConn)
+    public static List<User> GetUsers(MySqlConnection dbConn)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM users", dbConn);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.User> users = ReadResults(reader);
+        List<User> users = ReadResults(reader);
 
         return users;
     }
 
-    public static DataTypes.User GetUserById(MySqlConnection dbConn, ulong UID)
+    public static User GetUserById(MySqlConnection dbConn, ulong UID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE UserID = @UID", dbConn);
         cmd.Parameters.AddWithValue("@UID", UID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        DataTypes.User user = ReadSingleResult(reader);
+        User user = ReadSingleResult(reader);
 
         return user;
     }
 
-    public static DataTypes.User GetUserBySSID(MySqlConnection dbConn, ulong SSID)
+    public static User GetUserBySSID(MySqlConnection dbConn, ulong SSID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE SSID = @SSID", dbConn);
         cmd.Parameters.AddWithValue("@SSID", SSID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        DataTypes.User user = ReadSingleResult(reader);
+        User user = ReadSingleResult(reader);
 
         return user;
     }
 
-    public static List<DataTypes.User> GetUsersByOptBLUID(MySqlConnection dbConn, ulong OptBLUID)
+    public static List<User> GetUsersByOptBLUID(MySqlConnection dbConn, ulong OptBLUID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE OptBLUID = @OptBLUID", dbConn);
         cmd.Parameters.AddWithValue("@OptBLUID", OptBLUID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.User> users = ReadResults(reader);
+        List<User> users = ReadResults(reader);
 
         return users;
     }
 
-    public static List<DataTypes.User> GetUsersByName(MySqlConnection dbConn, string searchTerm)
+    public static List<User> GetUsersByName(MySqlConnection dbConn, string searchTerm)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE Username LIKE @searchTerm", dbConn);
         cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.User> users = ReadResults(reader);
+        List<User> users = ReadResults(reader);
 
         return users;
     }
 
-    public static List<DataTypes.User> GetUsersByRole(MySqlConnection dbConn, string searchTerm)
+    public static List<User> GetUsersByRole(MySqlConnection dbConn, string searchTerm)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE Role LIKE @searchTerm", dbConn);
         cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.User> users = ReadResults(reader);
+        List<User> users = ReadResults(reader);
 
         return users;
     }
 
-    public static DataTypes.User GetUserByDiscordId(MySqlConnection dbConn, ulong DiscordID)
+    public static User GetUserByDiscordId(MySqlConnection dbConn, ulong DiscordID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE DiscordID = @DiscordID", dbConn);
         cmd.Parameters.AddWithValue("@DiscordID", DiscordID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        DataTypes.User user = ReadSingleResult(reader);
+        User user = ReadSingleResult(reader);
 
         return user;
     }
 
-    public static DataTypes.User AddUser(MySqlConnection dbConn, FrontFacingDataTypes.AddUser user)
+    public static User AddUser(MySqlConnection dbConn, AddUser user)
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO users
@@ -155,12 +157,12 @@ public static class UserTools
         MySqlCommand getIdQuery = new MySqlCommand("SELECT * FROM users WHERE UserID = @UserID", dbConn);
         getIdQuery.Parameters.AddWithValue("@UserID", cmd.LastInsertedId);
         using MySqlDataReader reader = getIdQuery.ExecuteReader();
-        DataTypes.User newUser = ReadSingleResult(reader);
+        User newUser = ReadSingleResult(reader);
 
         return newUser;
     }
 
-    public static void UpdateUser(MySqlConnection dbConn, DataTypes.User user)
+    public static void UpdateUser(MySqlConnection dbConn, User user)
     {
         MySqlCommand cmd = new MySqlCommand("""
         UPDATE users SET
@@ -213,12 +215,12 @@ public static class UserTools
         return reader.HasRows;
     }
 
-    public static DataTypes.User GetUserByGoogleId(MySqlConnection dbConn, string GoogleID)
+    public static User GetUserByGoogleId(MySqlConnection dbConn, string GoogleID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE GoogleID = @GoogleID", dbConn);
         cmd.Parameters.AddWithValue("@GoogleID", GoogleID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        DataTypes.User user = ReadSingleResult(reader);
+        User user = ReadSingleResult(reader);
 
         return user;
     }

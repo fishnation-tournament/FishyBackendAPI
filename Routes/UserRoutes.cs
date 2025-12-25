@@ -1,4 +1,6 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.DataTypes;
+using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
 using MySql.Data.MySqlClient;
 
@@ -11,35 +13,35 @@ public static class UserRoutes
         endpoints.MapGet("/Users/GetUsers", () =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            List<FrontFacingDataTypes.FrontFacingUser> users = UserTools.GetUsers(conn).Select(user => new FrontFacingDataTypes.FrontFacingUser(user)).ToList();
+            List<FrontFacingUser> users = UserTools.GetUsers(conn).Select(user => new FrontFacingUser(user)).ToList();
             return users;
         }).WithName("GetUsers").WithOpenApi();
 
         endpoints.MapGet("/Users/GetUserById/{UID}", (ulong UID) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            FrontFacingDataTypes.FrontFacingUser user = new FrontFacingDataTypes.FrontFacingUser(UserTools.GetUserById(conn, UID));
+            FrontFacingUser user = new FrontFacingUser(UserTools.GetUserById(conn, UID));
             return user;
         }).WithName("GetUserById").WithOpenApi();
 
         endpoints.MapGet("/Users/SearchUserByName/{searchTerm}", (string searchTerm) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            List<FrontFacingDataTypes.FrontFacingUser> users = UserTools.GetUsersByName(conn, searchTerm).Select(user => new FrontFacingDataTypes.FrontFacingUser(user)).ToList();
+            List<FrontFacingUser> users = UserTools.GetUsersByName(conn, searchTerm).Select(user => new FrontFacingUser(user)).ToList();
             return users;
         }).WithName("SearchUserByName").WithOpenApi();
 
         endpoints.MapGet("/Users/GetUserByDiscordID/{DiscordID}", (ulong DiscordID) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            FrontFacingDataTypes.FrontFacingUser user = new FrontFacingDataTypes.FrontFacingUser(UserTools.GetUserByDiscordId(conn, DiscordID));
+            FrontFacingUser user = new FrontFacingUser(UserTools.GetUserByDiscordId(conn, DiscordID));
             return user;
         }).WithName("GetUserByDiscordID").WithOpenApi();
 
         endpoints.MapGet("/Users/GetUsersByRole/{Role}", (string Role) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            List<FrontFacingDataTypes.FrontFacingUser> users = UserTools.GetUsersByRole(conn, Role).Select(user => new FrontFacingDataTypes.FrontFacingUser(user)).ToList();
+            List<FrontFacingUser> users = UserTools.GetUsersByRole(conn, Role).Select(user => new FrontFacingUser(user)).ToList();
             return users;
         }).WithName("GetUsersByRole").WithOpenApi().RequireAuthorization("User");
 
@@ -54,11 +56,11 @@ public static class UserRoutes
             ulong uid = ulong.Parse(uidClaim.Value);
 
             using MySqlConnection conn = connManager.IssueConnection();
-            FrontFacingDataTypes.FrontFacingUser user = new FrontFacingDataTypes.FrontFacingUser(UserTools.GetUserById(conn, uid));
+            FrontFacingUser user = new FrontFacingUser(UserTools.GetUserById(conn, uid));
             return Results.Json(user);
         }).WithName("GetSelf").WithOpenApi().RequireAuthorization("User");
 
-        endpoints.MapPut("/Users/UpdateSelf", (HttpContext context, FrontFacingDataTypes.UpdateUser updateUser) =>
+        endpoints.MapPut("/Users/UpdateSelf", (HttpContext context, UpdateUser updateUser) =>
         {
             var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
             if (uidClaim == null)
@@ -69,10 +71,10 @@ public static class UserRoutes
             ulong uid = ulong.Parse(uidClaim.Value);
 
             using MySqlConnection conn = connManager.IssueConnection();
-            DataTypes.User user = updateUser.updateUser(UserTools.GetUserById(conn, uid));
+            User user = updateUser.updateUser(UserTools.GetUserById(conn, uid));
             UserTools.UpdateUser(conn, user);
 
-            FrontFacingDataTypes.FrontFacingUser frontFacingUser = new FrontFacingDataTypes.FrontFacingUser(user);
+            FrontFacingUser frontFacingUser = new FrontFacingUser(user);
             return Results.Json(frontFacingUser);
         }).WithName("UpdateSelf").WithOpenApi().RequireAuthorization("User");
 
@@ -87,21 +89,21 @@ public static class UserRoutes
             ulong uid = ulong.Parse(uidClaim.Value);
 
             using MySqlConnection conn = connManager.IssueConnection();
-            DataTypes.User user = await UserTools.GetUserById(conn, uid).UpdateProfilesAsync();
+            User user = await UserTools.GetUserById(conn, uid).UpdateProfilesAsync();
             UserTools.UpdateUser(conn, user);
 
-            FrontFacingDataTypes.FrontFacingUser frontFacingUser = new FrontFacingDataTypes.FrontFacingUser(user);
+            FrontFacingUser frontFacingUser = new FrontFacingUser(user);
             return Results.Json(frontFacingUser);
         }).WithName("UpdateProfile").WithOpenApi().RequireAuthorization("User");
 
-        endpoints.MapPost("/Users/AddUser", async (FrontFacingDataTypes.AddUser user) =>
+        endpoints.MapPost("/Users/AddUser", async (AddUser user) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            DataTypes.User newUser = UserTools.AddUser(conn, await user.UpdateProfilesAsync());
+            User newUser = UserTools.AddUser(conn, await user.UpdateProfilesAsync());
             return Results.Created($"/Users/GetUserById/{newUser.UID}", newUser);
         }).WithName("AddUser").WithOpenApi().RequireAuthorization("Organizer");
 
-        endpoints.MapPut("/Users/UpdateUser", (DataTypes.User user) =>
+        endpoints.MapPut("/Users/UpdateUser", (User user) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             UserTools.UpdateUser(conn, user);

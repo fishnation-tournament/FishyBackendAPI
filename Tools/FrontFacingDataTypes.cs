@@ -1,157 +1,154 @@
 ﻿using System.Text.Json.Serialization;
-namespace FishyAPI.Tools;
+namespace FishyAPI.Tools.FrontFacingDataTypes;
 
-public static class FrontFacingDataTypes
+public struct FrontFacingUser
 {
-    public struct FrontFacingUser
+    public ulong UID { get; set; }
+
+    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    public ulong? SSID { get; set; }
+
+    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    public ulong? OptBLUID { get; set; }
+
+    public string Username { get; set; }
+    public string? UserPfpLink { get; set; }
+    public string? UserBio { get; set; }
+
+    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    public ulong? DiscordID { get; set; }
+    public string? DiscordUsername { get; set; }
+
+    public DateTime RegistrationDate { get; set; }
+    public string? Role { get; set; }
+    public string? FrontendRole { get; set; }
+
+    public string? ScoreSaberProfile { get; set; }
+    public string? BeatLeaderProfile { get; set; }
+
+    public FrontFacingUser(DataTypes.User user)
     {
-        public ulong UID { get; set; }
+        UID = user.UID;
+        SSID = user.SSID;
+        OptBLUID = user.OptBLUID;
+        Username = user.Username;
+        UserPfpLink = user.UserPfpLink;
+        UserBio = user.UserBio;
+        DiscordID = user.DiscordID;
+        DiscordUsername = user.DiscordUsername;
+        RegistrationDate = user.RegistrationDate;
+        Role = user.Role;
+        FrontendRole = user.FrontendRole;
+        ScoreSaberProfile = user.ScoreSaberProfile;
+        BeatLeaderProfile = user.BeatLeaderProfile;
+    }
+}
 
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? SSID { get; set; }
+public struct AddUser
+{
+    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    public ulong? SSID { get; set; }
 
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? OptBLUID { get; set; }
+    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    public ulong? OptBLUID { get; set; }
+    public string Username { get; set; }
+    public string? UserPfpLink { get; set; }
+    public string? UserBio { get; set; }
 
-        public string Username { get; set; }
-        public string? UserPfpLink { get; set; }
-        public string? UserBio { get; set; }
+    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    public ulong? DiscordID { get; set; }
+    public string? DiscordUsername { get; set; }
 
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? DiscordID { get; set; }
-        public string? DiscordUsername { get; set; }
+    public string? GoogleID { get; set; }
+    public string? GoogleEmail { get; set; }
 
-        public DateTime RegistrationDate { get; set; }
-        public string? Role { get; set; }
-        public string? FrontendRole { get; set; }
+    public DateTime RegistrationDate { get; set; }
+    public string? Role { get; set; }
+    public string? FrontendRole { get; set; }
 
-        public string? ScoreSaberProfile { get; set; }
-        public string? BeatLeaderProfile { get; set; }
+    public string? ScoreSaberProfile { get; set; }
+    public string? BeatLeaderProfile { get; set; }
 
-        public FrontFacingUser(DataTypes.User user)
+    public async Task<AddUser> UpdateProfilesAsync()
+    {
+        DataTypes.UserProfiles userProfiles = await DataTypes.UserProfiles.GetUserProfilesAsync(SSID, OptBLUID);
+        ScoreSaberProfile = userProfiles.ScoreSaberProfile;
+        BeatLeaderProfile = userProfiles.BeatLeaderProfile;
+
+        return this;
+    }
+}
+
+public struct UpdateUser
+{
+    public string? Username { get; set; }
+    public string? UserBio { get; set; }
+
+    public DataTypes.User updateUser(DataTypes.User user)
+    {
+        if (Username != null)
         {
-            UID = user.UID;
-            SSID = user.SSID;
-            OptBLUID = user.OptBLUID;
-            Username = user.Username;
-            UserPfpLink = user.UserPfpLink;
-            UserBio = user.UserBio;
-            DiscordID = user.DiscordID;
-            DiscordUsername = user.DiscordUsername;
-            RegistrationDate = user.RegistrationDate;
-            Role = user.Role;
-            FrontendRole = user.FrontendRole;
-            ScoreSaberProfile = user.ScoreSaberProfile;
-            BeatLeaderProfile = user.BeatLeaderProfile;
+            user.Username = Username;
         }
-    }
 
-    public struct AddUser
-    {
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? SSID { get; set; }
-
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? OptBLUID { get; set; }
-        public string Username { get; set; }
-        public string? UserPfpLink { get; set; }
-        public string? UserBio { get; set; }
-
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? DiscordID { get; set; }
-        public string? DiscordUsername { get; set; }
-
-        public string? GoogleID { get; set; }
-        public string? GoogleEmail { get; set; }
-
-        public DateTime RegistrationDate { get; set; }
-        public string? Role { get; set; }
-        public string? FrontendRole { get; set; }
-
-        public string? ScoreSaberProfile { get; set; }
-        public string? BeatLeaderProfile { get; set; }
-
-        public async Task<AddUser> UpdateProfilesAsync()
+        if (UserBio != null)
         {
-            DataTypes.UserProfiles userProfiles = await DataTypes.UserProfiles.GetUserProfilesAsync(SSID, OptBLUID);
-            ScoreSaberProfile = userProfiles.ScoreSaberProfile;
-            BeatLeaderProfile = userProfiles.BeatLeaderProfile;
-
-            return this;
+            user.UserBio = UserBio;
         }
+
+        return user;
     }
+}
 
-    public struct UpdateUser
-    {
-        public string? Username { get; set; }
-        public string? UserBio { get; set; }
+public struct FrontFacingMap
+{
+    public string BSMapID { get; set; }
+    public string MapName { get; set; }
+    public string MapImageLink { get; set; }
+    public ulong MapPoolID { get; set; }
+    public int Season { get; set; }
+    public string Difficulty { get; set; }
+}
 
-        public DataTypes.User updateUser(DataTypes.User user)
-        {
-            if (Username != null)
-            {
-                user.Username = Username;
-            }
+public struct FrontFacingMapPool
+{
+    public string MapPoolName { get; set; }
+    public string MapPoolDescription { get; set; }
+    public List<FrontFacingMap> Maps { get; set; }
+    public int Season { get; set; }
+}
 
-            if (UserBio != null)
-            {
-                user.UserBio = UserBio;
-            }
+public struct FrontFacingMatch
+{
+    public ulong MapPoolID { get; set; }
+    public ulong Player1ID { get; set; }
+    public ulong Player2ID { get; set; }
+    public bool Complete { get; set; }
+    public ulong WinnerID { get; set; }
+    public int Player1Score { get; set; }
+    public int Player2Score { get; set; }
+    public DateTime MatchDate { get; set; }
+    public List<FrontFacingMatchScore> Scores { get; set; }
+    public int Season { get; set; }
 
-            return user;
-        }
-    }
+}
 
-    public struct FrontFacingMap
-    {
-        public string BSMapID { get; set; }
-        public string MapName { get; set; }
-        public string MapImageLink { get; set; }
-        public ulong MapPoolID { get; set; }
-        public int Season { get; set; }
-        public string Difficulty { get; set; }
-    }
+public struct FrontFacingMatchScore
+{
+    public ulong UID { get; set; }
+    public ulong MapID { get; set; }
+    public ulong MatchID { get; set; }
+    public int Score { get; set; }
+    public int MaxScore { get; set; }
+    public int Misses { get; set; }
+}
 
-    public struct FrontFacingMapPool
-    {
-        public string MapPoolName { get; set; }
-        public string MapPoolDescription { get; set; }
-        public List<FrontFacingMap> Maps { get; set; }
-        public int Season { get; set; }
-    }
-
-    public struct FrontFacingMatch
-    {
-        public ulong MapPoolID { get; set; }
-        public ulong Player1ID { get; set; }
-        public ulong Player2ID { get; set; }
-        public bool Complete { get; set; }
-        public ulong WinnerID { get; set; }
-        public int Player1Score { get; set; }
-        public int Player2Score { get; set; }
-        public DateTime MatchDate { get; set; }
-        public List<FrontFacingMatchScore> Scores { get; set; }
-        public int Season { get; set; }
-
-    }
-
-    public struct FrontFacingMatchScore
-    {
-        public ulong UID { get; set; }
-        public ulong MapID { get; set; }
-        public ulong MatchID { get; set; }
-        public int Score { get; set; }
-        public int MaxScore { get; set; }
-        public int Misses { get; set; }
-    }
-
-    public struct FrontFacingQualifierScore
-    {
-        public ulong UID { get; set; }
-        public ulong MapID { get; set; }
-        public int Score { get; set; }
-        public int MaxScore { get; set; }
-        public int Misses { get; set; }
-        public ulong QualifierID { get; set; }
-    }
+public struct FrontFacingQualifierScore
+{
+    public ulong UID { get; set; }
+    public ulong MapID { get; set; }
+    public int Score { get; set; }
+    public int MaxScore { get; set; }
+    public int Misses { get; set; }
+    public ulong QualifierID { get; set; }
 }

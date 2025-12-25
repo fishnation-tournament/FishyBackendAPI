@@ -1,143 +1,140 @@
 ﻿using System.Text.Json.Serialization;
 using System.Web;
 using System.Collections.Specialized;
-namespace FishyAPI.Tools;
+namespace FishyAPI.Tools.DataTypes;
 
-public static class DataTypes
+public struct User
 {
-    public struct User
+    public ulong UID { get; set; }
+
+    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    public ulong? SSID { get; set; }
+
+    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    public ulong? OptBLUID { get; set; }
+
+    public string Username { get; set; }
+    public string? UserPfpLink { get; set; }
+    public string? UserBio { get; set; }
+
+    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    public ulong? DiscordID { get; set; }
+    public string? DiscordUsername { get; set; }
+
+    public string? GoogleID { get; set; }
+    public string? GoogleEmail { get; set; }
+
+    public DateTime RegistrationDate { get; set; }
+    public string? Role { get; set; }
+    public string? FrontendRole { get; set; }
+
+    public string? ScoreSaberProfile { get; set; }
+    public string? BeatLeaderProfile { get; set; }
+
+    public async Task<User> UpdateProfilesAsync()
     {
-        public ulong UID { get; set; }
+        UserProfiles userProfiles = await UserProfiles.GetUserProfilesAsync(SSID, OptBLUID);
+        ScoreSaberProfile = userProfiles.ScoreSaberProfile;
+        BeatLeaderProfile = userProfiles.BeatLeaderProfile;
 
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? SSID { get; set; }
+        return this;
+    }
+}
 
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? OptBLUID { get; set; }
+public struct UserProfiles
+{
+    public string? ScoreSaberProfile { get; set; }
+    public string? BeatLeaderProfile { get; set; }
 
-        public string Username { get; set; }
-        public string? UserPfpLink { get; set; }
-        public string? UserBio { get; set; }
+    // No async constructors :(
+    public static async Task<UserProfiles> GetUserProfilesAsync(ulong? SSID, ulong? OptBLUID)
+    {
+        using var httpClient = new HttpClient();
 
-        [JsonConverter(typeof(NullableUInt64ToStringConverter))]
-        public ulong? DiscordID { get; set; }
-        public string? DiscordUsername { get; set; }
+        UserProfiles userProfiles = new UserProfiles { ScoreSaberProfile = null, BeatLeaderProfile = null };
 
-        public string? GoogleID { get; set; }
-        public string? GoogleEmail { get; set; }
-
-        public DateTime RegistrationDate { get; set; }
-        public string? Role { get; set; }
-        public string? FrontendRole { get; set; }
-
-        public string? ScoreSaberProfile { get; set; }
-        public string? BeatLeaderProfile { get; set; }
-
-        public async Task<User> UpdateProfilesAsync()
+        if (SSID != null)
         {
-            UserProfiles userProfiles = await UserProfiles.GetUserProfilesAsync(SSID, OptBLUID);
-            ScoreSaberProfile = userProfiles.ScoreSaberProfile;
-            BeatLeaderProfile = userProfiles.BeatLeaderProfile;
-
-            return this;
+            var scoreSaberResponse = await httpClient.GetAsync($"https://scoresaber.com/api/player/{SSID}/full");
+            if (scoreSaberResponse.IsSuccessStatusCode)
+            {
+                userProfiles.ScoreSaberProfile = await scoreSaberResponse.Content.ReadAsStringAsync();
+            }
         }
-    }
 
-    public struct UserProfiles
-    {
-        public string? ScoreSaberProfile { get; set; }
-        public string? BeatLeaderProfile { get; set; }
-
-        // No async constructors :(
-        public static async Task<UserProfiles> GetUserProfilesAsync(ulong? SSID, ulong? OptBLUID)
+        if (OptBLUID != null)
         {
-            using var httpClient = new HttpClient();
+            NameValueCollection beatLeaderParameters = HttpUtility.ParseQueryString(string.Empty);
+            beatLeaderParameters["stats"] = "true";
+            beatLeaderParameters["keepOriginalId"] = "false";
+            beatLeaderParameters["leaderboardContext"] = "general";
 
-            UserProfiles userProfiles = new UserProfiles { ScoreSaberProfile = null, BeatLeaderProfile = null };
-
-            if (SSID != null)
+            var beatLeaderResponse = await httpClient.GetAsync($"https://api.beatleader.com/player/{OptBLUID}?{beatLeaderParameters}");
+            if (beatLeaderResponse.IsSuccessStatusCode)
             {
-                var scoreSaberResponse = await httpClient.GetAsync($"https://scoresaber.com/api/player/{SSID}/full");
-                if (scoreSaberResponse.IsSuccessStatusCode)
-                {
-                    userProfiles.ScoreSaberProfile = await scoreSaberResponse.Content.ReadAsStringAsync();
-                }
+                userProfiles.BeatLeaderProfile = await beatLeaderResponse.Content.ReadAsStringAsync();
             }
-
-            if (OptBLUID != null)
-            {
-                NameValueCollection beatLeaderParameters = HttpUtility.ParseQueryString(string.Empty);
-                beatLeaderParameters["stats"] = "true";
-                beatLeaderParameters["keepOriginalId"] = "false";
-                beatLeaderParameters["leaderboardContext"] = "general";
-
-                var beatLeaderResponse = await httpClient.GetAsync($"https://api.beatleader.com/player/{OptBLUID}?{beatLeaderParameters}");
-                if (beatLeaderResponse.IsSuccessStatusCode)
-                {
-                    userProfiles.BeatLeaderProfile = await beatLeaderResponse.Content.ReadAsStringAsync();
-                }
-            }
-
-            return userProfiles;
         }
+
+        return userProfiles;
     }
+}
 
 
-    public struct Map
-    {
-        public ulong MID { get; set; }
-        public string BSMapID { get; set; }
-        public string MapName { get; set; }
-        public string MapImageLink { get; set; }
-        public ulong MapPoolID { get; set; }
-        public int Season { get; set; }
-        public string Difficulty { get; set; }
-    }
+public struct Map
+{
+    public ulong MID { get; set; }
+    public string BSMapID { get; set; }
+    public string MapName { get; set; }
+    public string MapImageLink { get; set; }
+    public ulong MapPoolID { get; set; }
+    public int Season { get; set; }
+    public string Difficulty { get; set; }
+}
 
-    public struct MapPool
-    {
-        public ulong MapPoolID { get; set; }
-        public string MapPoolName { get; set; }
-        public string MapPoolDescription { get; set; }
-        public List<Map> Maps { get; set; }
-        public int Season { get; set; }
-    }
+public struct MapPool
+{
+    public ulong MapPoolID { get; set; }
+    public string MapPoolName { get; set; }
+    public string MapPoolDescription { get; set; }
+    public List<Map> Maps { get; set; }
+    public int Season { get; set; }
+}
 
-    public struct Match
-    {
-        public ulong MatchID { get; set; }
-        public ulong Player1ID { get; set; }
-        public ulong Player2ID { get; set; }
-        public bool Complete { get; set; }
-        public ulong? WinnerID { get; set; }
-        public int? Player1Score { get; set; }
-        public int? Player2Score { get; set; }
-        public DateTime? MatchDate { get; set; }
-        public List<MatchScore> Scores { get; set; }
-        public int Season { get; set; }
-        public ulong MapPoolID { get; set; }
+public struct Match
+{
+    public ulong MatchID { get; set; }
+    public ulong Player1ID { get; set; }
+    public ulong Player2ID { get; set; }
+    public bool Complete { get; set; }
+    public ulong? WinnerID { get; set; }
+    public int? Player1Score { get; set; }
+    public int? Player2Score { get; set; }
+    public DateTime? MatchDate { get; set; }
+    public List<MatchScore> Scores { get; set; }
+    public int Season { get; set; }
+    public ulong MapPoolID { get; set; }
 
-    }
+}
 
-    public struct MatchScore
-    {
-        public ulong ScoreID { get; set; }
-        public ulong UID { get; set; }
-        public ulong MapID { get; set; }
-        public ulong MatchID { get; set; }
-        public int Score { get; set; }
-        public int MaxScore { get; set; }
-        public int Misses { get; set; }
-    }
+public struct MatchScore
+{
+    public ulong ScoreID { get; set; }
+    public ulong UID { get; set; }
+    public ulong MapID { get; set; }
+    public ulong MatchID { get; set; }
+    public int Score { get; set; }
+    public int MaxScore { get; set; }
+    public int Misses { get; set; }
+}
 
-    public struct QualifierScore
-    {
-        public ulong ScoreID { get; set; }
-        public ulong UID { get; set; }
-        public ulong MapID { get; set; }
-        public int Score { get; set; }
-        public int MaxScore { get; set; }
-        public int Misses { get; set; }
-        public ulong QualifierID { get; set; }
-    }
+public struct QualifierScore
+{
+    public ulong ScoreID { get; set; }
+    public ulong UID { get; set; }
+    public ulong MapID { get; set; }
+    public int Score { get; set; }
+    public int MaxScore { get; set; }
+    public int Misses { get; set; }
+    public ulong QualifierID { get; set; }
 }
