@@ -20,9 +20,13 @@ public static class FrontFacingDataTypes
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? DiscordID { get; set; }
         public string? DiscordUsername { get; set; }
+
         public DateTime RegistrationDate { get; set; }
         public string? Role { get; set; }
         public string? FrontendRole { get; set; }
+
+        public string? ScoreSaberProfile { get; set; }
+        public string? BeatLeaderProfile { get; set; }
 
         public FrontFacingUser(DataTypes.User user)
         {
@@ -37,6 +41,8 @@ public static class FrontFacingDataTypes
             RegistrationDate = user.RegistrationDate;
             Role = user.Role;
             FrontendRole = user.FrontendRole;
+            ScoreSaberProfile = user.ScoreSaberProfile;
+            BeatLeaderProfile = user.BeatLeaderProfile;
         }
     }
 
@@ -54,11 +60,25 @@ public static class FrontFacingDataTypes
         [JsonConverter(typeof(NullableUInt64ToStringConverter))]
         public ulong? DiscordID { get; set; }
         public string? DiscordUsername { get; set; }
+
         public string? GoogleID { get; set; }
         public string? GoogleEmail { get; set; }
+
         public DateTime RegistrationDate { get; set; }
         public string? Role { get; set; }
         public string? FrontendRole { get; set; }
+
+        public string? ScoreSaberProfile { get; set; }
+        public string? BeatLeaderProfile { get; set; }
+
+        public async Task<AddUser> UpdateProfilesAsync()
+        {
+            DataTypes.UserProfiles userProfiles = await DataTypes.UserProfiles.GetUserProfilesAsync(SSID, OptBLUID);
+            ScoreSaberProfile = userProfiles.ScoreSaberProfile;
+            BeatLeaderProfile = userProfiles.BeatLeaderProfile;
+
+            return this;
+        }
     }
 
     public struct UpdateUser
