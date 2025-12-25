@@ -1,5 +1,4 @@
 using System.Collections.Specialized;
-using System.Net.Http.Headers;
 using System.Web;
 using FishyAPI.Tools;
 using FishyAPI.Tools.Authentication;
@@ -13,7 +12,7 @@ public static class SteamAuth
 {
     public static void MapAuthRoutes(WebApplication app, Tokenizer apiToken, ConnectionManager connManager)
     {
-        app.MapGet("/Auth/Steam", async Task (HttpContext context) =>
+        app.MapGet("/Auth/Steam", (HttpContext context) =>
         {
             NameValueCollection parameters = HttpUtility.ParseQueryString(string.Empty);
             parameters["openid.ns"] = "http://specs.openid.net/auth/2.0";
@@ -24,7 +23,7 @@ public static class SteamAuth
             parameters["openid.realm"] = "https://api.fishnation.xyz";
 
             context.Response.Redirect($"https://steamcommunity.com/openid/login?{parameters}");
-        }).WithName("SteamAuth").WithOpenApi();
+        }).WithName("SteamAuth").WithOpenApi().RequireAuthorization("User");
 
         string steamApiKey = Environment.GetEnvironmentVariable("STEAM_API_KEY") ?? throw new InvalidOperationException("The steam api key is not in the environment variables");
         app.MapGet("/Auth/Steam/Callback", async Task (HttpContext context) =>
