@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Web;
 using System.Collections.Specialized;
+using MySql.Data.MySqlClient;
 namespace FishyAPI.Tools.DataTypes;
 
 public struct User
@@ -30,6 +31,25 @@ public struct User
 
     public string? ScoreSaberProfile { get; set; }
     public string? BeatLeaderProfile { get; set; }
+
+    public User(MySqlDataReader reader)
+    {
+        UID = reader.GetUInt64(0);
+        SSID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
+        OptBLUID = reader.IsDBNull(2) ? null : reader.GetUInt64(2);
+        Username = reader.GetString(3);
+        UserPfpLink = reader.IsDBNull(4) ? null : reader.GetString(4);
+        UserBio = reader.IsDBNull(5) ? null : reader.GetString(5);
+        DiscordID = reader.IsDBNull(6) ? null : reader.GetUInt64(6);
+        DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
+        GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
+        GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
+        RegistrationDate = reader.GetDateTime(10);
+        Role = reader.IsDBNull(11) ? null : reader.GetString(11);
+        FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
+        ScoreSaberProfile = reader.IsDBNull(13) ? null : reader.GetString(13);
+        BeatLeaderProfile = reader.IsDBNull(14) ? null : reader.GetString(14);
+    }
 
     public async Task<User> UpdateProfilesAsync()
     {
