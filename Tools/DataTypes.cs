@@ -135,6 +135,20 @@ public struct Match
     public int Season { get; set; }
     public ulong MapPoolID { get; set; }
 
+    public Match(MySqlDataReader reader)
+    {
+        MatchID = reader.GetUInt64(0);
+        Player1ID = reader.GetUInt64(1);
+        Player2ID = reader.GetUInt64(2);
+        Player1Score = reader.IsDBNull(3) ? null : reader.GetInt32(3);
+        Player2Score = reader.IsDBNull(4) ? null : reader.GetInt32(4);
+        MatchDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5);
+        Complete = reader.GetBoolean(6);
+        WinnerID = reader.IsDBNull(7) ? null : reader.GetUInt64(7);
+        Season = reader.GetInt32(8);
+        MapPoolID = reader.GetUInt64(9);
+        Scores = new List<MatchScore>();
+    }
 }
 
 public struct MatchScore
