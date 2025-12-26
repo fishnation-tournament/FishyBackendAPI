@@ -110,6 +110,17 @@ public struct Map
     public ulong MapPoolID { get; set; }
     public int Season { get; set; }
     public string Difficulty { get; set; }
+
+    public Map(MySqlDataReader reader)
+    {
+        MID = reader.GetUInt64(0);
+        BSMapID = reader.GetString(1);
+        MapName = reader.GetString(2);
+        MapImageLink = reader.GetString(3);
+        MapPoolID = reader.GetUInt64(4);
+        Season = reader.GetInt32(5);
+        Difficulty = reader.GetString(6);
+    }
 }
 
 public struct MapPool
@@ -119,6 +130,15 @@ public struct MapPool
     public string MapPoolDescription { get; set; }
     public List<Map> Maps { get; set; }
     public int Season { get; set; }
+
+    public MapPool(MySqlDataReader reader)
+    {
+        MapPoolID = reader.GetUInt64(0);
+        MapPoolName = reader.GetString(1);
+        MapPoolDescription = reader.GetString(2);
+        Season = reader.GetInt32(3);
+        Maps = new List<Map>();
+    }
 }
 
 public struct Match

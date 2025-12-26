@@ -1,59 +1,38 @@
 ﻿using MySql.Data.MySqlClient;
+using FishyAPI.Tools.DataTypes;
+using FishyAPI.Tools.FrontFacingDataTypes;
 namespace FishyAPI.Tools;
 
 public static class MapTools
 {
-    public static List<DataTypes.Map> ReadMaps(MySqlDataReader reader)
+    public static List<Map> ReadMaps(MySqlDataReader reader)
     {
-        List<DataTypes.Map> maps = new List<DataTypes.Map>();
+        List<Map> maps = new List<Map>();
         while (reader.Read())
         {
-            DataTypes.Map map = new DataTypes.Map();
-            map.MID = reader.GetUInt64(0);
-            map.BSMapID = reader.GetString(1);
-            map.MapName = reader.GetString(2);
-            map.MapImageLink = reader.GetString(3);
-            map.MapPoolID = reader.GetUInt64(4);
-            map.Season = reader.GetInt32(5);
-            map.Difficulty = reader.GetString(6);
-            maps.Add(map);
+            maps.Add(new Map(reader));
         }
-
-        reader.Close();
 
         return maps;
     }
 
-    public static DataTypes.Map ReadSingleMap(MySqlDataReader reader)
+    public static Map ReadSingleMap(MySqlDataReader reader)
     {
-        DataTypes.Map map = new DataTypes.Map();
+        Map map = new Map();
         while (reader.Read())
         {
-            map.MID = reader.GetUInt64(0);
-            map.BSMapID = reader.GetString(1);
-            map.MapName = reader.GetString(2);
-            map.MapImageLink = reader.GetString(3);
-            map.MapPoolID = reader.GetUInt64(4);
-            map.Season = reader.GetInt32(5);
-            map.Difficulty = reader.GetString(6);
+            map = new Map(reader);
         }
-        reader.Close();
 
         return map;
     }
 
-    public static List<DataTypes.MapPool> ReadMapPools(MySqlConnection dbConn, MySqlDataReader reader)
+    public static List<MapPool> ReadMapPools(MySqlConnection dbConn, MySqlDataReader reader)
     {
-        List<DataTypes.MapPool> mapPools = new List<DataTypes.MapPool>();
+        List<MapPool> mapPools = new List<MapPool>();
         while (reader.Read())
         {
-            DataTypes.MapPool mapPool = new DataTypes.MapPool();
-            mapPool.MapPoolID = reader.GetUInt64(0);
-            mapPool.MapPoolName = reader.GetString(1);
-            mapPool.MapPoolDescription = reader.GetString(2);
-            mapPool.Season = reader.GetInt32(3);
-            mapPool.Maps = new List<DataTypes.Map>();
-            mapPools.Add(mapPool);
+            mapPools.Add(new MapPool(reader));
         }
         reader.Close();
 
@@ -67,15 +46,12 @@ public static class MapTools
         return mapPools;
     }
 
-    public static DataTypes.MapPool ReadSingleMapPool(MySqlConnection dbConn, MySqlDataReader reader)
+    public static MapPool ReadSingleMapPool(MySqlConnection dbConn, MySqlDataReader reader)
     {
-        DataTypes.MapPool mapPool = new DataTypes.MapPool();
+        MapPool mapPool = new MapPool();
         while (reader.Read())
         {
-            mapPool.MapPoolID = reader.GetUInt64(0);
-            mapPool.MapPoolName = reader.GetString(1);
-            mapPool.MapPoolDescription = reader.GetString(2);
-            mapPool.Season = reader.GetInt32(3);
+            mapPool = new MapPool(reader);
         }
         reader.Close();
 
@@ -84,95 +60,95 @@ public static class MapTools
         return mapPool;
     }
 
-    public static List<DataTypes.MapPool> GetMapPools(MySqlConnection dbConn)
+    public static List<MapPool> GetMapPools(MySqlConnection dbConn)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM map_pools", dbConn);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.MapPool> mapPools = ReadMapPools(dbConn, reader);
+        List<MapPool> mapPools = ReadMapPools(dbConn, reader);
 
         return mapPools;
     }
 
-    public static DataTypes.MapPool GetMapPoolById(MySqlConnection dbConn, ulong MapPoolID)
+    public static MapPool GetMapPoolById(MySqlConnection dbConn, ulong MapPoolID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM map_pools WHERE MPID = @MapPoolID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@MapPoolID", MapPoolID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        DataTypes.MapPool mapPoolRes = ReadSingleMapPool(dbConn, reader);
+        MapPool mapPoolRes = ReadSingleMapPool(dbConn, reader);
 
         return mapPoolRes;
     }
 
-    public static List<DataTypes.MapPool> GetMapPoolByName(MySqlConnection dbConn, string searchTerm)
+    public static List<MapPool> GetMapPoolByName(MySqlConnection dbConn, string searchTerm)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM map_pools WHERE MapPoolName LIKE @searchTerm", dbConn);
         cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.MapPool> mapPools = ReadMapPools(dbConn, reader);
+        List<MapPool> mapPools = ReadMapPools(dbConn, reader);
 
         return mapPools;
     }
 
-    public static List<DataTypes.MapPool> GetMapPoolsBySeason(MySqlConnection dbConn, int season)
+    public static List<MapPool> GetMapPoolsBySeason(MySqlConnection dbConn, int season)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM map_pools WHERE Season = @season", dbConn);
         cmd.Parameters.AddWithValue("@season", season);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.MapPool> mapPools = ReadMapPools(dbConn, reader);
+        List<MapPool> mapPools = ReadMapPools(dbConn, reader);
 
         return mapPools;
     }
 
-    public static List<DataTypes.Map> GetMaps(MySqlConnection dbConn)
+    public static List<Map> GetMaps(MySqlConnection dbConn)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps", dbConn);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.Map> maps = ReadMaps(reader);
+        List<Map> maps = ReadMaps(reader);
 
         return maps;
     }
 
-    public static List<DataTypes.Map> GetMapsInMapPool(MySqlConnection dbConn, ulong MapPoolID)
+    public static List<Map> GetMapsInMapPool(MySqlConnection dbConn, ulong MapPoolID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps WHERE MPID = @MapPoolID", dbConn);
         cmd.Parameters.AddWithValue("@MapPoolID", MapPoolID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.Map> maps = ReadMaps(reader);
+        List<Map> maps = ReadMaps(reader);
 
         return maps;
     }
 
-    public static DataTypes.Map GetMapById(MySqlConnection dbConn, ulong MID)
+    public static Map GetMapById(MySqlConnection dbConn, ulong MID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps WHERE MapID = @MID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@MID", MID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        DataTypes.Map map = ReadSingleMap(reader);
+        Map map = ReadSingleMap(reader);
 
         return map;
     }
 
-    public static List<DataTypes.Map> GetMapsByName(MySqlConnection dbConn, string searchTerm)
+    public static List<Map> GetMapsByName(MySqlConnection dbConn, string searchTerm)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps WHERE MapName LIKE @searchTerm", dbConn);
         cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.Map> maps = ReadMaps(reader);
+        List<Map> maps = ReadMaps(reader);
 
         return maps;
     }
 
-    public static List<DataTypes.Map> GetMapsBySeason(MySqlConnection dbConn, int season)
+    public static List<Map> GetMapsBySeason(MySqlConnection dbConn, int season)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps WHERE Season = @season", dbConn);
         cmd.Parameters.AddWithValue("@season", season);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.Map> maps = ReadMaps(reader);
+        List<Map> maps = ReadMaps(reader);
 
         return maps;
     }
 
-    public static DataTypes.Map AddMap(MySqlConnection dbConn, FrontFacingDataTypes.FrontFacingMap frontFacingMap) //POST
+    public static Map AddMap(MySqlConnection dbConn, FrontFacingMap frontFacingMap) //POST
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO maps
@@ -191,22 +167,16 @@ public static class MapTools
         MySqlCommand getIdQuery = new MySqlCommand("SELECT * FROM maps WHERE MapID = @MapID", dbConn);
         getIdQuery.Parameters.AddWithValue("@MapID", cmd.LastInsertedId);
         using MySqlDataReader reader = getIdQuery.ExecuteReader();
-        DataTypes.Map mapOut = new DataTypes.Map();
+        Map mapOut = new Map();
         if (reader.Read())
         {
-            mapOut.MID = reader.GetUInt64(0);
-            mapOut.BSMapID = reader.GetString(1);
-            mapOut.MapName = reader.GetString(2);
-            mapOut.MapImageLink = reader.GetString(3);
-            mapOut.MapPoolID = reader.GetUInt64(4);
-            mapOut.Season = reader.GetInt32(5);
-            mapOut.Difficulty = reader.GetString(6);
+            mapOut = new Map(reader);
         }
 
         return mapOut;
     }
 
-    public static void UpdateMap(MySqlConnection dbConn, DataTypes.Map map) //PUT
+    public static void UpdateMap(MySqlConnection dbConn, Map map) //PUT
     {
         MySqlCommand cmd = new MySqlCommand("""
         UPDATE maps SET
@@ -235,7 +205,7 @@ public static class MapTools
         cmd.ExecuteNonQuery();
     }
 
-    public static DataTypes.MapPool AddMapPool(MySqlConnection dbConn, FrontFacingDataTypes.FrontFacingMapPool frontFacingMapPool) //POST
+    public static MapPool AddMapPool(MySqlConnection dbConn, FrontFacingMapPool frontFacingMapPool) //POST
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO map_pools
@@ -251,19 +221,16 @@ public static class MapTools
         MySqlCommand getIdQuery = new MySqlCommand("SELECT * FROM map_pools WHERE MPID = @MPID", dbConn);
         getIdQuery.Parameters.AddWithValue("@MPID", cmd.LastInsertedId);
         using MySqlDataReader reader = getIdQuery.ExecuteReader();
-        DataTypes.MapPool mapPoolOut = new DataTypes.MapPool();
+        MapPool mapPoolOut = new MapPool();
         if (reader.Read())
         {
-            mapPoolOut.MapPoolID = reader.GetUInt64(0);
-            mapPoolOut.MapPoolName = reader.GetString(1);
-            mapPoolOut.MapPoolDescription = reader.GetString(2);
-            mapPoolOut.Season = reader.GetInt32(3);
+            mapPoolOut = new MapPool(reader);
         }
 
         return mapPoolOut;
     }
 
-    public static void UpdateMapPool(MySqlConnection dbConn, DataTypes.MapPool mapPool) //PUT
+    public static void UpdateMapPool(MySqlConnection dbConn, MapPool mapPool) //PUT
     {
         MySqlCommand cmd = new MySqlCommand("""
         UPDATE map_pools SET
