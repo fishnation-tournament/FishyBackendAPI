@@ -19,7 +19,7 @@ public static class MapTools
     public static Map ReadSingleMap(MySqlDataReader reader)
     {
         Map map = new Map();
-        while (reader.Read())
+        if (reader.Read())
         {
             map = new Map(reader);
         }
@@ -49,7 +49,7 @@ public static class MapTools
     public static MapPool ReadSingleMapPool(MySqlConnection dbConn, MySqlDataReader reader)
     {
         MapPool mapPool = new MapPool();
-        while (reader.Read())
+        if (reader.Read())
         {
             mapPool = new MapPool(reader);
         }
@@ -164,16 +164,7 @@ public static class MapTools
         cmd.Parameters.AddWithValue("@Difficulty", frontFacingMap.Difficulty);
         cmd.ExecuteNonQuery();
 
-        MySqlCommand getIdQuery = new MySqlCommand("SELECT * FROM maps WHERE MapID = @MapID", dbConn);
-        getIdQuery.Parameters.AddWithValue("@MapID", cmd.LastInsertedId);
-        using MySqlDataReader reader = getIdQuery.ExecuteReader();
-        Map mapOut = new Map();
-        if (reader.Read())
-        {
-            mapOut = new Map(reader);
-        }
-
-        return mapOut;
+        return GetMapById(dbConn, (ulong)cmd.LastInsertedId);
     }
 
     public static void UpdateMap(MySqlConnection dbConn, Map map) //PUT
@@ -218,16 +209,7 @@ public static class MapTools
         cmd.Parameters.AddWithValue("@Season", frontFacingMapPool.Season);
         cmd.ExecuteNonQuery();
 
-        MySqlCommand getIdQuery = new MySqlCommand("SELECT * FROM map_pools WHERE MPID = @MPID", dbConn);
-        getIdQuery.Parameters.AddWithValue("@MPID", cmd.LastInsertedId);
-        using MySqlDataReader reader = getIdQuery.ExecuteReader();
-        MapPool mapPoolOut = new MapPool();
-        if (reader.Read())
-        {
-            mapPoolOut = new MapPool(reader);
-        }
-
-        return mapPoolOut;
+        return GetMapPoolById(dbConn, (ulong)cmd.LastInsertedId);
     }
 
     public static void UpdateMapPool(MySqlConnection dbConn, MapPool mapPool) //PUT

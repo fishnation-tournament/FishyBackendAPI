@@ -27,7 +27,7 @@ public class MatchTools
     {
         Match match = new Match();
 
-        while (reader.Read())
+        if (reader.Read())
         {
             match = new Match(reader);
         }

@@ -20,7 +20,7 @@ public static class UserTools
     private static User ReadSingleResult(MySqlDataReader reader)
     {
         User user = new User();
-        while (reader.Read())
+        if (reader.Read())
         {
             user = new User(reader);
         }
@@ -121,12 +121,7 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@BeatLeaderProfile", user.BeatLeaderProfile ?? (object)DBNull.Value);
         cmd.ExecuteNonQuery();
 
-        MySqlCommand getIdQuery = new MySqlCommand("SELECT * FROM users WHERE UserID = @UserID", dbConn);
-        getIdQuery.Parameters.AddWithValue("@UserID", cmd.LastInsertedId);
-        using MySqlDataReader reader = getIdQuery.ExecuteReader();
-        User newUser = ReadSingleResult(reader);
-
-        return newUser;
+        return GetUserById(dbConn, (ulong)cmd.LastInsertedId);
     }
 
     public static void UpdateUser(MySqlConnection dbConn, User user)

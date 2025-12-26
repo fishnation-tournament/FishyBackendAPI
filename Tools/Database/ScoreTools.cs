@@ -19,7 +19,7 @@ public class ScoreTools
     public static QualifierScore ReadSingleQualifierScore(MySqlDataReader reader)
     {
         QualifierScore score = new QualifierScore();
-        while (reader.Read())
+        if (reader.Read())
         {
             score = new QualifierScore(reader);
         }
