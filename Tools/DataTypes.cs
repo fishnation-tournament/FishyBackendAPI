@@ -160,6 +160,17 @@ public struct MatchScore
     public int Score { get; set; }
     public int MaxScore { get; set; }
     public int Misses { get; set; }
+
+    public MatchScore(MySqlDataReader reader)
+    {
+        ScoreID = reader.GetUInt64(0);
+        UID = reader.GetUInt64(1);
+        MapID = reader.GetUInt64(2);
+        MatchID = reader.GetUInt64(3);
+        Score = reader.GetInt32(4);
+        MaxScore = reader.GetInt32(5);
+        Misses = reader.GetInt32(6);
+    }
 }
 
 public struct QualifierScore
@@ -171,4 +182,15 @@ public struct QualifierScore
     public int MaxScore { get; set; }
     public int Misses { get; set; }
     public ulong QualifierID { get; set; }
+
+    public QualifierScore(MySqlDataReader reader)
+    {
+        ScoreID = reader.GetUInt64(0);
+        UID = reader.GetUInt64(1);
+        MapID = reader.GetUInt64(2);
+        Score = reader.GetInt32(3);
+        MaxScore = reader.GetInt32(4);
+        Misses = reader.GetInt32(5);
+        QualifierID = reader.GetUInt64(6);
+    }
 }
