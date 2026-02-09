@@ -1,130 +1,107 @@
 ﻿using MySql.Data.MySqlClient;
+using FishyAPI.Tools.DataTypes;
+using FishyAPI.Tools.FrontFacingDataTypes;
 namespace FishyAPI.Tools;
 
 public class ScoreTools
 {
-    public static List<DataTypes.MatchScore> ReadMatchScores(MySqlDataReader reader)
+    public static List<MatchScore> ReadMatchScores(MySqlDataReader reader)
     {
-        List<DataTypes.MatchScore> scores = new List<DataTypes.MatchScore>();
+        List<MatchScore> scores = new List<MatchScore>();
         while (reader.Read())
         {
-            DataTypes.MatchScore score = new DataTypes.MatchScore();
-            score.ScoreID = reader.GetUInt64(0);
-            score.UID = reader.GetUInt64(1);
-            score.MapID = reader.GetUInt64(2);
-            score.MatchID = reader.GetUInt64(3);
-            score.Score = reader.GetInt32(4);
-            score.MaxScore = reader.GetInt32(5);
-            score.Misses = reader.GetInt32(6);
-            scores.Add(score);
+            scores.Add(new MatchScore(reader));
         }
-        reader.Close();
 
         return scores;
     }
 
-    public static DataTypes.QualifierScore ReadSingleQualifierScore(MySqlDataReader reader)
+    public static QualifierScore ReadSingleQualifierScore(MySqlDataReader reader)
     {
-        DataTypes.QualifierScore score = new DataTypes.QualifierScore();
-        while (reader.Read())
+        QualifierScore score = new QualifierScore();
+        if (reader.Read())
         {
-            score.ScoreID = reader.GetUInt64(0);
-            score.UID = reader.GetUInt64(1);
-            score.MapID = reader.GetUInt64(2);
-            score.Score = reader.GetInt32(3);
-            score.MaxScore = reader.GetInt32(4);
-            score.Misses = reader.GetInt32(5);
-            score.QualifierID = reader.GetUInt64(6);
+            score = new QualifierScore(reader);
         }
-        reader.Close();
 
         return score;
     }
 
-    public static List<DataTypes.QualifierScore> ReadQualifierScores(MySqlDataReader reader)
+    public static List<QualifierScore> ReadQualifierScores(MySqlDataReader reader)
     {
-        List<DataTypes.QualifierScore> scores = new List<DataTypes.QualifierScore>();
+        List<QualifierScore> scores = new List<QualifierScore>();
         while (reader.Read())
         {
-            DataTypes.QualifierScore score = new DataTypes.QualifierScore();
-            score.ScoreID = reader.GetUInt64(0);
-            score.UID = reader.GetUInt64(1);
-            score.MapID = reader.GetUInt64(2);
-            score.Score = reader.GetInt32(3);
-            score.MaxScore = reader.GetInt32(4);
-            score.Misses = reader.GetInt32(5);
-            score.QualifierID = reader.GetUInt64(6);
-            scores.Add(score);
+            scores.Add(new QualifierScore(reader));
         }
-        reader.Close();
 
         return scores;
     }
 
-    public static List<DataTypes.MatchScore> GetMatchScores(MySqlConnection dbConn, ulong MatchID)
+    public static List<MatchScore> GetMatchScores(MySqlConnection dbConn, ulong MatchID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM player_scores WHERE MatchID = @MatchID", dbConn);
         cmd.Parameters.AddWithValue("@MatchID", MatchID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.MatchScore> scores = ReadMatchScores(reader);
+        List<MatchScore> scores = ReadMatchScores(reader);
 
         return scores;
     }
 
-    public static List<DataTypes.QualifierScore> GetQualifierScores(MySqlConnection dbConn, ulong QualifierID)
+    public static List<QualifierScore> GetQualifierScores(MySqlConnection dbConn, ulong QualifierID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM qualifier_scores WHERE QualifierID = @QualifierID", dbConn);
         cmd.Parameters.AddWithValue("@QualifierID", QualifierID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.QualifierScore> scores = ReadQualifierScores(reader);
+        List<QualifierScore> scores = ReadQualifierScores(reader);
 
         return scores;
     }
 
-    public static List<DataTypes.QualifierScore> GetQualifierScoreByMapID(MySqlConnection dbConn, ulong QualifierID, ulong MapID)
+    public static List<QualifierScore> GetQualifierScoreByMapID(MySqlConnection dbConn, ulong QualifierID, ulong MapID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM qualifier_scores WHERE MapID = @MapID AND QualifierID = @QualifierID", dbConn);
         cmd.Parameters.AddWithValue("@MapID", MapID);
         cmd.Parameters.AddWithValue("@QualifierID", QualifierID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.QualifierScore> scores = ReadQualifierScores(reader);
+        List<QualifierScore> scores = ReadQualifierScores(reader);
 
         return scores;
     }
 
-    public static List<DataTypes.QualifierScore> GetQualifierScoresByUID(MySqlConnection dbConn, ulong QualifierID, ulong UID)
+    public static List<QualifierScore> GetQualifierScoresByUID(MySqlConnection dbConn, ulong QualifierID, ulong UID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM qualifier_scores WHERE UID = @UID AND QualifierID = @QualifierID", dbConn);
         cmd.Parameters.AddWithValue("@UID", UID);
         cmd.Parameters.AddWithValue("@QualifierID", QualifierID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<DataTypes.QualifierScore> scores = ReadQualifierScores(reader);
+        List<QualifierScore> scores = ReadQualifierScores(reader);
 
         return scores;
     }
 
-    public static DataTypes.QualifierScore GetQualifierScoreByQualifierID(MySqlConnection dbConn, ulong QualifierID)
+    public static QualifierScore GetQualifierScoreByQualifierID(MySqlConnection dbConn, ulong QualifierID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM qualifier_scores WHERE QualifierID = @QualifierID", dbConn);
         cmd.Parameters.AddWithValue("@QualifierID", QualifierID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        DataTypes.QualifierScore score = ReadSingleQualifierScore(reader);
+        QualifierScore score = ReadSingleQualifierScore(reader);
 
         return score;
     }
 
-    public static DataTypes.QualifierScore GetQualifierScoreByUIDAndMapID(MySqlConnection dbConn, ulong UID, ulong MapID)
+    public static QualifierScore GetQualifierScoreByUIDAndMapID(MySqlConnection dbConn, ulong UID, ulong MapID)
     {
         MySqlCommand cmd = new MySqlCommand("SELECT * FROM qualifier_scores WHERE UID = @UID AND MapID = @MapID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@UID", UID);
         cmd.Parameters.AddWithValue("@MapID", MapID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        DataTypes.QualifierScore score = ReadSingleQualifierScore(reader);
+        QualifierScore score = ReadSingleQualifierScore(reader);
 
         return score;
     }
 
-    public static void CreateMatchScore(MySqlConnection dbConn, FrontFacingDataTypes.FrontFacingMatchScore score)
+    public static void CreateMatchScore(MySqlConnection dbConn, FrontFacingMatchScore score)
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO player_scores
@@ -141,7 +118,7 @@ public class ScoreTools
         cmd.ExecuteNonQuery();
     }
 
-    public static void CreateQualifierScore(MySqlConnection dbConn, FrontFacingDataTypes.FrontFacingQualifierScore score)
+    public static void CreateQualifierScore(MySqlConnection dbConn, FrontFacingQualifierScore score)
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO qualifier_scores

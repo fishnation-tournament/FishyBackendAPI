@@ -11,26 +11,8 @@ public static class UserTools
         List<User> users = new List<User>();
         while (reader.Read())
         {
-            User user = new User();
-            user.UID = reader.GetUInt64(0);
-            user.SSID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
-            user.OptBLUID = reader.IsDBNull(2) ? null : reader.GetUInt64(2);
-            user.Username = reader.GetString(3);
-            user.UserPfpLink = reader.IsDBNull(4) ? null : reader.GetString(4);
-            user.UserBio = reader.IsDBNull(5) ? null : reader.GetString(5);
-            user.DiscordID = reader.IsDBNull(6) ? null : reader.GetUInt64(6);
-            user.DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
-            user.GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
-            user.GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
-            user.RegistrationDate = reader.GetDateTime(10);
-            user.Role = reader.IsDBNull(11) ? null : reader.GetString(11);
-            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
-            user.ScoreSaberProfile = reader.IsDBNull(13) ? null : reader.GetString(13);
-            user.BeatLeaderProfile = reader.IsDBNull(14) ? null : reader.GetString(14);
-
-            users.Add(user);
+            users.Add(new User(reader));
         }
-        reader.Close();
 
         return users;
     }
@@ -38,25 +20,10 @@ public static class UserTools
     private static User ReadSingleResult(MySqlDataReader reader)
     {
         User user = new User();
-        while (reader.Read())
+        if (reader.Read())
         {
-            user.UID = reader.GetUInt64(0);
-            user.SSID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
-            user.OptBLUID = reader.IsDBNull(2) ? null : reader.GetUInt64(2);
-            user.Username = reader.GetString(3);
-            user.UserPfpLink = reader.IsDBNull(4) ? null : reader.GetString(4);
-            user.UserBio = reader.IsDBNull(5) ? null : reader.GetString(5);
-            user.DiscordID = reader.IsDBNull(6) ? null : reader.GetUInt64(6);
-            user.DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
-            user.GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
-            user.GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
-            user.RegistrationDate = reader.GetDateTime(10);
-            user.Role = reader.IsDBNull(11) ? null : reader.GetString(11);
-            user.FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
-            user.ScoreSaberProfile = reader.IsDBNull(13) ? null : reader.GetString(13);
-            user.BeatLeaderProfile = reader.IsDBNull(14) ? null : reader.GetString(14);
+            user = new User(reader);
         }
-        reader.Close();
 
         return user;
     }
@@ -154,12 +121,7 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@BeatLeaderProfile", user.BeatLeaderProfile ?? (object)DBNull.Value);
         cmd.ExecuteNonQuery();
 
-        MySqlCommand getIdQuery = new MySqlCommand("SELECT * FROM users WHERE UserID = @UserID", dbConn);
-        getIdQuery.Parameters.AddWithValue("@UserID", cmd.LastInsertedId);
-        using MySqlDataReader reader = getIdQuery.ExecuteReader();
-        User newUser = ReadSingleResult(reader);
-
-        return newUser;
+        return GetUserById(dbConn, (ulong)cmd.LastInsertedId);
     }
 
     public static void UpdateUser(MySqlConnection dbConn, User user)
