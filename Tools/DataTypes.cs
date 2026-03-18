@@ -1,24 +1,26 @@
-﻿using System.Text.Json.Serialization;
-using System.Web;
+﻿using System.Web;
 using System.Collections.Specialized;
+using FishyAPI.Tools.FrontFacingDataTypes;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json;
+
 namespace FishyAPI.Tools.DataTypes;
 
 public struct User
 {
     public ulong UID { get; set; }
 
-    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(NullableUInt64ToStringConverter))]
     public ulong? SSID { get; set; }
 
-    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(NullableUInt64ToStringConverter))]
     public ulong? OptBLUID { get; set; }
 
     public string Username { get; set; }
     public string? UserPfpLink { get; set; }
     public string? UserBio { get; set; }
 
-    [JsonConverter(typeof(NullableUInt64ToStringConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(NullableUInt64ToStringConverter))]
     public ulong? DiscordID { get; set; }
     public string? DiscordUsername { get; set; }
 
@@ -29,8 +31,8 @@ public struct User
     public string? Role { get; set; }
     public string? FrontendRole { get; set; }
 
-    public string? ScoreSaberProfile { get; set; }
-    public string? BeatLeaderProfile { get; set; }
+    public object? ScoreSaberProfile { get; set; }
+    public object? BeatLeaderProfile { get; set; }
 
     public User(MySqlDataReader reader)
     {
@@ -47,8 +49,18 @@ public struct User
         RegistrationDate = reader.GetDateTime(10);
         Role = reader.IsDBNull(11) ? null : reader.GetString(11);
         FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
-        ScoreSaberProfile = reader.IsDBNull(13) ? null : reader.GetString(13);
-        BeatLeaderProfile = reader.IsDBNull(14) ? null : reader.GetString(14);
+        string? ssProf = reader.IsDBNull(13) ? null : reader.GetString(13);
+        string? blProf = reader.IsDBNull(14) ? null : reader.GetString(14);
+
+        if (ssProf != null)
+        {
+            ScoreSaberProfile = JsonConvert.DeserializeObject(ssProf);
+        }
+        
+        if (blProf != null)
+        {
+            BeatLeaderProfile = JsonConvert.DeserializeObject(blProf);
+        }
     }
 
     public async Task<User> UpdateProfilesAsync()
@@ -97,6 +109,24 @@ public struct UserProfiles
         }
 
         return userProfiles;
+    }
+}
+
+public struct Player
+{
+    public int? PlayerID { get; set; }
+    public ulong UID { get; set; }
+    public int Season { get; set; }
+    public int? Seed { get; set; }
+    public FrontFacingUser User { get; set; }
+    
+    public Player(MySqlDataReader reader)
+    {
+        PlayerID = reader.GetInt32(0);
+        UID = reader.GetUInt64(1);
+        Season = reader.GetInt32(2);
+        Seed =  reader.IsDBNull(0) ? null : reader.GetInt32(3);
+        User = new FrontFacingUser();
     }
 }
 

@@ -23,8 +23,8 @@ public struct FrontFacingUser
     public string? Role { get; set; }
     public string? FrontendRole { get; set; }
 
-    public string? ScoreSaberProfile { get; set; }
-    public string? BeatLeaderProfile { get; set; }
+    public object? ScoreSaberProfile { get; set; }
+    public object? BeatLeaderProfile { get; set; }
 
     public FrontFacingUser(DataTypes.User user)
     {
@@ -66,8 +66,8 @@ public struct AddUser
     public string? Role { get; set; }
     public string? FrontendRole { get; set; }
 
-    public string? ScoreSaberProfile { get; set; }
-    public string? BeatLeaderProfile { get; set; }
+    public object? ScoreSaberProfile { get; set; }
+    public object? BeatLeaderProfile { get; set; }
 
     public async Task<AddUser> UpdateProfilesAsync()
     {

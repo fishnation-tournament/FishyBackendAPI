@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
 rm -rf ./linux-x64
 
 mkdir ./linux-x64

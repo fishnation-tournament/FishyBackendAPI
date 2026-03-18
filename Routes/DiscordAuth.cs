@@ -63,10 +63,24 @@ public static class DiscordAuth
             string token = "";
 
             using MySqlConnection dbConn = connManager.IssueConnection();
-
-            if (UserTools.CheckUserExistsDID(dbConn, ulong.Parse(userData["id"].ToString())))
+            bool userExists = UserTools.CheckUserExistsDID(dbConn, ulong.Parse(userData["id"].ToString()));
+            
+            
+            if (userExists)
             {
                 var user = UserTools.GetUserByDiscordId(dbConn, ulong.Parse(userData["id"].ToString()));
+                
+                if(user.SSID == null || user.OptBLUID == null)
+                {
+                    ulong? blid = UserTools.GetBLID(userData["id"].ToString());
+                    
+                    if (blid != null)
+                    {
+                        user.OptBLUID = blid;
+                    }
+                    UserTools.UpdateUser(dbConn, user);
+                }
+                
                 token = apiToken.GenerateToken(user, user.Role, DateTime.Now.AddDays(7));
                 var websiteRedirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);

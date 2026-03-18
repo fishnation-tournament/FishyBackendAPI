@@ -1,0 +1,6 @@
+﻿# Keep shell scripts LF so they run on Linux after Windows edits.
+*.sh text eol=lf
+
+# Keep batch scripts CRLF for Windows tooling.
+*.bat text eol=crlf
+

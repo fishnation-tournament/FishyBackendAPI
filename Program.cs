@@ -106,6 +106,7 @@ Tokenizer apiTokenizer = new Tokenizer(SecretKey);
 
 MapRoutes.MapMapRoutes(app, connManager);
 ScoresRoutes.RegisterScoresRoutes(app, connManager);
+PlayerRoutes.MapPlayerRoutes(app, connManager);
 UserRoutes.MapUserRoutes(app, connManager);
 DiscordAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 GoogleAuth.MapAuthRoutes(app, apiTokenizer, connManager);

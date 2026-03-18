@@ -1,6 +1,8 @@
 ﻿using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
+using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json;
 
 namespace FishyAPI.Tools;
 
@@ -201,5 +203,38 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@SteamID", SteamID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         return reader.HasRows;
+    }
+
+    public static ulong? GetBLID(string discordID)
+    {
+        if (string.IsNullOrWhiteSpace(discordID)) return null;
+
+        using HttpClient httpClient = new HttpClient();
+        httpClient.BaseAddress = new Uri($"https://api.beatkhana.com/api/users/{discordID}");
+
+        using var response = httpClient.GetAsync(string.Empty).GetAwaiter().GetResult();
+        if (!response.IsSuccessStatusCode) return null;
+
+        var content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        if (string.IsNullOrWhiteSpace(content)) return null;
+
+        BeatKhanaUserResponse? beatKhanaUser;
+        try
+        {
+            beatKhanaUser = JsonConvert.DeserializeObject<BeatKhanaUserResponse>(content);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        if (!ulong.TryParse(beatKhanaUser?.BeatLeaderId, out ulong beatLeaderId)) return null;
+        return beatLeaderId;
+    }
+
+    private sealed class BeatKhanaUserResponse
+    {
+        [JsonProperty("beatleaderId")]
+        public string? BeatLeaderId { get; set; }
     }
 }
