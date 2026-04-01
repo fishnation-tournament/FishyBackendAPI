@@ -20,8 +20,9 @@ var DBPassword = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
 var CertPath = Environment.GetEnvironmentVariable("CERT_PATH");
 var CertKey = Environment.GetEnvironmentVariable("CERT_KEY");
 var SecretKey = Environment.GetEnvironmentVariable("SECRET_KEY");
+var SteamKey = Environment.GetEnvironmentVariable("STEAM_API_KEY")?.Trim();
 
-
+Console.WriteLine($"Steam Key: {SteamKey}");
 
 ConnectionManager connManager = new ConnectionManager(
     DBServer,
@@ -99,7 +100,39 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
+app.Use(async (context, next) => {
+    if (context.Request.Query.TryGetValue("token", out var token) &&
+        !context.Request.Headers.ContainsKey("Authorization"))
+    {
+        context.Request.Headers.Append("Authorization", $"Bearer {token}");
+    }
+    await next();
+});
+
 app.UseAuthentication();
+
+// Revocation check: reject API tokens that have been revoked in the database.
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true &&
+        context.User.FindFirstValue("token_type") == "api")
+    {
+        var jti = context.User.FindFirstValue("jti");
+        if (jti == null)
+        {
+            context.Response.StatusCode = 401;
+            return;
+        }
+        using MySqlConnection revokeConn = connManager.IssueConnection();
+        if (ApiTokenTools.IsTokenRevoked(revokeConn, jti))
+        {
+            context.Response.StatusCode = 401;
+            return;
+        }
+    }
+    await next();
+});
+
 app.UseAuthorization();
 
 Tokenizer apiTokenizer = new Tokenizer(SecretKey);
@@ -110,6 +143,7 @@ PlayerRoutes.MapPlayerRoutes(app, connManager);
 UserRoutes.MapUserRoutes(app, connManager);
 DiscordAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 GoogleAuth.MapAuthRoutes(app, apiTokenizer, connManager);
-SteamAuth.MapAuthRoutes(app, apiTokenizer, connManager);
+SteamAuth.MapAuthRoutes(app, SteamKey, connManager);
+ApiTokenRoutes.MapApiTokenRoutes(app, apiTokenizer, connManager);
 
 app.Run();

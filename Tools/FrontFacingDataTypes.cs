@@ -1,4 +1,9 @@
 ﻿using System.Text.Json.Serialization;
+using System.Xml;
+using FishyAPI.Tools.DataTypes;
+using Newtonsoft.Json.Linq;
+using Formatting = Newtonsoft.Json.Formatting;
+
 namespace FishyAPI.Tools.FrontFacingDataTypes;
 
 public struct FrontFacingUser
@@ -23,8 +28,11 @@ public struct FrontFacingUser
     public string? Role { get; set; }
     public string? FrontendRole { get; set; }
 
-    public object? ScoreSaberProfile { get; set; }
-    public object? BeatLeaderProfile { get; set; }
+    [JsonConverter(typeof(RawJsonStringConverter))]
+    public string? ScoreSaberProfile { get; set; }
+
+    [JsonConverter(typeof(RawJsonStringConverter))]
+    public string? BeatLeaderProfile { get; set; }
 
     public FrontFacingUser(DataTypes.User user)
     {
@@ -66,8 +74,11 @@ public struct AddUser
     public string? Role { get; set; }
     public string? FrontendRole { get; set; }
 
-    public object? ScoreSaberProfile { get; set; }
-    public object? BeatLeaderProfile { get; set; }
+    [JsonConverter(typeof(RawJsonStringConverter))]
+    public string? ScoreSaberProfile { get; set; }
+
+    [JsonConverter(typeof(RawJsonStringConverter))]
+    public string? BeatLeaderProfile { get; set; }
 
     public async Task<AddUser> UpdateProfilesAsync()
     {
@@ -100,6 +111,13 @@ public struct UpdateUser
     }
 }
 
+public struct AddPlayer
+{
+    public ulong UID { get; set; }
+    public int Season { get; set; }
+    public int? Seed { get; set; }
+}
+
 public struct FrontFacingMap
 {
     public string BSMapID { get; set; }
@@ -108,14 +126,18 @@ public struct FrontFacingMap
     public ulong MapPoolID { get; set; }
     public int Season { get; set; }
     public string Difficulty { get; set; }
+    public List<string> Tags { get; set; }
 }
 
 public struct FrontFacingMapPool
 {
     public string MapPoolName { get; set; }
     public string MapPoolDescription { get; set; }
-    public List<FrontFacingMap> Maps { get; set; }
     public int Season { get; set; }
+    public string DownloadLink { get; set; }
+    public string OneClickLink { get; set; }
+    public string Visibility { get; set; }
+    public List<FrontFacingMap> Maps { get; set; }
 }
 
 public struct FrontFacingMatch
@@ -151,4 +173,21 @@ public struct FrontFacingQualifierScore
     public int MaxScore { get; set; }
     public int Misses { get; set; }
     public ulong QualifierID { get; set; }
+}
+
+public struct IssueApiTokenRequest
+{
+    public string Name { get; set; }
+    public string Role { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}
+
+public struct IssuedApiTokenResponse
+{
+    public string TokenID { get; set; }
+    public string TokenName { get; set; }
+    public string Role { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+    public string Token { get; set; }
 }

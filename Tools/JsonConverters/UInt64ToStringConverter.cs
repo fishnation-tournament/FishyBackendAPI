@@ -14,16 +14,12 @@ public class UInt64ToStringConverter : JsonConverter<ulong>
             {
                 return value;
             }
-        }
-        else if (reader.TokenType == JsonTokenType.Number)
-        {
-            if (reader.TryGetUInt64(out ulong value))
-            {
-                return value;
-            }
+
+            throw new JsonException($"Invalid unsigned integer string '{stringValue}'.");
         }
 
-        throw new JsonException($"Unable to convert \"{reader.GetString()}\" to ulong.");
+        // Force string-only for large IDs so client-side number rounding cannot corrupt values.
+        throw new JsonException("Expected a JSON string for ulong value.");
     }
 
     public override void Write(Utf8JsonWriter writer, ulong value, JsonSerializerOptions options)

@@ -1,33 +1,91 @@
 using System.Collections.Specialized;
+using System.Text.Json;
 using System.Web;
 using FishyAPI.Tools;
 using FishyAPI.Tools.DataTypes;
-using FishyAPI.Tools.FrontFacingDataTypes;
-using FishyAPI.Tools.Authentication;
 using FishyAPI.Tools.DBInteractions;
-using Json;
 using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Routes;
 
 public static class SteamAuth
 {
-    public static void MapAuthRoutes(WebApplication app, Tokenizer apiToken, ConnectionManager connManager)
+    private static bool TryParseSteamId64(string? raw, out ulong steamId)
+    {
+        steamId = 0;
+
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        // SteamID64 is a 17-digit unsigned integer in practice.
+        if (raw.Length != 17 || raw.Any(c => !char.IsDigit(c)))
+        {
+            return false;
+        }
+
+        return ulong.TryParse(raw, out steamId);
+    }
+
+    private static bool TryExtractSteamIdFromClaimedId(string? claimedId, out ulong steamId)
+    {
+        steamId = 0;
+        if (string.IsNullOrWhiteSpace(claimedId))
+        {
+            return false;
+        }
+
+        string candidate = claimedId.Split('/').LastOrDefault() ?? string.Empty;
+        return TryParseSteamId64(candidate, out steamId);
+    }
+
+    private static bool TryExtractSteamIdFromProfileResponse(string responseJson, out ulong steamId)
+    {
+        steamId = 0;
+        try
+        {
+            using JsonDocument doc = JsonDocument.Parse(responseJson);
+            if (!doc.RootElement.TryGetProperty("response", out JsonElement responseElement) ||
+                !responseElement.TryGetProperty("players", out JsonElement playersElement) ||
+                playersElement.ValueKind != JsonValueKind.Array ||
+                playersElement.GetArrayLength() == 0)
+            {
+                return false;
+            }
+
+            JsonElement firstPlayer = playersElement[0];
+            if (!firstPlayer.TryGetProperty("steamid", out JsonElement steamIdElement) ||
+                steamIdElement.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            return TryParseSteamId64(steamIdElement.GetString(), out steamId);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    public static void MapAuthRoutes(WebApplication app, string steamKey, ConnectionManager connManager)
     {
         app.MapGet("/Auth/Steam", (HttpContext context) =>
         {
+            var token = context.Request.Query["token"].ToString();
+
             NameValueCollection parameters = HttpUtility.ParseQueryString(string.Empty);
             parameters["openid.ns"] = "http://specs.openid.net/auth/2.0";
             parameters["openid.mode"] = "checkid_setup";
             parameters["openid.claimed_id"] = "http://specs.openid.net/auth/2.0/identifier_select";
             parameters["openid.identity"] = "http://specs.openid.net/auth/2.0/identifier_select";
-            parameters["openid.return_to"] = "https://api.fishnation.xyz/auth/steam/callback";
+            parameters["openid.return_to"] = $"https://api.fishnation.xyz/auth/steam/callback?token={token}";
             parameters["openid.realm"] = "https://api.fishnation.xyz";
 
             context.Response.Redirect($"https://steamcommunity.com/openid/login?{parameters}");
         }).WithName("SteamAuth").WithOpenApi().RequireAuthorization("User");
-
-        string steamApiKey = Environment.GetEnvironmentVariable("STEAM_API_KEY") ?? throw new InvalidOperationException("The steam api key is not in the environment variables");
+        
         app.MapGet("/Auth/Steam/Callback", async Task (HttpContext context) =>
         {
             using var httpClient = new HttpClient();
@@ -44,51 +102,46 @@ public static class SteamAuth
                 return;
             }
 
-            // Extract steam id
+            // Extract and validate steam id from OpenID callback.
             string? claimedId = context.Request.Query["openid.claimed_id"];
-            if (claimedId == null)
+            if (!TryExtractSteamIdFromClaimedId(claimedId, out ulong steamID))
             {
-                // Just in case. Should never happen.
                 context.Response.StatusCode = 400;
-                await context.Response.WriteAsync("Steam auth failed, missing claimed_id.");
+                await context.Response.WriteAsync("Steam auth failed, invalid SteamID in claimed_id.");
                 return;
             }
-            string steamIDString = claimedId.Split('/').Last();
-
+            string steamIDString = steamID.ToString();
+            
+            Console.WriteLine($"Steam key loaded: {!string.IsNullOrEmpty(steamKey)}");
+            
             // Grab their steam profile
             NameValueCollection parameters = HttpUtility.ParseQueryString(string.Empty);
-            parameters["key"] = steamApiKey;
+            parameters["key"] = steamKey;
             parameters["steamids"] = steamIDString;
-            HttpResponseMessage response = await httpClient.GetAsync($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?{parameters}");
+            HttpResponseMessage response = await httpClient.GetAsync($"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?{parameters}");
             if (!response.IsSuccessStatusCode)
             {
                 context.Response.StatusCode = 500;
+                Console.WriteLine($"Failed to fetch Steam user profile. Status code: {response.StatusCode}. {await response.Content.ReadAsStringAsync()}");
                 await context.Response.WriteAsync("Failed to fetch Steam user profile.");
                 return;
             }
-            IDictionary<string, object> responseContent = JsonParser.FromJson(await response.Content.ReadAsStringAsync());
-            if (!responseContent.TryGetValue("response", out var responseObj) ||
-                responseObj is not IDictionary<string, object> innerResponse)
+
+            string steamProfileJson = await response.Content.ReadAsStringAsync();
+            if (!TryExtractSteamIdFromProfileResponse(steamProfileJson, out ulong profileSteamId))
             {
                 context.Response.StatusCode = 500;
                 await context.Response.WriteAsync("Failed to fetch Steam user profile.");
                 return;
             }
-            if (!innerResponse.TryGetValue("players", out var playersObj) ||
-                playersObj is not IList<object> players)
+
+            // Defense-in-depth: ensure OpenID identity and Steam API identity match.
+            if (profileSteamId != steamID)
             {
-                context.Response.StatusCode = 500;
-                await context.Response.WriteAsync("Failed to fetch Steam user profile.");
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("Steam auth failed, mismatched Steam profile ID.");
                 return;
             }
-            if (players.Count == 0 ||
-                players[0] is not IDictionary<string, object> steamUserData)
-            {
-                context.Response.StatusCode = 500;
-                await context.Response.WriteAsync("Failed to fetch Steam user profile.");
-                return;
-            }
-            ulong steamID = ulong.Parse(steamIDString);
 
             using MySqlConnection dbConn = connManager.IssueConnection();
 
@@ -102,9 +155,23 @@ public static class SteamAuth
                 return;
             }
 
-            User user = UserTools.GetUserById(dbConn, ulong.Parse(context.User.Claims.First(c => c.Type == "uid").Value));
+            if (!ulong.TryParse(context.User.Claims.First(c => c.Type == "uid").Value, out ulong currentUid))
+            {
+                context.Response.StatusCode = 401;
+                await context.Response.WriteAsync("Unauthorized user context.");
+                return;
+            }
+
+            User user = UserTools.GetUserById(dbConn, currentUid);
             user.SSID = steamID;
-            user.OptBLUID = steamID;
+            
+            if(user.OptBLUID == null || user.OptBLUID == 0)
+            {
+                user.OptBLUID = steamID;
+            }
+            
+            UserTools.UpdateUser(dbConn, user);
+            
             UserTools.UpdateUser(dbConn, await user.UpdateProfilesAsync());
 
             NameValueCollection respParam = HttpUtility.ParseQueryString(string.Empty);

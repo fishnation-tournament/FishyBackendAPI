@@ -1,6 +1,7 @@
 ﻿using FishyAPI.Tools;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.DBInteractions;
+using FishyAPI.Tools.FrontFacingDataTypes;
 using MySql.Data.MySqlClient;
 
 namespace FishyAPI.Routes;
@@ -19,21 +20,25 @@ public static class PlayerRoutes
             }
 
             ulong uid = ulong.Parse(uidClaim.Value);
-            
+
             if(PlayerTools.IsPlayerInCurrentSeason(conn, uid))
             {
+                Console.WriteLine($"Player with UID {uid} is already registered for the current season.");
                 return Results.BadRequest("Player is already registered for the current season.");
             }
-            
-            PlayerTools.AddPlayer(conn, new Player
+
+            Console.WriteLine($"Player with UID {uid} is being created for the current season.");
+
+            Player returnPlayer = PlayerTools.AddPlayer(conn, new Player
             {
                 PlayerID = null,
                 UID = uid,
                 Season = 2,
                 Seed = null
             });
-            
-            return Results.Ok();
+
+
+            return Results.Created($"/Players/GetPlayerByID/{returnPlayer.PlayerID}", returnPlayer);
         }).WithName("RegisterPlayer").WithOpenApi().RequireAuthorization("User");
         endpoints.MapGet("/Players/GetPlayers", () =>
         {
@@ -77,9 +82,16 @@ public static class PlayerRoutes
             return players;
         }).WithName("GetPlayersByUID").WithOpenApi();
 
-        endpoints.MapPost("/Players/AddPlayer", (Player player) =>
+        endpoints.MapPost("/Players/AddPlayer", (AddPlayer addPlayer) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
+            Player player = new Player
+            {
+                PlayerID = null,
+                UID = addPlayer.UID,
+                Season = addPlayer.Season,
+                Seed = addPlayer.Seed
+            };
             Player newPlayer = PlayerTools.AddPlayer(conn, player);
             return Results.Created($"/Players/GetPlayerByID/{newPlayer.PlayerID}", newPlayer);
         }).WithName("AddPlayer").WithOpenApi().RequireAuthorization("Organizer");

@@ -1,8 +1,8 @@
 ﻿using System.Web;
 using System.Collections.Specialized;
+using System.Text.Json;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using MySql.Data.MySqlClient;
-using Newtonsoft.Json;
 
 namespace FishyAPI.Tools.DataTypes;
 
@@ -31,8 +31,11 @@ public struct User
     public string? Role { get; set; }
     public string? FrontendRole { get; set; }
 
-    public object? ScoreSaberProfile { get; set; }
-    public object? BeatLeaderProfile { get; set; }
+    [System.Text.Json.Serialization.JsonConverter(typeof(RawJsonStringConverter))]
+    public string? ScoreSaberProfile { get; set; }
+
+    [System.Text.Json.Serialization.JsonConverter(typeof(RawJsonStringConverter))]
+    public string? BeatLeaderProfile { get; set; }
 
     public User(MySqlDataReader reader)
     {
@@ -52,19 +55,44 @@ public struct User
         string? ssProf = reader.IsDBNull(13) ? null : reader.GetString(13);
         string? blProf = reader.IsDBNull(14) ? null : reader.GetString(14);
 
-        if (ssProf != null)
+        ScoreSaberProfile = NormalizeStoredProfileJson(ssProf, UID, "ScoreSaberProfile");
+        BeatLeaderProfile = NormalizeStoredProfileJson(blProf, UID, "BeatLeaderProfile");
+    }
+
+    private static string? NormalizeStoredProfileJson(string? profileJson, ulong uid, string profileName)
+    {
+        if (string.IsNullOrWhiteSpace(profileJson))
         {
-            ScoreSaberProfile = JsonConvert.DeserializeObject(ssProf);
+            return null;
         }
-        
-        if (blProf != null)
+
+        try
         {
-            BeatLeaderProfile = JsonConvert.DeserializeObject(blProf);
+            using JsonDocument doc = JsonDocument.Parse(profileJson);
+            if (doc.RootElement.ValueKind == JsonValueKind.String)
+            {
+                string? innerJson = doc.RootElement.GetString();
+                if (string.IsNullOrWhiteSpace(innerJson))
+                {
+                    return null;
+                }
+
+                using JsonDocument innerDoc = JsonDocument.Parse(innerJson);
+                return innerDoc.RootElement.GetRawText();
+            }
+
+            return doc.RootElement.GetRawText();
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            Console.WriteLine($"Failed to deserialize {profileName} for UID {uid}: {ex.Message}");
+            return null;
         }
     }
 
     public async Task<User> UpdateProfilesAsync()
     {
+        Console.WriteLine($"Updating profiles for user {Username} (SSID: {SSID}, OptBLUID: {OptBLUID})");
         UserProfiles userProfiles = await UserProfiles.GetUserProfilesAsync(SSID, OptBLUID);
         ScoreSaberProfile = userProfiles.ScoreSaberProfile;
         BeatLeaderProfile = userProfiles.BeatLeaderProfile;
@@ -91,6 +119,7 @@ public struct UserProfiles
             if (scoreSaberResponse.IsSuccessStatusCode)
             {
                 userProfiles.ScoreSaberProfile = await scoreSaberResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"ScoreSaberProfile: {userProfiles.ScoreSaberProfile}");
             }
         }
 
@@ -105,6 +134,7 @@ public struct UserProfiles
             if (beatLeaderResponse.IsSuccessStatusCode)
             {
                 userProfiles.BeatLeaderProfile = await beatLeaderResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"BeatLeaderProfile: {userProfiles.BeatLeaderProfile}");
             }
         }
 
@@ -125,7 +155,7 @@ public struct Player
         PlayerID = reader.GetInt32(0);
         UID = reader.GetUInt64(1);
         Season = reader.GetInt32(2);
-        Seed =  reader.IsDBNull(0) ? null : reader.GetInt32(3);
+        Seed =  reader.IsDBNull(3) ? null : reader.GetInt32(3);
         User = new FrontFacingUser();
     }
 }
@@ -140,16 +170,34 @@ public struct Map
     public ulong MapPoolID { get; set; }
     public int Season { get; set; }
     public string Difficulty { get; set; }
+    public List<string>? Tags { get; set; }
+
+    private static int GetOrdinalOrMinusOne(MySqlDataReader reader, string columnName)
+    {
+        try
+        {
+            return reader.GetOrdinal(columnName);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return -1;
+        }
+    }
 
     public Map(MySqlDataReader reader)
     {
-        MID = reader.GetUInt64(0);
-        BSMapID = reader.GetString(1);
-        MapName = reader.GetString(2);
-        MapImageLink = reader.GetString(3);
-        MapPoolID = reader.GetUInt64(4);
-        Season = reader.GetInt32(5);
-        Difficulty = reader.GetString(6);
+        MID = reader.GetUInt64(reader.GetOrdinal("MapID"));
+        BSMapID = reader.GetString(reader.GetOrdinal("BSMapID"));
+        MapName = reader.GetString(reader.GetOrdinal("MapName"));
+        MapImageLink = reader.GetString(reader.GetOrdinal("MapImageLink"));
+        MapPoolID = reader.GetUInt64(reader.GetOrdinal("MPID"));
+        Season = reader.GetInt32(reader.GetOrdinal("Season"));
+        Difficulty = reader.GetString(reader.GetOrdinal("Difficulty"));
+
+        int tagsOrdinal = GetOrdinalOrMinusOne(reader, "Tags");
+        Tags = tagsOrdinal < 0 || reader.IsDBNull(tagsOrdinal)
+            ? null
+            : reader.GetString(tagsOrdinal).Split(',').ToList();
     }
 }
 
@@ -158,8 +206,11 @@ public struct MapPool
     public ulong MapPoolID { get; set; }
     public string MapPoolName { get; set; }
     public string MapPoolDescription { get; set; }
-    public List<Map> Maps { get; set; }
     public int Season { get; set; }
+    public string? DownloadLink { get; set; }
+    public string? OneClickLink { get; set; }
+    public string Visibility { get; set; }
+    public List<Map> Maps { get; set; }
 
     public MapPool(MySqlDataReader reader)
     {
@@ -167,6 +218,9 @@ public struct MapPool
         MapPoolName = reader.GetString(1);
         MapPoolDescription = reader.GetString(2);
         Season = reader.GetInt32(3);
+        DownloadLink = reader.IsDBNull(4) ? null : reader.GetString(4);
+        OneClickLink = reader.IsDBNull(5) ? null : reader.GetString(5);
+        Visibility = reader.GetString(6);
         Maps = new List<Map>();
     }
 }
@@ -242,5 +296,27 @@ public struct QualifierScore
         MaxScore = reader.GetInt32(4);
         Misses = reader.GetInt32(5);
         QualifierID = reader.GetUInt64(6);
+    }
+}
+
+public struct ApiToken
+{
+    public string TokenID { get; set; }
+    public ulong OwnerUID { get; set; }
+    public string TokenName { get; set; }
+    public string Role { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+    public bool IsRevoked { get; set; }
+
+    public ApiToken(MySqlDataReader reader)
+    {
+        TokenID = reader.GetString(0);
+        OwnerUID = reader.GetUInt64(1);
+        TokenName = reader.GetString(2);
+        Role = reader.GetString(3);
+        CreatedAt = reader.GetDateTime(4);
+        ExpiresAt = reader.IsDBNull(5) ? null : reader.GetDateTime(5);
+        IsRevoked = reader.GetBoolean(6);
     }
 }

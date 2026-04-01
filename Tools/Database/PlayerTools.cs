@@ -1,4 +1,5 @@
-﻿using FishyAPI.Tools.DataTypes;
+﻿using System.Text.Json;
+using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using MySql.Data.MySqlClient;
 
@@ -13,6 +14,8 @@ public static class PlayerTools
         {
             players.Add(new Player(reader));
         }
+        
+        reader.Close();
 
         for (int i = 0; i < players.Count; i++)
         {
@@ -32,7 +35,8 @@ public static class PlayerTools
         {
             player = new Player(reader);
         }
-
+        
+        reader.Close();
         player.User = new FrontFacingUser(UserTools.GetUserById(conn, player.UID)); 
 
         return player;
@@ -113,11 +117,12 @@ public static class PlayerTools
         MySqlCommand cmd = new MySqlCommand($"SELECT * FROM players WHERE Season = @season AND UID = @uid LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@season", 2);
         cmd.Parameters.AddWithValue("@uid", uid);
-        using MySqlDataReader reader = cmd.ExecuteReader(); 
-        
+        using MySqlDataReader reader = cmd.ExecuteReader();
         Player player = ReadSingleResult(dbConn, reader);
         
-        return player.PlayerID != 0;
+        reader.Close();
+        return player.PlayerID != null;
+            
     }
 
     public static Player AddPlayer(MySqlConnection dbConn, Player player) //POST

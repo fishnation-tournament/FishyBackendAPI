@@ -45,6 +45,7 @@ public class ScoreTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<MatchScore> scores = ReadMatchScores(reader);
 
+        reader.Close();
         return scores;
     }
 
@@ -55,6 +56,7 @@ public class ScoreTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<QualifierScore> scores = ReadQualifierScores(reader);
 
+        reader.Close();
         return scores;
     }
 
@@ -66,6 +68,7 @@ public class ScoreTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<QualifierScore> scores = ReadQualifierScores(reader);
 
+        reader.Close();
         return scores;
     }
 
@@ -77,6 +80,7 @@ public class ScoreTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<QualifierScore> scores = ReadQualifierScores(reader);
 
+        reader.Close();
         return scores;
     }
 
@@ -87,6 +91,7 @@ public class ScoreTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         QualifierScore score = ReadSingleQualifierScore(reader);
 
+        reader.Close();
         return score;
     }
 
@@ -98,6 +103,7 @@ public class ScoreTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         QualifierScore score = ReadSingleQualifierScore(reader);
 
+        reader.Close();
         return score;
     }
 

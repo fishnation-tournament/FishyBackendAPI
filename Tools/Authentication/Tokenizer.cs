@@ -21,8 +21,8 @@ public class Tokenizer
             new Claim("uid", user.UID.ToString()),
             new Claim("discord_id", user.DiscordID?.ToString() ?? ""),
             new Claim("google_id", user.GoogleID ?? ""),
-            new Claim(ClaimTypes.Role, role)
-            
+            new Claim(ClaimTypes.Role, role),
+            new Claim("token_type", "session")
         };
 
         var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
@@ -32,7 +32,31 @@ public class Tokenizer
             "Fishnation",
             "TournamentUser",
             claims,
-            expires: DateTime.Now.AddHours(2),
+            expires: expiry,
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public string GenerateApiToken(ulong uid, string role, DateTime expiry, string tokenId)
+    {
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, uid.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, tokenId),
+            new Claim("uid", uid.ToString()),
+            new Claim(ClaimTypes.Role, role),
+            new Claim("token_type", "api")
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            "Fishnation",
+            "TournamentUser",
+            claims,
+            expires: expiry,
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

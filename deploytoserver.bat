@@ -5,6 +5,7 @@ tar -a -cf ./bin/Release/net9.0/linux-x64.zip -C ./bin/Release/net9.0/linux-x64/
 ssh -i .\.dnu\sshKey.pem ubuntu@api.fishnation.xyz "pkill screen"
 scp -i .\.dnu\sshKey.pem .\bin\Release\net9.0\linux-x64.zip ubuntu@api.fishnation.xyz:/home/ubuntu/
 scp -i .\.dnu\sshKey.pem .\DeploymentResources\* ubuntu@api.fishnation.xyz:/home/ubuntu/
+scp -i .\.dnu\sshKey.pem .\DeploymentResources\.env ubuntu@api.fishnation.xyz:/home/ubuntu/
 ssh -i .\.dnu\sshKey.pem ubuntu@api.fishnation.xyz "tr -d '\r' < ./unpack.sh > ./unpack.sh.lf && mv ./unpack.sh.lf ./unpack.sh"
 ssh -i .\.dnu\sshKey.pem ubuntu@api.fishnation.xyz "sudo chmod +x ./unpack.sh"
 ssh -i .\.dnu\sshKey.pem ubuntu@api.fishnation.xyz "sudo ./unpack.sh"

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FishyAPI.Tools;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
@@ -37,17 +38,42 @@ public static class MapRoutes
             return maps;
         }).WithName("SearchMapsByName").WithOpenApi();
 
-        endpoints.MapGet("/Maps/GetMapPools", () =>
+        endpoints.MapGet("/Maps/GetMapPools", (HttpContext context) =>
         {
+            var role = context.User.FindFirstValue(ClaimTypes.Role) ?? "User";
+            
+            Console.WriteLine($"User role for GetMapPools: {role}");
+            
             using MySqlConnection conn = connManager.IssueConnection();
-            List<MapPool> mapPools = MapTools.GetMapPools(conn);
+            List<MapPool> mapPools;
+            
+            if(role != "User" && role != "Unassigned")
+            { 
+                mapPools = MapTools.GetMapPools(conn, true);
+            }
+            else
+            {
+                mapPools = MapTools.GetMapPools(conn);
+            }
+            
             return mapPools;
         }).WithName("GetMapPools").WithOpenApi();
 
-        endpoints.MapGet("/Maps/GetMapPoolById/{MapPoolID}", (ulong MapPoolID) =>
+        endpoints.MapGet("/Maps/GetMapPoolById/{MapPoolID}", (HttpContext context, ulong MapPoolID) =>
         {
+            string role = context.User.Claims.Select(c => c.Value).FirstOrDefault(v => v == "User" || v == "Admin" || v == "Organizer") ?? "User";
             using MySqlConnection conn = connManager.IssueConnection();
-            MapPool mapPool = MapTools.GetMapPoolById(conn, MapPoolID);
+            MapPool mapPool;    
+
+            if (role != "User" && role == "Admin" && role == "Organizer")
+            {
+                mapPool = MapTools.GetMapPoolById(conn, MapPoolID, true);
+            }
+            else
+            {
+                mapPool = MapTools.GetMapPoolById(conn, MapPoolID);
+            }
+
             return mapPool;
         }).WithName("GetMapPoolById").WithOpenApi();
 

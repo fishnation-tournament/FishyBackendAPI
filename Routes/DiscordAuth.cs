@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Web;
 using FishyAPI.Tools;
 using FishyAPI.Tools.DataTypes;
@@ -69,6 +70,10 @@ public static class DiscordAuth
             if (userExists)
             {
                 var user = UserTools.GetUserByDiscordId(dbConn, ulong.Parse(userData["id"].ToString()));
+                UserTools.UpdateUser(dbConn, await user.UpdateProfilesAsync());
+                
+                
+                Console.WriteLine($"User {user.Username} logged in with Discord. Checking for profile updates...");
                 
                 if(user.SSID == null || user.OptBLUID == null)
                 {
@@ -102,7 +107,16 @@ public static class DiscordAuth
                 FrontendRole = "Unassigned"
             };
 
-            User newUser = UserTools.AddUser(dbConn, User);
+            User newUser;
+            try
+            {
+                newUser = UserTools.AddUser(dbConn, User);
+            }
+            catch (MySqlException ex) when (ex.Number == 1062)
+            {
+                // Another callback inserted this Discord user first; fetch and continue login.
+                newUser = UserTools.GetUserByDiscordId(dbConn, ulong.Parse(userData["id"].ToString()));
+            }
 
             token = apiToken.GenerateToken(newUser, "User", DateTime.Now.AddDays(7));
             var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";

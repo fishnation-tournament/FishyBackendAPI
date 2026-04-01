@@ -36,6 +36,7 @@ public static class UserTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<User> users = ReadResults(reader);
 
+        reader.Close();
         return users;
     }
 
@@ -45,7 +46,8 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@UID", UID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         User user = ReadSingleResult(reader);
-
+        
+        reader.Close();
         return user;
     }
 
@@ -56,6 +58,7 @@ public static class UserTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         User user = ReadSingleResult(reader);
 
+        reader.Close();
         return user;
     }
 
@@ -66,6 +69,7 @@ public static class UserTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<User> users = ReadResults(reader);
 
+        reader.Close();
         return users;
     }
 
@@ -76,6 +80,7 @@ public static class UserTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<User> users = ReadResults(reader);
 
+        reader.Close();
         return users;
     }
 
@@ -86,6 +91,7 @@ public static class UserTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<User> users = ReadResults(reader);
 
+        reader.Close();
         return users;
     }
 
@@ -96,6 +102,7 @@ public static class UserTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         User user = ReadSingleResult(reader);
 
+        reader.Close();
         return user;
     }
 
@@ -162,6 +169,8 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@BeatLeaderProfile", user.BeatLeaderProfile ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@UserID", user.UID);
         cmd.ExecuteNonQuery();
+        
+        Console.WriteLine($"Updated user {user.Username} (UID: {user.UID}) in the database. {user.Username} now has Role: {user.Role}, FrontendRole: {user.FrontendRole}, SSID: {user.SSID}, OptBLUID: {user.OptBLUID}");
     }
 
     public static void DeleteUser(MySqlConnection dbConn, ulong UID)
@@ -173,10 +182,10 @@ public static class UserTools
 
     public static bool CheckUserExistsDID(MySqlConnection dbConn, ulong DiscordID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE DiscordID = @DiscordID", dbConn);
+        MySqlCommand cmd = new MySqlCommand("SELECT 1 FROM users WHERE DiscordID = @DiscordID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@DiscordID", DiscordID);
-        using MySqlDataReader reader = cmd.ExecuteReader();
-        return reader.HasRows;
+        object? result = cmd.ExecuteScalar();
+        return result != null;
     }
 
     public static User GetUserByGoogleId(MySqlConnection dbConn, string GoogleID)
@@ -186,23 +195,24 @@ public static class UserTools
         using MySqlDataReader reader = cmd.ExecuteReader();
         User user = ReadSingleResult(reader);
 
+        reader.Close();
         return user;
     }
 
     public static bool CheckUserExistsGID(MySqlConnection dbConn, string GoogleID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE GoogleID = @GoogleID", dbConn);
+        MySqlCommand cmd = new MySqlCommand("SELECT 1 FROM users WHERE GoogleID = @GoogleID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@GoogleID", GoogleID);
-        using MySqlDataReader reader = cmd.ExecuteReader();
-        return reader.HasRows;
+        object? result = cmd.ExecuteScalar();
+        return result != null;
     }
 
     public static bool CheckUserExistsSteamID(MySqlConnection dbConn, ulong SteamID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE SSID = @SteamID OR OptBLUID = @SteamID", dbConn);
+        MySqlCommand cmd = new MySqlCommand("SELECT 1 FROM users WHERE SSID = @SteamID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@SteamID", SteamID);
-        using MySqlDataReader reader = cmd.ExecuteReader();
-        return reader.HasRows;
+        object? result = cmd.ExecuteScalar();
+        return result != null;
     }
 
     public static ulong? GetBLID(string discordID)
