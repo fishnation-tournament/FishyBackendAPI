@@ -21,6 +21,9 @@ public static class ApiTokenRoutes
             if (uidClaim == null || !ulong.TryParse(uidClaim, out ulong uid))
                 return Results.Unauthorized();
 
+            if (string.IsNullOrWhiteSpace(request.TokenName) || string.IsNullOrWhiteSpace(request.Role))
+                return Results.BadRequest("TokenName and Role are required.");
+
             var issuerRole = context.User.FindFirstValue(ClaimTypes.Role) ?? "Unassigned";
             string scopedRole = ApiTokenTools.ClampRole(request.Role, issuerRole);
 
@@ -28,7 +31,7 @@ public static class ApiTokenRoutes
             DateTime jwtExpiry = request.ExpiresAt ?? NoExpiry;
 
             using MySqlConnection conn = connManager.IssueConnection();
-            ApiToken issued = ApiTokenTools.IssueApiToken(conn, uid, tokenId, request.Name, scopedRole, request.ExpiresAt);
+            ApiToken issued = ApiTokenTools.IssueApiToken(conn, uid, tokenId, request.TokenName, scopedRole, request.ExpiresAt);
 
             string jwt = tokenizer.GenerateApiToken(uid, scopedRole, jwtExpiry, tokenId);
 
@@ -46,6 +49,8 @@ public static class ApiTokenRoutes
         app.MapGet("/Auth/ApiTokens", (HttpContext context) =>
         {
             var uidClaim = context.User.FindFirstValue("uid");
+            
+            Console.WriteLine($"UID claim for GetApiTokens: {uidClaim}");
             if (uidClaim == null || !ulong.TryParse(uidClaim, out ulong uid))
                 return Results.Unauthorized();
 
@@ -53,6 +58,21 @@ public static class ApiTokenRoutes
             List<ApiToken> tokens = ApiTokenTools.GetApiTokensByOwner(conn, uid);
             return Results.Ok(tokens);
         }).WithName("GetApiTokens").WithOpenApi().RequireAuthorization("User");
+
+        app.MapGet("/Auth/ApiTokens/All", (
+            ulong? ownerUid,
+            string? role,
+            bool? isRevoked,
+            int page = 1,
+            int pageSize = 50) =>
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 200);
+
+            using MySqlConnection conn = connManager.IssueConnection();
+            var (tokens, totalCount) = ApiTokenTools.GetAllApiTokens(conn, ownerUid, role, isRevoked, page, pageSize);
+            return Results.Ok(new { TotalCount = totalCount, Page = page, PageSize = pageSize, Tokens = tokens });
+        }).WithName("GetAllApiTokens").WithOpenApi().RequireAuthorization("Admin");
 
         app.MapDelete("/Auth/ApiTokens/{tokenId}", (HttpContext context, string tokenId) =>
         {

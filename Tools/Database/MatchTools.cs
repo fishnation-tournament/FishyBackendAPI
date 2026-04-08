@@ -66,7 +66,7 @@ public class MatchTools
         return match;
     }
 
-    public static void CreateMatch(MySqlConnection dbConn, FrontFacingMatch frontFacingMatch)
+    public static Match CreateMatch(MySqlConnection dbConn, FrontFacingMatch frontFacingMatch)
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO matches
@@ -80,9 +80,11 @@ public class MatchTools
         cmd.Parameters.AddWithValue("@Player2Points", frontFacingMatch.Player2Score);
         cmd.Parameters.AddWithValue("@MatchDateTime", frontFacingMatch.MatchDate.ToString("yyyy-MM-dd HH:mm:ss"));
         cmd.Parameters.AddWithValue("@MatchComplete", frontFacingMatch.Complete);
-        cmd.Parameters.AddWithValue("@WinnerUID", frontFacingMatch.WinnerID);
+        cmd.Parameters.AddWithValue("@WinnerUID", frontFacingMatch.WinnerID == 0 ? (object)DBNull.Value : frontFacingMatch.WinnerID);
         cmd.Parameters.AddWithValue("@Season", frontFacingMatch.Season);
         cmd.Parameters.AddWithValue("@MapPoolID", frontFacingMatch.MapPoolID);
+        cmd.ExecuteNonQuery();
+        return GetMatchById(dbConn, (ulong)cmd.LastInsertedId);
     }
 
     public static void UpdateMatch(MySqlConnection dbConn, Match match)
@@ -97,7 +99,7 @@ public class MatchTools
             MatchComplete = @MatchComplete,
             WinnerUID = @WinnerUID,
             Season = @Season,
-            MapPoolID = @MapPoolID,
+            MapPoolID = @MapPoolID
         WHERE MatchID = @MatchID
         """, dbConn);
         cmd.Parameters.AddWithValue("@Player1UID", match.Player1ID);

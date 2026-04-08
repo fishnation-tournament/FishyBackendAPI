@@ -165,19 +165,65 @@ public struct FrontFacingMatchScore
     public int Misses { get; set; }
 }
 
-public struct FrontFacingQualifierScore
+public struct AddQualifierScore
 {
-    public ulong UID { get; set; }
     public ulong MapID { get; set; }
     public int Score { get; set; }
     public int MaxScore { get; set; }
     public int Misses { get; set; }
     public ulong QualifierID { get; set; }
+    [JsonConverter(typeof(UInt64ToStringConverter))]
+    public ulong ScoresaberID { get; set; }
+}
+
+public struct FrontFacingQualifierScore
+{
+    public ulong MapID { get; set; }
+    public int Score { get; set; }
+    public int MaxScore { get; set; }
+    public int Misses { get; set; }
+    public ulong QualifierID { get; set; }
+    [JsonConverter(typeof(UInt64ToStringConverter))]
+    public ulong ScoresaberID { get; set; }
+    public Player? scorePlayer { get; set; }
+
+    public FrontFacingQualifierScore(AddQualifierScore score)
+    {
+        ScoresaberID = score.ScoresaberID;
+        MapID = score.MapID;
+        Score = score.Score;
+        MaxScore = score.MaxScore;
+        Misses = score.Misses;
+        QualifierID = score.QualifierID;
+        scorePlayer = null;
+    }
+}
+
+public struct SetRoleRequest
+{
+    public string Role { get; set; }
+}
+
+public struct CreateSeasonRequest
+{
+    public string SeasonName { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public DateTime? QualifierCutoff { get; set; }
+}
+
+public struct UpdateSeasonRequest
+{
+    public string? SeasonName { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public DateTime? QualifierCutoff { get; set; }
+    public bool ClearQualifierCutoff { get; set; }
 }
 
 public struct IssueApiTokenRequest
 {
-    public string Name { get; set; }
+    public string TokenName { get; set; }
     public string Role { get; set; }
     public DateTime? ExpiresAt { get; set; }
 }

@@ -173,6 +173,16 @@ public static class UserTools
         Console.WriteLine($"Updated user {user.Username} (UID: {user.UID}) in the database. {user.Username} now has Role: {user.Role}, FrontendRole: {user.FrontendRole}, SSID: {user.SSID}, OptBLUID: {user.OptBLUID}");
     }
 
+    public static void SetUserRole(MySqlConnection dbConn, ulong uid, string role)
+    {
+        MySqlCommand cmd = new MySqlCommand(
+            "UPDATE users SET Role = @Role WHERE UserID = @UID",
+            dbConn);
+        cmd.Parameters.AddWithValue("@Role", role);
+        cmd.Parameters.AddWithValue("@UID", uid);
+        cmd.ExecuteNonQuery();
+    }
+
     public static void DeleteUser(MySqlConnection dbConn, ulong UID)
     {
         MySqlCommand cmd = new MySqlCommand("DELETE FROM users WHERE UserID = @UID", dbConn);

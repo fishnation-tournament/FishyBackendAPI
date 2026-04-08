@@ -135,6 +135,54 @@ app.Use(async (context, next) =>
 
 app.UseAuthorization();
 
+// Audit log middleware: captures all authenticated PUT, POST, and DELETE requests.
+app.Use(async (context, next) =>
+{
+    var method = context.Request.Method;
+    bool isMutating = method == "PUT" || method == "POST" || method == "DELETE";
+
+    if (isMutating)
+        context.Request.EnableBuffering();
+
+    await next();
+
+    if (!isMutating) return;
+
+    string? body = null;
+    if (context.Request.Body.CanSeek)
+    {
+        context.Request.Body.Seek(0, SeekOrigin.Begin);
+        using var bodyReader = new StreamReader(context.Request.Body, leaveOpen: true);
+        body = await bodyReader.ReadToEndAsync();
+    }
+
+    if (context.Response.StatusCode == 400)
+    {
+        Console.WriteLine($"[400] {method} {context.Request.Path} | Body: {body}");
+    }
+
+    if (context.User.Identity?.IsAuthenticated == true)
+    {
+        var uidClaim = context.User.FindFirstValue("uid");
+        if (uidClaim != null && ulong.TryParse(uidClaim, out ulong uid))
+        {
+            var role = context.User.FindFirstValue(ClaimTypes.Role) ?? "Unassigned";
+            var tokenType = context.User.FindFirstValue("token_type") ?? "session";
+            var actionContext = context.Request.Path.Value ?? "";
+
+            try
+            {
+                using MySqlConnection auditConn = connManager.IssueConnection();
+                AuditLogTools.InsertLog(auditConn, uid, role, method, actionContext, body, tokenType);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Audit log write failed: {ex.Message}");
+            }
+        }
+    }
+});
+
 Tokenizer apiTokenizer = new Tokenizer(SecretKey);
 
 MapRoutes.MapMapRoutes(app, connManager);
@@ -145,5 +193,7 @@ DiscordAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 GoogleAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 SteamAuth.MapAuthRoutes(app, SteamKey, connManager);
 ApiTokenRoutes.MapApiTokenRoutes(app, apiTokenizer, connManager);
+SeasonRoutes.MapSeasonRoutes(app, connManager);
+AuditLogRoutes.MapAuditLogRoutes(app, connManager);
 
 app.Run();

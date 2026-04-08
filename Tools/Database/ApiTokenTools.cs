@@ -15,9 +15,9 @@ public static class ApiTokenTools
 
     public static string ClampRole(string requested, string issuerRole)
     {
-        int requestedRank = RoleRank.GetValueOrDefault(requested, 0);
-        int issuerRank = RoleRank.GetValueOrDefault(issuerRole, 0);
-        return requestedRank <= issuerRank ? requested : issuerRole;
+        int requestedRank = string.IsNullOrEmpty(requested) ? 0 : RoleRank.GetValueOrDefault(requested, 0);
+        int issuerRank = string.IsNullOrEmpty(issuerRole) ? 0 : RoleRank.GetValueOrDefault(issuerRole, 0);
+        return requestedRank <= issuerRank ? (requested ?? issuerRole) : issuerRole;
     }
 
     public static ApiToken IssueApiToken(MySqlConnection conn, ulong ownerUID, string tokenId, string name, string role, DateTime? expiresAt)
@@ -74,6 +74,52 @@ public static class ApiTokenTools
         if (!isAdmin) cmd.Parameters.AddWithValue("@OwnerUID", requestingUID);
 
         return cmd.ExecuteNonQuery() > 0;
+    }
+
+    public static (List<ApiToken> Tokens, int TotalCount) GetAllApiTokens(
+        MySqlConnection conn,
+        ulong? ownerUID,
+        string? role,
+        bool? isRevoked,
+        int page,
+        int pageSize)
+    {
+        var conditions = new List<string>();
+        MySqlCommand cmd = new MySqlCommand();
+        cmd.Connection = conn;
+
+        if (ownerUID.HasValue)
+        {
+            conditions.Add("OwnerUID = @OwnerUID");
+            cmd.Parameters.AddWithValue("@OwnerUID", ownerUID.Value);
+        }
+        if (role != null)
+        {
+            conditions.Add("Role = @Role");
+            cmd.Parameters.AddWithValue("@Role", role);
+        }
+        if (isRevoked.HasValue)
+        {
+            conditions.Add("IsRevoked = @IsRevoked");
+            cmd.Parameters.AddWithValue("@IsRevoked", isRevoked.Value ? 1 : 0);
+        }
+
+        string where = conditions.Count > 0 ? $"WHERE {string.Join(" AND ", conditions)}" : "";
+
+        cmd.CommandText = $"SELECT COUNT(*) FROM api_tokens {where}";
+        int totalCount = Convert.ToInt32(cmd.ExecuteScalar());
+
+        int offset = (page - 1) * pageSize;
+        cmd.CommandText = $"SELECT TokenID, OwnerUID, TokenName, Role, CreatedAt, ExpiresAt, IsRevoked FROM api_tokens {where} ORDER BY CreatedAt DESC LIMIT @PageSize OFFSET @Offset";
+        cmd.Parameters.AddWithValue("@PageSize", pageSize);
+        cmd.Parameters.AddWithValue("@Offset", offset);
+
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        List<ApiToken> tokens = new();
+        while (reader.Read())
+            tokens.Add(new ApiToken(reader));
+
+        return (tokens, totalCount);
     }
 
     public static bool IsTokenRevoked(MySqlConnection conn, string tokenId)

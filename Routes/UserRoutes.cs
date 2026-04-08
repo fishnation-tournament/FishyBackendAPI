@@ -38,6 +38,13 @@ public static class UserRoutes
             return user;
         }).WithName("GetUserByDiscordID").WithOpenApi();
 
+        endpoints.MapGet("/Users/GetUserByScoresaberID/{SSID}", (ulong SSID) =>
+        {
+            using MySqlConnection conn = connManager.IssueConnection();
+            FrontFacingUser user = new FrontFacingUser(UserTools.GetUserBySSID(conn, SSID));
+            return user;
+        }).WithName("GetUserByScoresaberID").WithOpenApi();
+
         endpoints.MapGet("/Users/GetUsersByRole/{Role}", (string Role) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
@@ -65,10 +72,12 @@ public static class UserRoutes
             var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
             if (uidClaim == null)
             {
+                Console.WriteLine("[UpdateSelf] Rejected: no uid claim in token.");
                 return Results.Unauthorized();
             }
 
             ulong uid = ulong.Parse(uidClaim.Value);
+            Console.WriteLine($"[UpdateSelf] UID={uid} | Username='{updateUser.Username}' | Bio='{updateUser.UserBio}'");
 
             using MySqlConnection conn = connManager.IssueConnection();
             User user = updateUser.updateUser(UserTools.GetUserById(conn, uid));
@@ -105,10 +114,26 @@ public static class UserRoutes
 
         endpoints.MapPut("/Users/UpdateUser", (User user) =>
         {
+            Console.WriteLine($"[UpdateUser] UID={user.UID} | Username='{user.Username}' | SSID={user.SSID} | Role='{user.Role}'");
             using MySqlConnection conn = connManager.IssueConnection();
             UserTools.UpdateUser(conn, user);
             return Results.Created($"/Users/GetUserById/{user.UID}", user);
         }).WithName("UpdateUser").WithOpenApi().RequireAuthorization("Organizer");
+
+        endpoints.MapPut("/Users/SetRole/{UID}", (ulong UID, SetRoleRequest request) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Role))
+                return Results.BadRequest("Role is required.");
+
+            string[] validRoles = { "Admin", "Organizer", "User", "Unassigned" };
+            if (!validRoles.Contains(request.Role))
+                return Results.BadRequest($"Role must be one of: {string.Join(", ", validRoles)}");
+
+            using MySqlConnection conn = connManager.IssueConnection();
+            UserTools.SetUserRole(conn, UID, request.Role);
+            FrontFacingUser updated = new FrontFacingUser(UserTools.GetUserById(conn, UID));
+            return Results.Ok(updated);
+        }).WithName("SetUserRole").WithOpenApi().RequireAuthorization("Admin");
 
         endpoints.MapDelete("/Users/DeleteUser/{UID}", (ulong UID) =>
         {

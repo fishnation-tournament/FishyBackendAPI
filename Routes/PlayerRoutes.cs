@@ -15,28 +15,29 @@ public static class PlayerRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             var uidClaim = context.User.Claims.FirstOrDefault(c => c.Type == "uid");
             if (uidClaim == null)
-            {
                 return Results.Unauthorized();
-            }
 
             ulong uid = ulong.Parse(uidClaim.Value);
 
-            if(PlayerTools.IsPlayerInCurrentSeason(conn, uid))
+            Season? activeSeason = SeasonTools.GetActiveSeason(conn);
+            if (!activeSeason.HasValue)
+                return Results.BadRequest("There is no active season to register for.");
+
+            if (PlayerTools.IsPlayerInCurrentSeason(conn, uid))
             {
-                Console.WriteLine($"Player with UID {uid} is already registered for the current season.");
+                Console.WriteLine($"Player with UID {uid} is already registered for season {activeSeason.Value.SeasonID}.");
                 return Results.BadRequest("Player is already registered for the current season.");
             }
 
-            Console.WriteLine($"Player with UID {uid} is being created for the current season.");
+            Console.WriteLine($"Player with UID {uid} is being registered for season {activeSeason.Value.SeasonID}.");
 
             Player returnPlayer = PlayerTools.AddPlayer(conn, new Player
             {
                 PlayerID = null,
                 UID = uid,
-                Season = 2,
+                Season = activeSeason.Value.SeasonID,
                 Seed = null
             });
-
 
             return Results.Created($"/Players/GetPlayerByID/{returnPlayer.PlayerID}", returnPlayer);
         }).WithName("RegisterPlayer").WithOpenApi().RequireAuthorization("User");

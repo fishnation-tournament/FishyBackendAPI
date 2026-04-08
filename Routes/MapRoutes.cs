@@ -65,7 +65,7 @@ public static class MapRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             MapPool mapPool;    
 
-            if (role != "User" && role == "Admin" && role == "Organizer")
+            if (role == "Admin" || role == "Organizer")
             {
                 mapPool = MapTools.GetMapPoolById(conn, MapPoolID, true);
             }

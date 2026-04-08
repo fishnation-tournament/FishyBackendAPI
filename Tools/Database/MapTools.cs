@@ -108,7 +108,7 @@ public static class MapTools
 
     public static MapPool GetMapPoolById(MySqlConnection dbConn, ulong MapPoolID, bool includePrivate = false)
     {
-        string query = includePrivate ? "SELECT  * FROM map_pools LIMIT 1" : "SELECT * FROM map_pools WHERE Visibility = 'Public' LIMIT 1";
+        string query = includePrivate ? "SELECT * FROM map_pools WHERE MPID = @MapPoolID" : "SELECT * FROM map_pools WHERE MPID = @MapPoolID AND Visibility = 'Public'";
         MySqlCommand cmd = new MySqlCommand(query, dbConn);
         cmd.Parameters.AddWithValue("@MapPoolID", MapPoolID);
         using MySqlDataReader reader = cmd.ExecuteReader();
@@ -314,8 +314,12 @@ public static class MapTools
 
     public static void DeleteMapPool(MySqlConnection dbConn, ulong MapPoolID) //DELETE
     {
-        MySqlCommand cmd = new MySqlCommand("DELETE FROM map_pools WHERE MPID = @MapPoolID", dbConn);
-        cmd.Parameters.AddWithValue("@MapPoolID", MapPoolID);
-        cmd.ExecuteNonQuery();
+        MySqlCommand deleteMapCmd = new MySqlCommand("DELETE FROM maps WHERE MPID = @MapPoolID", dbConn);
+        deleteMapCmd.Parameters.AddWithValue("@MapPoolID", MapPoolID);
+        deleteMapCmd.ExecuteNonQuery();
+
+        MySqlCommand deletePoolCmd = new MySqlCommand("DELETE FROM map_pools WHERE MPID = @MapPoolID", dbConn);
+        deletePoolCmd.Parameters.AddWithValue("@MapPoolID", MapPoolID);
+        deletePoolCmd.ExecuteNonQuery();
     }
 }

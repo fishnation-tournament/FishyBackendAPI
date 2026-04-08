@@ -64,7 +64,7 @@ public static class PlayerTools
     public static List<Player> GetPlayersByName(MySqlConnection dbConn, string name)
     {
         MySqlCommand cmd = new MySqlCommand("""
-        SELECT p.PlayerID, p.UID, p.Season, p.Seed
+        SELECT p.PlayerID, p.UID, p.Season, p.Seed, p.ScoresaberID
         FROM players p
         INNER JOIN users u ON p.UID = u.UserID
         WHERE u.Username LIKE @searchTerm
@@ -101,7 +101,7 @@ public static class PlayerTools
     public static List<Player> GetPlayersBySeason(MySqlConnection dbConn, int season)
     {
         MySqlCommand cmd = new MySqlCommand("""
-                                            SELECT PlayerID, UID, Season, Seed
+                                            SELECT PlayerID, UID, Season, Seed, ScoresaberID
                                             FROM players
                                             WHERE Season = @season
                                             """, dbConn);
@@ -127,15 +127,23 @@ public static class PlayerTools
 
     public static Player AddPlayer(MySqlConnection dbConn, Player player) //POST
     {
+        // Auto-populate ScoresaberID from the linked user's SSID if not already set
+        if (!player.ScoresaberID.HasValue)
+        {
+            User user = UserTools.GetUserById(dbConn, player.UID);
+            player.ScoresaberID = user.SSID;
+        }
+
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO players
-            (UID, Season, Seed)
+            (UID, Season, Seed, ScoresaberID)
         VALUES
-            (@UID, @Season, @Seed)
+            (@UID, @Season, @Seed, @ScoresaberID)
         """, dbConn);
         cmd.Parameters.AddWithValue("@UID", player.UID);
         cmd.Parameters.AddWithValue("@Season", player.Season);
-        cmd.Parameters.AddWithValue("@Seed", player.Seed);
+        cmd.Parameters.AddWithValue("@Seed", player.Seed ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@ScoresaberID", player.ScoresaberID ?? (object)DBNull.Value);
         cmd.ExecuteNonQuery();
 
         return GetPlayerByID(dbConn, (int)cmd.LastInsertedId);
@@ -147,14 +155,35 @@ public static class PlayerTools
         UPDATE players SET
             UID = @UID,
             Season = @Season,
-            Seed = @Seed
+            Seed = @Seed,
+            ScoresaberID = @ScoresaberID
         WHERE PlayerID = @PlayerID
         """, dbConn);
         cmd.Parameters.AddWithValue("@UID", player.UID);
         cmd.Parameters.AddWithValue("@Season", player.Season);
-        cmd.Parameters.AddWithValue("@Seed", player.Seed);
+        cmd.Parameters.AddWithValue("@Seed", player.Seed ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@ScoresaberID", player.ScoresaberID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@PlayerID", player.PlayerID);
         cmd.ExecuteNonQuery();
+    }
+
+    public static Player? GetPlayerByScoresaberID(MySqlConnection dbConn, ulong scoresaberID)
+    {
+        MySqlCommand cmd = new MySqlCommand(
+            "SELECT * FROM players WHERE ScoresaberID = @ScoresaberID LIMIT 1", dbConn);
+        cmd.Parameters.AddWithValue("@ScoresaberID", scoresaberID);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+
+        if (!reader.Read())
+        {
+            reader.Close();
+            return null;
+        }
+
+        Player player = new Player(reader);
+        reader.Close();
+        player.User = new FrontFacingUser(UserTools.GetUserById(dbConn, player.UID));
+        return player;
     }
 
     public static void DeletePlayer(MySqlConnection dbConn, int playerID) //DELETE

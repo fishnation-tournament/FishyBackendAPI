@@ -148,6 +148,8 @@ public struct Player
     public ulong UID { get; set; }
     public int Season { get; set; }
     public int? Seed { get; set; }
+    [System.Text.Json.Serialization.JsonConverter(typeof(UInt64ToStringConverter))]
+    public ulong? ScoresaberID  { get; set; }
     public FrontFacingUser User { get; set; }
     
     public Player(MySqlDataReader reader)
@@ -156,6 +158,7 @@ public struct Player
         UID = reader.GetUInt64(1);
         Season = reader.GetInt32(2);
         Seed =  reader.IsDBNull(3) ? null : reader.GetInt32(3);
+        ScoresaberID = reader.IsDBNull(4) ? null : reader.GetUInt64(4); 
         User = new FrontFacingUser();
     }
 }
@@ -238,6 +241,8 @@ public struct Match
     public List<MatchScore> Scores { get; set; }
     public int Season { get; set; }
     public ulong MapPoolID { get; set; }
+    public string? Status { get; set; }
+    public int? BestOf { get; set; }
 
     public Match(MySqlDataReader reader)
     {
@@ -251,6 +256,8 @@ public struct Match
         WinnerID = reader.IsDBNull(7) ? null : reader.GetUInt64(7);
         Season = reader.GetInt32(8);
         MapPoolID = reader.GetUInt64(9);
+        Status = reader.IsDBNull(10) ? null : reader.GetString(10);
+        BestOf = reader.IsDBNull(11) ? null : reader.GetInt32(11);
         Scores = new List<MatchScore>();
     }
 }
@@ -280,22 +287,27 @@ public struct MatchScore
 public struct QualifierScore
 {
     public ulong ScoreID { get; set; }
-    public ulong UID { get; set; }
+    [System.Text.Json.Serialization.JsonConverter(typeof(UInt64ToStringConverter))]
+    public ulong ScoresaberID { get; set; }
     public ulong MapID { get; set; }
     public int Score { get; set; }
     public int MaxScore { get; set; }
     public int Misses { get; set; }
     public ulong QualifierID { get; set; }
+    public DateTime? SubmittedAt { get; set; }
+    public Player? Player { get; set; }
 
     public QualifierScore(MySqlDataReader reader)
     {
         ScoreID = reader.GetUInt64(0);
-        UID = reader.GetUInt64(1);
+        ScoresaberID = reader.GetUInt64(1);
         MapID = reader.GetUInt64(2);
         Score = reader.GetInt32(3);
         MaxScore = reader.GetInt32(4);
         Misses = reader.GetInt32(5);
         QualifierID = reader.GetUInt64(6);
+        SubmittedAt = reader.IsDBNull(7) ? null : reader.GetDateTime(7);
+        Player = null;
     }
 }
 
@@ -311,12 +323,57 @@ public struct ApiToken
 
     public ApiToken(MySqlDataReader reader)
     {
-        TokenID = reader.GetString(0);
+        TokenID = reader.GetValue(0).ToString()!;
         OwnerUID = reader.GetUInt64(1);
         TokenName = reader.GetString(2);
         Role = reader.GetString(3);
         CreatedAt = reader.GetDateTime(4);
         ExpiresAt = reader.IsDBNull(5) ? null : reader.GetDateTime(5);
         IsRevoked = reader.GetBoolean(6);
+    }
+}
+
+public struct Season
+{
+    public int SeasonID { get; set; }
+    public string SeasonName { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public DateTime? QualifierCutoff { get; set; }
+
+    public bool IsActive => DateTime.UtcNow >= StartDate && DateTime.UtcNow <= EndDate;
+    public bool QualifiersOpen => IsActive && (QualifierCutoff == null || DateTime.UtcNow <= QualifierCutoff);
+
+    public Season(MySqlDataReader reader)
+    {
+        SeasonID = reader.GetInt32(0);
+        SeasonName = reader.GetString(1);
+        StartDate = reader.GetDateTime(2);
+        EndDate = reader.GetDateTime(3);
+        QualifierCutoff = reader.IsDBNull(4) ? null : reader.GetDateTime(4);
+    }
+}
+
+public struct AuditLog
+{
+    public ulong LogID { get; set; }
+    public ulong ActorUID { get; set; }
+    public string ActorRole { get; set; }
+    public string ActionType { get; set; }
+    public string ActionContext { get; set; }
+    public string? ActionDetail { get; set; }
+    public string TokenType { get; set; }
+    public DateTime Timestamp { get; set; }
+
+    public AuditLog(MySqlDataReader reader)
+    {
+        LogID = reader.GetUInt64(0);
+        ActorUID = reader.GetUInt64(1);
+        ActorRole = reader.GetString(2);
+        ActionType = reader.GetString(3);
+        ActionContext = reader.GetString(4);
+        ActionDetail = reader.IsDBNull(5) ? null : reader.GetString(5);
+        TokenType = reader.GetString(6);
+        Timestamp = reader.GetDateTime(7);
     }
 }
