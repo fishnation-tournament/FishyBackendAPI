@@ -169,7 +169,15 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@BeatLeaderProfile", user.BeatLeaderProfile ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@UserID", user.UID);
         cmd.ExecuteNonQuery();
-        
+
+        // Keep the players table in sync with the user's ScoreSaber ID.
+        MySqlCommand syncCmd = new MySqlCommand(
+            "UPDATE players SET ScoresaberID = @SSID WHERE UID = @UID",
+            dbConn);
+        syncCmd.Parameters.AddWithValue("@SSID", user.SSID ?? (object)DBNull.Value);
+        syncCmd.Parameters.AddWithValue("@UID", user.UID);
+        syncCmd.ExecuteNonQuery();
+
         Console.WriteLine($"Updated user {user.Username} (UID: {user.UID}) in the database. {user.Username} now has Role: {user.Role}, FrontendRole: {user.FrontendRole}, SSID: {user.SSID}, OptBLUID: {user.OptBLUID}");
     }
 
@@ -217,13 +225,16 @@ public static class UserTools
         return result != null;
     }
 
-    public static bool CheckUserExistsSteamID(MySqlConnection dbConn, ulong SteamID)
+    public static bool CheckUserExistsBySSID(MySqlConnection dbConn, ulong ssid)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT 1 FROM users WHERE SSID = @SteamID LIMIT 1", dbConn);
-        cmd.Parameters.AddWithValue("@SteamID", SteamID);
+        MySqlCommand cmd = new MySqlCommand("SELECT 1 FROM users WHERE SSID = @SSID LIMIT 1", dbConn);
+        cmd.Parameters.AddWithValue("@SSID", ssid);
         object? result = cmd.ExecuteScalar();
         return result != null;
     }
+
+    public static bool CheckUserExistsSteamID(MySqlConnection dbConn, ulong steamId)
+        => CheckUserExistsBySSID(dbConn, steamId);
 
     public static ulong? GetBLID(string discordID)
     {

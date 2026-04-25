@@ -46,6 +46,8 @@ public class ScoreTools
         {
             var temp = scores[i];
             temp.Player = PlayerTools.GetPlayerByScoresaberID(conn, scores[i].ScoresaberID);
+            Console.WriteLine($"Read qualifier score: ScoreID={temp.ScoreID}, ScoresaberID={temp.ScoresaberID}, PlayerID={temp.Player?.PlayerID}");
+            Console.WriteLine($"Player scoresaberID: {scores[i].ScoresaberID}");
             scores[i] = temp;
         }
 
@@ -132,13 +134,13 @@ public class ScoreTools
         return ReadSingleQualifierScore(dbConn, reader);
     }
 
-    public static void CreateMatchScore(MySqlConnection dbConn, FrontFacingMatchScore score)
+    public static MatchScore? CreateMatchScore(MySqlConnection dbConn, FrontFacingMatchScore score)
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO player_scores
-            (UID, MapID, MatchID, Score, MaxScore, Misses)
+            (UID, MapID, MatchID, Score, MaxScore, Misses, IsReplayAttempt)
         VALUES
-            (@UID, @MapID, @MatchID, @Score, @MaxScore, @Misses)
+            (@UID, @MapID, @MatchID, @Score, @MaxScore, @Misses, @IsReplayAttempt)
         """, dbConn);
         cmd.Parameters.AddWithValue("@UID", score.UID);
         cmd.Parameters.AddWithValue("@MapID", score.MapID);
@@ -146,7 +148,64 @@ public class ScoreTools
         cmd.Parameters.AddWithValue("@Score", score.Score);
         cmd.Parameters.AddWithValue("@MaxScore", score.MaxScore);
         cmd.Parameters.AddWithValue("@Misses", score.Misses);
+        cmd.Parameters.AddWithValue("@IsReplayAttempt", score.IsReplayAttempt ? 1 : 0);
         cmd.ExecuteNonQuery();
+
+        return GetMatchScoreById(dbConn, (ulong)cmd.LastInsertedId);
+    }
+
+    public static MatchScore? GetMatchScoreById(MySqlConnection dbConn, ulong scoreId)
+    {
+        MySqlCommand cmd = new MySqlCommand("SELECT * FROM player_scores WHERE ScoreID = @ScoreID LIMIT 1", dbConn);
+        cmd.Parameters.AddWithValue("@ScoreID", scoreId);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+        if (!reader.Read()) return null;
+        return new MatchScore(reader);
+    }
+
+    public static MatchScore? UpdateMatchScore(MySqlConnection dbConn, ulong scoreId, UpdateMatchScoreRequest request)
+    {
+        MySqlCommand cmd = new MySqlCommand("""
+        UPDATE player_scores SET Score = @Score, MaxScore = @MaxScore, Misses = @Misses
+        WHERE ScoreID = @ScoreID
+        """, dbConn);
+        cmd.Parameters.AddWithValue("@Score", request.Score);
+        cmd.Parameters.AddWithValue("@MaxScore", request.MaxScore);
+        cmd.Parameters.AddWithValue("@Misses", request.Misses);
+        cmd.Parameters.AddWithValue("@ScoreID", scoreId);
+        if (cmd.ExecuteNonQuery() == 0) return null;
+        return GetMatchScoreById(dbConn, scoreId);
+    }
+
+    /// <summary>
+    /// Marks all scores for the most recently played map in the given match with ReplayCalledAfter = 1.
+    /// The scores remain valid reference points — the replaying player must beat them.
+    /// Returns the flagged score entries, or an empty list if there are no scores.
+    /// </summary>
+    public static List<MatchScore> FlagPreReplayScores(MySqlConnection dbConn, ulong matchId)
+    {
+        MySqlCommand findCmd = new MySqlCommand(
+                "SELECT MapID FROM player_scores WHERE MatchID = @MatchID AND ReplayCalledAfter = 0 ORDER BY ScoreID DESC LIMIT 1",
+            dbConn);
+        findCmd.Parameters.AddWithValue("@MatchID", matchId);
+        object? result = findCmd.ExecuteScalar();
+        if (result == null || result == DBNull.Value) return new List<MatchScore>();
+        ulong mapId = Convert.ToUInt64(result);
+
+        MySqlCommand flagCmd = new MySqlCommand(
+            "UPDATE player_scores SET ReplayCalledAfter = 1 WHERE MatchID = @MatchID AND MapID = @MapID",
+            dbConn);
+        flagCmd.Parameters.AddWithValue("@MatchID", matchId);
+        flagCmd.Parameters.AddWithValue("@MapID", mapId);
+        flagCmd.ExecuteNonQuery();
+
+        MySqlCommand getCmd = new MySqlCommand(
+            "SELECT * FROM player_scores WHERE MatchID = @MatchID AND MapID = @MapID",
+            dbConn);
+        getCmd.Parameters.AddWithValue("@MatchID", matchId);
+        getCmd.Parameters.AddWithValue("@MapID", mapId);
+        using MySqlDataReader reader = getCmd.ExecuteReader();
+        return ReadMatchScores(reader);
     }
 
     public static bool DeleteMatchScore(MySqlConnection dbConn, ulong scoreId)

@@ -143,26 +143,104 @@ public struct FrontFacingMapPool
 public struct FrontFacingMatch
 {
     public ulong MapPoolID { get; set; }
-    public ulong Player1ID { get; set; }
-    public ulong Player2ID { get; set; }
+    public ulong? Player1ID { get; set; }
+    public ulong? Player2ID { get; set; }
     public bool Complete { get; set; }
-    public ulong WinnerID { get; set; }
+    public ulong? WinnerID { get; set; }
     public int Player1Score { get; set; }
     public int Player2Score { get; set; }
     public DateTime MatchDate { get; set; }
     public List<FrontFacingMatchScore> Scores { get; set; }
     public int Season { get; set; }
+    public string? Status { get; set; }
+    public int? BestOf { get; set; }
+    public bool IsStreamed { get; set; }
+    public ulong? CoordinatorUID { get; set; }
+    public string? RoundName { get; set; }
+    public int? RoundOrder { get; set; }
+    public int? BanCount { get; set; }
+    public int? PickCount { get; set; }
+    public int LocalMatchID  { get; set; }
+    public int IsLosersBracket { get; set; }
+    public ulong? WinnerGoesToMatch { get; set; }
+    public ulong? LoserGoesToMatch  { get; set; }
+}
 
+public struct UpdateMatchScoreRequest
+{
+    public int Score { get; set; }
+    public int MaxScore { get; set; }
+    public int Misses { get; set; }
+}
+
+public struct CallReplayRequest
+{
+    /// <summary>UID of the player calling the replay. Must be Player1 or Player2 of the match.</summary>
+    [System.Text.Json.Serialization.JsonNumberHandling(System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString)]
+    public ulong CallingPlayerUID { get; set; }
+}
+
+public struct BulkCreateMatchEntry
+{
+    public ulong MapPoolID { get; set; }
+    public ulong? Player1ID { get; set; }
+    public ulong? Player2ID { get; set; }
+    public bool Complete { get; set; }
+    public ulong? WinnerID { get; set; }
+    public int Player1Score { get; set; }
+    public int Player2Score { get; set; }
+    public DateTime? MatchDate { get; set; }
+    public int Season { get; set; }
+    public string? Status { get; set; }
+    public int? BestOf { get; set; }
+    public bool IsStreamed { get; set; }
+    public ulong? CoordinatorUID { get; set; }
+    public string? RoundName { get; set; }
+    public int? RoundOrder { get; set; }
+    public int? BanCount { get; set; }
+    public int? PickCount { get; set; }
+    public int LocalMatchID { get; set; }
+    public bool IsLosersBracket {  get; set; }
+    public ulong? WinnerGoesToMatch { get; set; }
+    public ulong? LoserGoesToMatch { get; set; }
+    // Optional schedule — omit ScheduledAt to skip creating a schedule entry
+    public DateTime? ScheduledAt { get; set; }
+    public string? ScheduleNotes { get; set; }
+    
+}
+
+public struct BulkMatchCreationResult
+{
+    public DataTypes.Match Match { get; set; }
+    public DataTypes.MatchSchedule? Schedule { get; set; }
+}
+
+public struct CreatePickBanRequest
+{
+    public ulong MatchID { get; set; }
+    /// <summary>true = pick, false = ban</summary>
+    public bool IsPick { get; set; }
+    public int PlayerID { get; set; }
+    public ulong MapID { get; set; }
+}
+
+public struct CreateMatchScheduleRequest
+{
+    public ulong MatchID { get; set; }
+    public DateTime ScheduledAt { get; set; }
+    public string? Notes { get; set; }
 }
 
 public struct FrontFacingMatchScore
 {
+    [JsonConverter(typeof(UInt64ToStringConverter))]
     public ulong UID { get; set; }
     public ulong MapID { get; set; }
     public ulong MatchID { get; set; }
     public int Score { get; set; }
     public int MaxScore { get; set; }
     public int Misses { get; set; }
+    public bool IsReplayAttempt { get; set; }
 }
 
 public struct AddQualifierScore
@@ -219,6 +297,33 @@ public struct UpdateSeasonRequest
     public DateTime? EndDate { get; set; }
     public DateTime? QualifierCutoff { get; set; }
     public bool ClearQualifierCutoff { get; set; }
+}
+
+public struct CreateFlairRequest
+{
+    public string Color { get; set; }
+    public string Name { get; set; }
+}
+
+public struct UpdateFlairRequest
+{
+    public string? Color { get; set; }
+    public string? Name { get; set; }
+}
+
+public struct AddStreamTokenRequest
+{
+    public int UserID { get; set; }
+    public string IngressLinkPrimary { get; set; }
+    public string IngressLinkSecondary { get; set; }
+    public string StreamKey { get; set; }
+}
+
+public struct UpdateStreamTokenRequest
+{
+    public string? IngressLinkPrimary { get; set; }
+    public string? IngressLinkSecondary { get; set; }
+    public string? StreamKey { get; set; }
 }
 
 public struct IssueApiTokenRequest

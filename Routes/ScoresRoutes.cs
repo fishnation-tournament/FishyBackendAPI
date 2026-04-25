@@ -3,6 +3,7 @@ using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
 using MySql.Data.MySqlClient;
+using System.Threading.Tasks;
 
 namespace FishyAPI.Routes;
 
@@ -80,12 +81,26 @@ public static class ScoresRoutes
             return scores;
         }).WithName("GetMatchScores").WithOpenApi();
 
-        endpoints.MapPost("/Scores/AddMatchScore", (FrontFacingMatchScore score) =>
+        endpoints.MapPost("/Scores/AddMatchScore", async (FrontFacingMatchScore score) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            ScoreTools.CreateMatchScore(conn, score);
+            MatchScore? completeScore = ScoreTools.CreateMatchScore(conn, score);
+            if (completeScore != null)
+            {
+                await MatchWebSocketManager.BroadcastToMatch(score.MatchID, "score_posted", completeScore);
+            }
+
             return Results.Created($"/Matches/GetMatchById/{score.MatchID}", score);
-        }).WithName("AddMatchScore").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("AddMatchScore").WithOpenApi().RequireAuthorization("Organizer");
+
+        endpoints.MapPut("/Scores/Match/{scoreId}", async (ulong scoreId, UpdateMatchScoreRequest request) =>
+        {
+            using MySqlConnection conn = connManager.IssueConnection();
+            MatchScore? updated = ScoreTools.UpdateMatchScore(conn, scoreId, request);
+            if (updated == null) return Results.NotFound();
+            await MatchWebSocketManager.BroadcastToMatch(updated.Value.MatchID, "score_updated", updated.Value);
+            return Results.Ok(updated.Value);
+        }).WithName("UpdateMatchScore").WithOpenApi().RequireAuthorization("Organizer");
 
         endpoints.MapDelete("/Scores/Match/{scoreId}", (ulong scoreId) =>
         {
@@ -110,10 +125,10 @@ public static class ScoresRoutes
             return match;
         }).WithName("GetMatchById").WithOpenApi();
 
-        endpoints.MapGet("/Matches/GetMatchesBySeason/{Season}", (int Season) =>
+        endpoints.MapGet("/Matches/GetMatchesBySeason/{Season}", (int Season, bool sortByRound = false) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            List<Match> matches = MatchTools.GetMatchesBySeason(conn, Season);
+            List<Match> matches = MatchTools.GetMatchesBySeason(conn, Season, sortByRound);
             return matches;
         }).WithName("GetMatchesBySeason").WithOpenApi();
 
@@ -124,11 +139,24 @@ public static class ScoresRoutes
             return Results.Created($"/Matches/GetMatchById/{created.MatchID}", created);
         }).WithName("CreateMatch").WithOpenApi().RequireAuthorization("Organizer");
 
-        endpoints.MapPut("/Matches/Update", (Match match) =>
+        endpoints.MapPost("/Matches/BulkCreate", (List<BulkCreateMatchEntry> entries) =>
+        {
+            if (entries.Count == 0)
+                return Results.BadRequest("At least one match entry is required.");
+
+            using MySqlConnection conn = connManager.IssueConnection();
+            List<BulkMatchCreationResult> results = MatchTools.BulkCreateMatches(conn, entries);
+            return Results.Ok(results);
+        }).WithName("BulkCreateMatches").WithOpenApi().RequireAuthorization("Organizer");
+
+        endpoints.MapPut("/Matches/Update", async (Match match) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             MatchTools.UpdateMatch(conn, match);
             Match updated = MatchTools.GetMatchById(conn, match.MatchID);
+            if (updated.Complete)
+                MatchTools.AdvancePlayersFromMatch(conn, updated);
+            await MatchWebSocketManager.BroadcastToMatch(updated.MatchID, "match_updated", updated);
             return Results.Ok(updated);
         }).WithName("UpdateMatch").WithOpenApi().RequireAuthorization("Organizer");
 
@@ -138,5 +166,27 @@ public static class ScoresRoutes
             MatchTools.DeleteMatch(conn, MID);
             return Results.NoContent();
         }).WithName("DeleteMatch").WithOpenApi().RequireAuthorization("Organizer");
+
+        // A player may call a replay once per match when they lose a point.
+        // Voids the scores for the most recently played map and marks the player's replay as spent.
+        endpoints.MapPost("/Matches/{matchId}/CallReplay", async (ulong matchId, CallReplayRequest request) =>
+        {
+            using MySqlConnection conn = connManager.IssueConnection();
+
+            Match? updatedMatch = MatchTools.SetPlayerReplayUsed(conn, matchId, request.CallingPlayerUID);
+            if (updatedMatch == null)
+                return Results.BadRequest("Replay not available: match not found, player not in match, or replay already used.");
+
+            List<MatchScore> preReplayScores = ScoreTools.FlagPreReplayScores(conn, matchId);
+
+            await MatchWebSocketManager.BroadcastToMatch(matchId, "replay_called", new
+            {
+                callingPlayerUID = request.CallingPlayerUID,
+                preReplayScores,
+                match = updatedMatch.Value
+            });
+
+            return Results.Ok(new { match = updatedMatch.Value, preReplayScores });
+        }).WithName("CallReplay").WithOpenApi().RequireAuthorization("Organizer");
     }
 }

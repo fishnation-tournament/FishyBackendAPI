@@ -19,6 +19,10 @@ public static class PlayerRoutes
 
             ulong uid = ulong.Parse(uidClaim.Value);
 
+            User user = UserTools.GetUserById(conn, uid);
+            if (!user.SSID.HasValue)
+                return Results.BadRequest("A ScoreSaber ID must be linked to your account before registering as a player.");
+
             Season? activeSeason = SeasonTools.GetActiveSeason(conn);
             if (!activeSeason.HasValue)
                 return Results.BadRequest("There is no active season to register for.");

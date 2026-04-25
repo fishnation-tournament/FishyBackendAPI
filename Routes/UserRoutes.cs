@@ -31,10 +31,12 @@ public static class UserRoutes
             return users;
         }).WithName("SearchUserByName").WithOpenApi();
 
-        endpoints.MapGet("/Users/GetUserByDiscordID/{DiscordID}", (ulong DiscordID) =>
+        endpoints.MapGet("/Users/GetUserByDiscordID/{DiscordID}", (string DiscordID) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            FrontFacingUser user = new FrontFacingUser(UserTools.GetUserByDiscordId(conn, DiscordID));
+            
+            ulong parsedID = ulong.Parse(DiscordID);
+            FrontFacingUser user = new FrontFacingUser(UserTools.GetUserByDiscordId(conn, parsedID));
             return user;
         }).WithName("GetUserByDiscordID").WithOpenApi();
 

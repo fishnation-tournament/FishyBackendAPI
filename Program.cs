@@ -47,6 +47,7 @@ builder.WebHost.ConfigureKestrel(options =>
         options.ListenAnyIP(80);
         options.ListenAnyIP(443, httpsOptions =>
         {
+            httpsOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1;
             try
             {
                 var certPem = File.ReadAllText(CertPath);
@@ -97,6 +98,8 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseWebSockets();
 
 app.UseHttpsRedirection();
 
@@ -186,6 +189,7 @@ app.Use(async (context, next) =>
 Tokenizer apiTokenizer = new Tokenizer(SecretKey);
 
 MapRoutes.MapMapRoutes(app, connManager);
+FlairRoutes.MapFlairRoutes(app, connManager);
 ScoresRoutes.RegisterScoresRoutes(app, connManager);
 PlayerRoutes.MapPlayerRoutes(app, connManager);
 UserRoutes.MapUserRoutes(app, connManager);
@@ -195,5 +199,9 @@ SteamAuth.MapAuthRoutes(app, SteamKey, connManager);
 ApiTokenRoutes.MapApiTokenRoutes(app, apiTokenizer, connManager);
 SeasonRoutes.MapSeasonRoutes(app, connManager);
 AuditLogRoutes.MapAuditLogRoutes(app, connManager);
+PickBanRoutes.MapPickBanRoutes(app, connManager);
+MatchScheduleRoutes.MapMatchScheduleRoutes(app, connManager);
+MatchWebSocketRoutes.MapMatchWebSocketRoutes(app);
+StreamTokenRoutes.MapStreamTokenRoutes(app, connManager);
 
 app.Run();

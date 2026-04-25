@@ -174,6 +174,7 @@ public struct Map
     public int Season { get; set; }
     public string Difficulty { get; set; }
     public List<string>? Tags { get; set; }
+    public Flair? Flair { get; set; }
 
     private static int GetOrdinalOrMinusOne(MySqlDataReader reader, string columnName)
     {
@@ -201,6 +202,21 @@ public struct Map
         Tags = tagsOrdinal < 0 || reader.IsDBNull(tagsOrdinal)
             ? null
             : reader.GetString(tagsOrdinal).Split(',').ToList();
+
+        int flairIdOrdinal = GetOrdinalOrMinusOne(reader, "FlairID");
+        if (flairIdOrdinal >= 0 && !reader.IsDBNull(flairIdOrdinal))
+        {
+            Flair = new Flair
+            {
+                FlairID = reader.GetInt32(flairIdOrdinal),
+                Color = reader.GetString(reader.GetOrdinal("FlairColor")),
+                Name = reader.GetString(reader.GetOrdinal("FlairName"))
+            };
+        }
+        else
+        {
+            Flair = null;
+        }
     }
 }
 
@@ -231,24 +247,40 @@ public struct MapPool
 public struct Match
 {
     public ulong MatchID { get; set; }
-    public ulong Player1ID { get; set; }
-    public ulong Player2ID { get; set; }
+    public ulong? Player1ID { get; set; }
+    public ulong? Player2ID { get; set; }
     public bool Complete { get; set; }
     public ulong? WinnerID { get; set; }
     public int? Player1Score { get; set; }
     public int? Player2Score { get; set; }
     public DateTime? MatchDate { get; set; }
     public List<MatchScore> Scores { get; set; }
+    public List<PickBan> PickBans { get; set; }
     public int Season { get; set; }
     public ulong MapPoolID { get; set; }
     public string? Status { get; set; }
     public int? BestOf { get; set; }
+    public bool Player1ReplayUsed { get; set; }
+    public bool Player2ReplayUsed { get; set; }
+    public bool IsStreamed { get; set; }
+    public ulong? CoordinatorUID { get; set; }
+    public string? RoundName { get; set; }
+    public int? RoundOrder { get; set; }
+    public int? BanCount { get; set; }
+    public int? PickCount { get; set; }
+    public int LocalMatchID { get; set; }
+    public bool IsLosersBracket { get; set; }
+    public ulong? WinnerGoesToMatch { get; set; }
+    public ulong? LoserGoesToMatch { get; set; }
+    public FrontFacingDataTypes.FrontFacingUser? Player1User { get; set; }
+    public FrontFacingDataTypes.FrontFacingUser? Player2User { get; set; }
+    public FrontFacingDataTypes.FrontFacingUser? CoordinatorUser { get; set; }
 
     public Match(MySqlDataReader reader)
     {
         MatchID = reader.GetUInt64(0);
-        Player1ID = reader.GetUInt64(1);
-        Player2ID = reader.GetUInt64(2);
+        Player1ID = reader.IsDBNull(1) ? null : reader.GetUInt64(1);
+        Player2ID = reader.IsDBNull(2) ? null : reader.GetUInt64(2);
         Player1Score = reader.IsDBNull(3) ? null : reader.GetInt32(3);
         Player2Score = reader.IsDBNull(4) ? null : reader.GetInt32(4);
         MatchDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5);
@@ -258,19 +290,38 @@ public struct Match
         MapPoolID = reader.GetUInt64(9);
         Status = reader.IsDBNull(10) ? null : reader.GetString(10);
         BestOf = reader.IsDBNull(11) ? null : reader.GetInt32(11);
+        Player1ReplayUsed = reader.GetBoolean(12);
+        Player2ReplayUsed = reader.GetBoolean(13);
+        IsStreamed = reader.GetBoolean(14);
+        CoordinatorUID = reader.IsDBNull(15) ? null : reader.GetUInt64(15);
+        RoundName = reader.IsDBNull(16) ? null : reader.GetString(16);
+        RoundOrder = reader.IsDBNull(17) ? null : reader.GetInt32(17);
+        BanCount = reader.IsDBNull(18) ? null : reader.GetInt32(18);
+        PickCount = reader.IsDBNull(19) ? null : reader.GetInt32(19);
+        LocalMatchID = reader.GetInt32(20);
+        IsLosersBracket = reader.GetBoolean(21);
+        WinnerGoesToMatch = reader.IsDBNull(22) ? null : reader.GetUInt64(22);
+        LoserGoesToMatch = reader.IsDBNull(23) ? null : reader.GetUInt64(23);
         Scores = new List<MatchScore>();
+        PickBans = new List<PickBan>();
+        Player1User = null;
+        Player2User = null;
+        CoordinatorUser = null;
     }
 }
 
 public struct MatchScore
 {
     public ulong ScoreID { get; set; }
+    [System.Text.Json.Serialization.JsonConverter(typeof(UInt64ToStringConverter))]
     public ulong UID { get; set; }
     public ulong MapID { get; set; }
     public ulong MatchID { get; set; }
     public int Score { get; set; }
     public int MaxScore { get; set; }
     public int Misses { get; set; }
+    public bool ReplayCalledAfter { get; set; }
+    public bool IsReplayAttempt { get; set; }
 
     public MatchScore(MySqlDataReader reader)
     {
@@ -281,6 +332,8 @@ public struct MatchScore
         Score = reader.GetInt32(4);
         MaxScore = reader.GetInt32(5);
         Misses = reader.GetInt32(6);
+        ReplayCalledAfter = reader.GetBoolean(7);
+        IsReplayAttempt = reader.GetBoolean(8);
     }
 }
 
@@ -351,6 +404,79 @@ public struct Season
         StartDate = reader.GetDateTime(2);
         EndDate = reader.GetDateTime(3);
         QualifierCutoff = reader.IsDBNull(4) ? null : reader.GetDateTime(4);
+    }
+}
+
+public struct Flair
+{
+    public int FlairID { get; set; }
+    public string Color { get; set; }
+    public string Name { get; set; }
+
+    public Flair(MySqlDataReader reader)
+    {
+        FlairID = reader.GetInt32(0);
+        Color = reader.GetString(1);
+        Name = reader.GetString(2);
+    }
+}
+
+public struct PickBan
+{
+    public int PickBanID { get; set; }
+    public ulong MatchID { get; set; }
+    public bool IsPick { get; set; }
+    public int PlayerID { get; set; }
+    public ulong? MapID { get; set; }
+    public Map? Map { get; set; }
+
+    public PickBan(MySqlDataReader reader)
+    {
+        PickBanID = reader.GetInt32(reader.GetOrdinal("PickBanID"));
+        MatchID = reader.GetUInt64(reader.GetOrdinal("MatchID"));
+        IsPick = reader.GetBoolean(reader.GetOrdinal("Pick"));
+        int playerIdOrdinal = reader.GetOrdinal("PlayerID");
+        PlayerID = reader.IsDBNull(playerIdOrdinal) ? 0 : reader.GetInt32(playerIdOrdinal);
+        int mapRefOrdinal = reader.GetOrdinal("MapRefID");
+        MapID = reader.IsDBNull(mapRefOrdinal) ? null : reader.GetUInt64(mapRefOrdinal);
+
+        int mapIdOrdinal = -1;
+        try { mapIdOrdinal = reader.GetOrdinal("MapID"); } catch (IndexOutOfRangeException) { }
+        Map = (mapIdOrdinal >= 0 && !reader.IsDBNull(mapIdOrdinal)) ? new Map(reader) : null;
+    }
+}
+
+public struct MatchSchedule
+{
+    public int ScheduleID { get; set; }
+    public ulong MatchID { get; set; }
+    public DateTime ScheduledAt { get; set; }
+    public string? Notes { get; set; }
+    public Match? Match { get; set; }
+
+    public MatchSchedule(MySqlDataReader reader)
+    {
+        ScheduleID = reader.GetInt32(0);
+        MatchID = reader.GetUInt64(1);
+        ScheduledAt = reader.GetDateTime(2);
+        Notes = reader.IsDBNull(3) ? null : reader.GetString(3);
+        Match = null;
+    }
+}
+
+public struct StreamToken
+{
+    public int UserID { get; set; }
+    public string IngressLinkPrimary { get; set; }
+    public string IngressLinkSecondary { get; set; }
+    public string StreamKey { get; set; }
+
+    public StreamToken(MySqlDataReader reader)
+    {
+        UserID = reader.GetInt32(0);
+        IngressLinkPrimary = reader.GetString(1);
+        IngressLinkSecondary = reader.GetString(2);
+        StreamKey = reader.GetString(3);
     }
 }
 

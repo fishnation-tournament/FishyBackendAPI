@@ -139,53 +139,67 @@ public static class MapTools
         return mapPools;
     }
 
+    private const string MapWithFlairSelect =
+        """
+        SELECT maps.*, f.flair_id AS FlairID, f.color AS FlairColor, f.name AS FlairName
+        FROM maps
+        LEFT JOIN flairs f ON maps.flair = f.flair_id
+        """;
+
     public static List<Map> GetMaps(MySqlConnection dbConn)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps", dbConn);
+        MySqlCommand cmd = new MySqlCommand(MapWithFlairSelect, dbConn);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<Map> maps = ReadMaps(reader);
-
-        return maps;
+        return ReadMaps(reader);
     }
 
     public static List<Map> GetMapsInMapPool(MySqlConnection dbConn, ulong MapPoolID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps WHERE MPID = @MapPoolID", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"{MapWithFlairSelect} WHERE maps.MPID = @MapPoolID", dbConn);
         cmd.Parameters.AddWithValue("@MapPoolID", MapPoolID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<Map> maps = ReadMaps(reader);
-
-        return maps;
+        return ReadMaps(reader);
     }
 
     public static Map GetMapById(MySqlConnection dbConn, ulong MID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps WHERE MapID = @MID LIMIT 1", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"{MapWithFlairSelect} WHERE maps.MapID = @MID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@MID", MID);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        Map map = ReadSingleMap(reader);
-
-        return map;
+        return ReadSingleMap(reader);
     }
 
     public static List<Map> GetMapsByName(MySqlConnection dbConn, string searchTerm)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps WHERE MapName LIKE @searchTerm", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"{MapWithFlairSelect} WHERE maps.MapName LIKE @searchTerm", dbConn);
         cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<Map> maps = ReadMaps(reader);
-
-        return maps;
+        return ReadMaps(reader);
     }
 
     public static List<Map> GetMapsBySeason(MySqlConnection dbConn, int season)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM maps WHERE Season = @season", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"{MapWithFlairSelect} WHERE maps.Season = @season", dbConn);
         cmd.Parameters.AddWithValue("@season", season);
         using MySqlDataReader reader = cmd.ExecuteReader();
-        List<Map> maps = ReadMaps(reader);
+        return ReadMaps(reader);
+    }
 
-        return maps;
+    public static Map SetMapFlair(MySqlConnection dbConn, ulong mapId, int flairId)
+    {
+        MySqlCommand cmd = new MySqlCommand("UPDATE maps SET flair = @FlairID WHERE MapID = @MapID", dbConn);
+        cmd.Parameters.AddWithValue("@FlairID", flairId);
+        cmd.Parameters.AddWithValue("@MapID", mapId);
+        cmd.ExecuteNonQuery();
+        return GetMapById(dbConn, mapId);
+    }
+
+    public static Map ClearMapFlair(MySqlConnection dbConn, ulong mapId)
+    {
+        MySqlCommand cmd = new MySqlCommand("UPDATE maps SET flair = NULL WHERE MapID = @MapID", dbConn);
+        cmd.Parameters.AddWithValue("@MapID", mapId);
+        cmd.ExecuteNonQuery();
+        return GetMapById(dbConn, mapId);
     }
 
     public static Map AddMap(MySqlConnection dbConn, FrontFacingMap frontFacingMap) //POST
