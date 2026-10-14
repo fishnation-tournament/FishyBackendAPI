@@ -32,7 +32,7 @@ public static class MatchLineupRoutes
                 return Results.BadRequest("Match not found.");
             if (match.Team1ID != request.TeamID && match.Team2ID != request.TeamID)
                 return Results.BadRequest("Team is not playing in this match.");
-            if (MapTools.GetMapById(conn, request.MapID).MID == 0)
+            if (MapTools.GetMapById(conn, request.MapID, includePrivate: true).MID == 0)
                 return Results.BadRequest("Map not found.");
             if (!TeamTools.IsTeamMember(conn, request.TeamID, request.UserID))
                 return Results.BadRequest("User is not a member of that team.");

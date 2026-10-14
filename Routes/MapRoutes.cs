@@ -8,86 +8,67 @@ namespace FishyAPI.Routes;
 
 public static class MapRoutes
 {
+    private static bool CanViewPrivatePools(HttpContext context)
+    {
+        string? role = context.User.FindFirstValue(ClaimTypes.Role);
+        return role == "Admin" || role == "Organizer";
+    }
+
     public static void MapMapRoutes(WebApplication endpoints, ConnectionManager connManager)
     {
-        endpoints.MapGet("/Maps/GetMaps", () =>
+        endpoints.MapGet("/Maps/GetMaps", (HttpContext context) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            List<Map> maps = MapTools.GetMaps(conn);
+            List<Map> maps = MapTools.GetMaps(conn, CanViewPrivatePools(context));
             return maps;
         }).WithName("GetMaps").WithOpenApi();
 
-        endpoints.MapGet("/Maps/GetMapBySeason/{season}", (int season) =>
+        endpoints.MapGet("/Maps/GetMapBySeason/{season}", (HttpContext context, int season) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            List<Map> maps = MapTools.GetMapsBySeason(conn, season);
+            List<Map> maps = MapTools.GetMapsBySeason(conn, season, CanViewPrivatePools(context));
             return maps;
         }).WithName("GetMapsBySeason").WithOpenApi();
 
-        endpoints.MapGet("/Maps/GetMapById/{MID}", (ulong MID) =>
+        endpoints.MapGet("/Maps/GetMapById/{MID}", (HttpContext context, ulong MID) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            Map map = MapTools.GetMapById(conn, MID);
+            Map map = MapTools.GetMapById(conn, MID, CanViewPrivatePools(context));
             return map;
         }).WithName("GetMapById").WithOpenApi();
 
-        endpoints.MapGet("/Maps/SearchMapByName/{searchTerm}", (string searchTerm) =>
+        endpoints.MapGet("/Maps/SearchMapByName/{searchTerm}", (HttpContext context, string searchTerm) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            List<Map> maps = MapTools.GetMapsByName(conn, searchTerm);
+            List<Map> maps = MapTools.GetMapsByName(conn, searchTerm, CanViewPrivatePools(context));
             return maps;
         }).WithName("SearchMapsByName").WithOpenApi();
 
         endpoints.MapGet("/Maps/GetMapPools", (HttpContext context) =>
         {
-            var role = context.User.FindFirstValue(ClaimTypes.Role) ?? "User";
-            
-            Console.WriteLine($"User role for GetMapPools: {role}");
-            
             using MySqlConnection conn = connManager.IssueConnection();
-            List<MapPool> mapPools;
-            
-            if(role != "User" && role != "Unassigned")
-            { 
-                mapPools = MapTools.GetMapPools(conn, true);
-            }
-            else
-            {
-                mapPools = MapTools.GetMapPools(conn);
-            }
-            
+            List<MapPool> mapPools = MapTools.GetMapPools(conn, CanViewPrivatePools(context));
             return mapPools;
         }).WithName("GetMapPools").WithOpenApi();
 
         endpoints.MapGet("/Maps/GetMapPoolById/{MapPoolID}", (HttpContext context, ulong MapPoolID) =>
         {
-            string role = context.User.Claims.Select(c => c.Value).FirstOrDefault(v => v == "User" || v == "Admin" || v == "Organizer") ?? "User";
             using MySqlConnection conn = connManager.IssueConnection();
-            MapPool mapPool;    
-
-            if (role == "Admin" || role == "Organizer")
-            {
-                mapPool = MapTools.GetMapPoolById(conn, MapPoolID, true);
-            }
-            else
-            {
-                mapPool = MapTools.GetMapPoolById(conn, MapPoolID);
-            }
-
+            MapPool mapPool = MapTools.GetMapPoolById(conn, MapPoolID, CanViewPrivatePools(context));
             return mapPool;
         }).WithName("GetMapPoolById").WithOpenApi();
 
-        endpoints.MapGet("/Maps/SearchMapPoolByName/{searchTerm}", (string searchTerm) =>
+        endpoints.MapGet("/Maps/SearchMapPoolByName/{searchTerm}", (HttpContext context, string searchTerm) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            List<MapPool> mapPools = MapTools.GetMapPoolByName(conn, searchTerm);
+            List<MapPool> mapPools = MapTools.GetMapPoolByName(conn, searchTerm, CanViewPrivatePools(context));
             return mapPools;
         }).WithName("SearchMapPoolByName").WithOpenApi();
 
-        endpoints.MapGet("/Maps/GetMapPoolsBySeason/{season}", (int season) =>
+        endpoints.MapGet("/Maps/GetMapPoolsBySeason/{season}", (HttpContext context, int season) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
-            List<MapPool> mapPools = MapTools.GetMapPoolsBySeason(conn, season);
+            List<MapPool> mapPools = MapTools.GetMapPoolsBySeason(conn, season, CanViewPrivatePools(context));
             return mapPools;
         }).WithName("GetMapPoolsBySeason").WithOpenApi();
 

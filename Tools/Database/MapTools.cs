@@ -100,7 +100,7 @@ public static class MapTools
         return mapPool;
     }
     
-    public static List<MapPool> GetMapPools(MySqlConnection dbConn, bool includePrivate = false)
+    public static List<MapPool> GetMapPools(MySqlConnection dbConn, bool includePrivate)
     {
         string query = includePrivate ? $"SELECT {MapPoolColumns} FROM map_pools" : $"SELECT {MapPoolColumns} FROM map_pools WHERE Visibility = 'Public'";
         MySqlCommand cmd = new MySqlCommand(query, dbConn);
@@ -110,7 +110,7 @@ public static class MapTools
         return mapPools;
     }
 
-    public static MapPool GetMapPoolById(MySqlConnection dbConn, ulong MapPoolID, bool includePrivate = false)
+    public static MapPool GetMapPoolById(MySqlConnection dbConn, ulong MapPoolID, bool includePrivate)
     {
         string query = includePrivate ? $"SELECT {MapPoolColumns} FROM map_pools WHERE MPID = @MapPoolID" : $"SELECT {MapPoolColumns} FROM map_pools WHERE MPID = @MapPoolID AND Visibility = 'Public'";
         MySqlCommand cmd = new MySqlCommand(query, dbConn);
@@ -121,7 +121,7 @@ public static class MapTools
         return mapPoolRes;
     }
 
-    public static List<MapPool> GetMapPoolByName(MySqlConnection dbConn, string searchTerm, bool includePrivate = false)
+    public static List<MapPool> GetMapPoolByName(MySqlConnection dbConn, string searchTerm, bool includePrivate)
     {
         string query = includePrivate ? $"SELECT {MapPoolColumns} FROM map_pools WHERE MapPoolName LIKE @searchTerm" : $"SELECT {MapPoolColumns} FROM map_pools WHERE MapPoolName LIKE @searchTerm AND Visibility = 'Public'";
         MySqlCommand cmd = new MySqlCommand(query, dbConn);
@@ -132,7 +132,7 @@ public static class MapTools
         return mapPools;
     }
 
-    public static List<MapPool> GetMapPoolsBySeason(MySqlConnection dbConn, int season, bool includePrivate = false)
+    public static List<MapPool> GetMapPoolsBySeason(MySqlConnection dbConn, int season, bool includePrivate)
     {
         string query = includePrivate ? $"SELECT {MapPoolColumns} FROM map_pools WHERE Season = @season" : $"SELECT {MapPoolColumns} FROM map_pools WHERE Season = @season AND Visibility = 'Public'";
         MySqlCommand cmd = new MySqlCommand(query, dbConn);
@@ -148,42 +148,56 @@ public static class MapTools
         SELECT maps.*, f.flair_id AS FlairID, f.color AS FlairColor, f.name AS FlairName
         FROM maps
         LEFT JOIN flairs f ON maps.flair = f.flair_id
+        INNER JOIN map_pools vis_mp ON vis_mp.MPID = maps.MPID
         """;
 
-    public static List<Map> GetMaps(MySqlConnection dbConn)
+    /// <summary>
+    /// Builds a map query; unless includePrivate, maps belonging to non-public pools are excluded.
+    /// </summary>
+    private static string MapQuery(bool includePrivate, string? condition = null, string suffix = "")
     {
-        MySqlCommand cmd = new MySqlCommand(MapWithFlairSelect, dbConn);
+        List<string> where = new List<string>();
+        if (condition != null) where.Add(condition);
+        if (!includePrivate) where.Add("vis_mp.Visibility = 'Public'");
+        string whereClause = where.Count == 0 ? "" : " WHERE " + string.Join(" AND ", where);
+        return $"{MapWithFlairSelect}{whereClause}{suffix}";
+    }
+
+    public static List<Map> GetMaps(MySqlConnection dbConn, bool includePrivate)
+    {
+        MySqlCommand cmd = new MySqlCommand(MapQuery(includePrivate), dbConn);
         using MySqlDataReader reader = cmd.ExecuteReader();
         return ReadMaps(reader);
     }
 
+    // Only called after the pool itself passed its visibility check.
     public static List<Map> GetMapsInMapPool(MySqlConnection dbConn, ulong MapPoolID)
     {
-        MySqlCommand cmd = new MySqlCommand($"{MapWithFlairSelect} WHERE maps.MPID = @MapPoolID", dbConn);
+        MySqlCommand cmd = new MySqlCommand(MapQuery(true, "maps.MPID = @MapPoolID"), dbConn);
         cmd.Parameters.AddWithValue("@MapPoolID", MapPoolID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         return ReadMaps(reader);
     }
 
-    public static Map GetMapById(MySqlConnection dbConn, ulong MID)
+    public static Map GetMapById(MySqlConnection dbConn, ulong MID, bool includePrivate)
     {
-        MySqlCommand cmd = new MySqlCommand($"{MapWithFlairSelect} WHERE maps.MapID = @MID LIMIT 1", dbConn);
+        MySqlCommand cmd = new MySqlCommand(MapQuery(includePrivate, "maps.MapID = @MID", " LIMIT 1"), dbConn);
         cmd.Parameters.AddWithValue("@MID", MID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         return ReadSingleMap(reader);
     }
 
-    public static List<Map> GetMapsByName(MySqlConnection dbConn, string searchTerm)
+    public static List<Map> GetMapsByName(MySqlConnection dbConn, string searchTerm, bool includePrivate)
     {
-        MySqlCommand cmd = new MySqlCommand($"{MapWithFlairSelect} WHERE maps.MapName LIKE @searchTerm", dbConn);
+        MySqlCommand cmd = new MySqlCommand(MapQuery(includePrivate, "maps.MapName LIKE @searchTerm"), dbConn);
         cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
         using MySqlDataReader reader = cmd.ExecuteReader();
         return ReadMaps(reader);
     }
 
-    public static List<Map> GetMapsBySeason(MySqlConnection dbConn, int season)
+    public static List<Map> GetMapsBySeason(MySqlConnection dbConn, int season, bool includePrivate)
     {
-        MySqlCommand cmd = new MySqlCommand($"{MapWithFlairSelect} WHERE maps.Season = @season", dbConn);
+        MySqlCommand cmd = new MySqlCommand(MapQuery(includePrivate, "maps.Season = @season"), dbConn);
         cmd.Parameters.AddWithValue("@season", season);
         using MySqlDataReader reader = cmd.ExecuteReader();
         return ReadMaps(reader);
@@ -195,7 +209,7 @@ public static class MapTools
         cmd.Parameters.AddWithValue("@FlairID", flairId);
         cmd.Parameters.AddWithValue("@MapID", mapId);
         cmd.ExecuteNonQuery();
-        return GetMapById(dbConn, mapId);
+        return GetMapById(dbConn, mapId, includePrivate: true);
     }
 
     public static Map ClearMapFlair(MySqlConnection dbConn, ulong mapId)
@@ -203,7 +217,7 @@ public static class MapTools
         MySqlCommand cmd = new MySqlCommand("UPDATE maps SET flair = NULL WHERE MapID = @MapID", dbConn);
         cmd.Parameters.AddWithValue("@MapID", mapId);
         cmd.ExecuteNonQuery();
-        return GetMapById(dbConn, mapId);
+        return GetMapById(dbConn, mapId, includePrivate: true);
     }
 
     public static Map AddMap(MySqlConnection dbConn, FrontFacingMap frontFacingMap) //POST
@@ -237,7 +251,7 @@ public static class MapTools
         }
         cmd.ExecuteNonQuery();
 
-        return GetMapById(dbConn, (ulong)cmd.LastInsertedId);
+        return GetMapById(dbConn, (ulong)cmd.LastInsertedId, includePrivate: true);
     }
 
     public static void UpdateMap(MySqlConnection dbConn, Map map) //PUT
@@ -309,7 +323,7 @@ public static class MapTools
             : (object)DBNull.Value);
         cmd.ExecuteNonQuery();
 
-        return GetMapPoolById(dbConn, (ulong)cmd.LastInsertedId);
+        return GetMapPoolById(dbConn, (ulong)cmd.LastInsertedId, includePrivate: true);
     }
 
     public static void UpdateMapPool(MySqlConnection dbConn, MapPool mapPool) //PUT
