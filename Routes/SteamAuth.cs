@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Text.Json;
 using System.Web;
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.DBInteractions;
 using MySql.Data.MySqlClient;
@@ -84,7 +85,7 @@ public static class SteamAuth
             parameters["openid.realm"] = "https://api.fishnation.xyz";
 
             context.Response.Redirect($"https://steamcommunity.com/openid/login?{parameters}");
-        }).WithName("SteamAuth").WithOpenApi().RequireAuthorization("User");
+        }).WithName("SteamAuth").WithOpenApi().RequirePermission(Permission.AccountManageSelf);
         
         app.MapGet("/Auth/Steam/Callback", async Task (HttpContext context) =>
         {
@@ -180,6 +181,6 @@ public static class SteamAuth
             var redirect = $"https://fishnation.xyz/me?{respParam}";
             context.Response.Redirect(redirect);
             return;
-        }).WithName("SteamAuthCallback").WithOpenApi().ExcludeFromDescription().RequireAuthorization("User");
+        }).WithName("SteamAuthCallback").WithOpenApi().ExcludeFromDescription().RequirePermission(Permission.AccountManageSelf);
     }
 }

@@ -5,21 +5,6 @@ namespace FishyAPI.Tools;
 
 public static class ApiTokenTools
 {
-    private static readonly Dictionary<string, int> RoleRank = new()
-    {
-        { "Admin", 3 },
-        { "Organizer", 2 },
-        { "User", 1 },
-        { "Unassigned", 0 }
-    };
-
-    public static string ClampRole(string requested, string issuerRole)
-    {
-        int requestedRank = string.IsNullOrEmpty(requested) ? 0 : RoleRank.GetValueOrDefault(requested, 0);
-        int issuerRank = string.IsNullOrEmpty(issuerRole) ? 0 : RoleRank.GetValueOrDefault(issuerRole, 0);
-        return requestedRank <= issuerRank ? (requested ?? issuerRole) : issuerRole;
-    }
-
     public static ApiToken IssueApiToken(MySqlConnection conn, ulong ownerUID, string tokenId, string name, string role, DateTime? expiresAt)
     {
         MySqlCommand cmd = new MySqlCommand("""

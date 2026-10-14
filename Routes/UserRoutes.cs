@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -52,7 +53,7 @@ public static class UserRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             List<FrontFacingUser> users = UserTools.GetUsersByRole(conn, Role).Select(user => new FrontFacingUser(user)).ToList();
             return users;
-        }).WithName("GetUsersByRole").WithOpenApi().RequireAuthorization("User");
+        }).WithName("GetUsersByRole").WithOpenApi().RequirePermission(Permission.UsersViewByRole);
 
         endpoints.MapGet("/Users/GetSelf", (HttpContext context) =>
         {
@@ -67,7 +68,7 @@ public static class UserRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             FrontFacingUser user = new FrontFacingUser(UserTools.GetUserById(conn, uid));
             return Results.Json(user);
-        }).WithName("GetSelf").WithOpenApi().RequireAuthorization("User");
+        }).WithName("GetSelf").WithOpenApi().RequirePermission(Permission.AccountManageSelf);
 
         endpoints.MapPut("/Users/UpdateSelf", (HttpContext context, UpdateUser updateUser) =>
         {
@@ -87,7 +88,7 @@ public static class UserRoutes
 
             FrontFacingUser frontFacingUser = new FrontFacingUser(user);
             return Results.Json(frontFacingUser);
-        }).WithName("UpdateSelf").WithOpenApi().RequireAuthorization("User");
+        }).WithName("UpdateSelf").WithOpenApi().RequirePermission(Permission.AccountManageSelf);
 
         endpoints.MapPost("/Users/UpdateProfile", async (HttpContext context) =>
         {
@@ -105,43 +106,51 @@ public static class UserRoutes
 
             FrontFacingUser frontFacingUser = new FrontFacingUser(user);
             return Results.Json(frontFacingUser);
-        }).WithName("UpdateProfile").WithOpenApi().RequireAuthorization("User");
+        }).WithName("UpdateProfile").WithOpenApi().RequirePermission(Permission.AccountManageSelf);
 
         endpoints.MapPost("/Users/AddUser", async (AddUser user) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             User newUser = UserTools.AddUser(conn, await user.UpdateProfilesAsync());
             return Results.Created($"/Users/GetUserById/{newUser.UID}", newUser);
-        }).WithName("AddUser").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("AddUser").WithOpenApi().RequirePermission(Permission.UsersManage);
 
         endpoints.MapPut("/Users/UpdateUser", (User user) =>
         {
-            Console.WriteLine($"[UpdateUser] UID={user.UID} | Username='{user.Username}' | SSID={user.SSID} | Role='{user.Role}'");
+            Console.WriteLine($"[UpdateUser] UID={user.UID} | Username='{user.Username}' | SSID={user.SSID}");
             using MySqlConnection conn = connManager.IssueConnection();
             UserTools.UpdateUser(conn, user);
             return Results.Created($"/Users/GetUserById/{user.UID}", user);
-        }).WithName("UpdateUser").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("UpdateUser").WithOpenApi().RequirePermission(Permission.UsersManage);
 
-        endpoints.MapPut("/Users/SetRole/{UID}", (ulong UID, SetRoleRequest request) =>
+        // Compatibility shim for the old single-role model: sets the user's admin/organizer/user roles to match
+        // "Admin" / "Organizer" / "User" / "Unassigned". Prefer POST/DELETE /Users/{userId}/Roles/{roleKey}.
+        endpoints.MapPut("/Users/SetRole/{UID}", (HttpContext context, ulong UID, SetRoleRequest request) =>
         {
             if (string.IsNullOrWhiteSpace(request.Role))
                 return Results.BadRequest("Role is required.");
 
-            string[] validRoles = { "Admin", "Organizer", "User", "Unassigned" };
-            if (!validRoles.Contains(request.Role))
-                return Results.BadRequest($"Role must be one of: {string.Join(", ", validRoles)}");
+            if (!RoleTools.LegacyRoleValues.Contains(request.Role))
+                return Results.BadRequest($"Role must be one of: {string.Join(", ", RoleTools.LegacyRoleValues)}");
 
             using MySqlConnection conn = connManager.IssueConnection();
-            UserTools.SetUserRole(conn, UID, request.Role);
+            if (UserTools.GetUserById(conn, UID).UID == 0)
+                return Results.NotFound("User not found.");
+            if (request.Role != "Admin" &&
+                RoleTools.GetRoleKeysForUser(conn, UID).Contains("admin") &&
+                RoleTools.CountHolders(conn, "admin") <= 1)
+                return Results.Conflict("Cannot remove the last admin.");
+
+            RoleTools.ApplyLegacyRole(conn, UID, request.Role, context.GetAccess().UserID);
             FrontFacingUser updated = new FrontFacingUser(UserTools.GetUserById(conn, UID));
             return Results.Ok(updated);
-        }).WithName("SetUserRole").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("SetUserRole").WithOpenApi().RequirePermission(Permission.RolesAssign);
 
         endpoints.MapDelete("/Users/DeleteUser/{UID}", (ulong UID) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             UserTools.DeleteUser(conn, UID);
             return Results.NoContent();
-        }).WithName("DeleteUser").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeleteUser").WithOpenApi().RequirePermission(Permission.UsersManage);
     }
 }

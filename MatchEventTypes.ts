@@ -10,8 +10,8 @@ export interface FrontFacingUser {
     DiscordID:         string | undefined;   // serialised as string (ulong)
     DiscordUsername:   string | undefined;
     RegistrationDate:  string;               // ISO 8601
-    Role:              string | undefined;
-    FrontendRole:      string | undefined;
+    Roles:             string[];             // role keys, e.g. ["user", "organizer"]
+    Title:             string | undefined;   // display text, not used for access
     ScoreSaberProfile: object | undefined;   // raw JSON blob
     BeatLeaderProfile: object | undefined;   // raw JSON blob
 }

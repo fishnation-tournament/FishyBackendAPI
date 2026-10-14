@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.Authentication;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
@@ -24,8 +25,11 @@ public static class ApiTokenRoutes
             if (string.IsNullOrWhiteSpace(request.TokenName) || string.IsNullOrWhiteSpace(request.Role))
                 return Results.BadRequest("TokenName and Role are required.");
 
-            var issuerRole = context.User.FindFirstValue(ClaimTypes.Role) ?? "Unassigned";
-            string scopedRole = ApiTokenTools.ClampRole(request.Role, issuerRole);
+            // A token acts as one of the issuer's own roles, and is further limited to what the issuer holds at use time.
+            UserAccess access = context.GetAccess();
+            string? scopedRole = access.Roles.FirstOrDefault(r => string.Equals(r, request.Role, StringComparison.OrdinalIgnoreCase));
+            if (scopedRole == null)
+                return Results.BadRequest($"Role must be one of your roles: {string.Join(", ", access.Roles)}.");
 
             string tokenId = Guid.NewGuid().ToString();
             DateTime jwtExpiry = request.ExpiresAt ?? NoExpiry;
@@ -44,7 +48,7 @@ public static class ApiTokenRoutes
                 ExpiresAt = issued.ExpiresAt,
                 Token = jwt
             });
-        }).WithName("IssueApiToken").WithOpenApi().RequireAuthorization("User");
+        }).WithName("IssueApiToken").WithOpenApi().RequirePermission(Permission.ApiTokensManageOwn);
 
         app.MapGet("/Auth/ApiTokens", (HttpContext context) =>
         {
@@ -57,7 +61,7 @@ public static class ApiTokenRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             List<ApiToken> tokens = ApiTokenTools.GetApiTokensByOwner(conn, uid);
             return Results.Ok(tokens);
-        }).WithName("GetApiTokens").WithOpenApi().RequireAuthorization("User");
+        }).WithName("GetApiTokens").WithOpenApi().RequirePermission(Permission.ApiTokensManageOwn);
 
         app.MapGet("/Auth/ApiTokens/All", (
             ulong? ownerUid,
@@ -72,7 +76,7 @@ public static class ApiTokenRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             var (tokens, totalCount) = ApiTokenTools.GetAllApiTokens(conn, ownerUid, role, isRevoked, page, pageSize);
             return Results.Ok(new { TotalCount = totalCount, Page = page, PageSize = pageSize, Tokens = tokens });
-        }).WithName("GetAllApiTokens").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("GetAllApiTokens").WithOpenApi().RequirePermission(Permission.ApiTokensManageAll);
 
         app.MapDelete("/Auth/ApiTokens/{tokenId}", (HttpContext context, string tokenId) =>
         {
@@ -80,13 +84,12 @@ public static class ApiTokenRoutes
             if (uidClaim == null || !ulong.TryParse(uidClaim, out ulong uid))
                 return Results.Unauthorized();
 
-            var role = context.User.FindFirstValue(ClaimTypes.Role) ?? "Unassigned";
-            bool isAdmin = role == "Admin";
+            bool canRevokeAny = context.HasPermission(Permission.ApiTokensManageAll);
 
             using MySqlConnection conn = connManager.IssueConnection();
-            bool revoked = ApiTokenTools.RevokeApiToken(conn, tokenId, uid, isAdmin);
+            bool revoked = ApiTokenTools.RevokeApiToken(conn, tokenId, uid, canRevokeAny);
 
             return revoked ? Results.NoContent() : Results.NotFound();
-        }).WithName("RevokeApiToken").WithOpenApi().RequireAuthorization("User");
+        }).WithName("RevokeApiToken").WithOpenApi().RequirePermission(Permission.ApiTokensManageOwn);
     }
 }

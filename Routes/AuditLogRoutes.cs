@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DBInteractions;
 using MySql.Data.MySqlClient;
 
@@ -32,6 +33,6 @@ public static class AuditLogRoutes
                 PageSize = pageSize,
                 Logs = logs
             });
-        }).WithName("SearchAuditLog").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("SearchAuditLog").WithOpenApi().RequirePermission(Permission.AuditLogRead);
     }
 }

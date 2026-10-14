@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -44,13 +45,13 @@ public static class MatchScheduleRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             MatchSchedule created = MatchScheduleTools.CreateSchedule(conn, request);
             return Results.Created($"/Schedule/{created.ScheduleID}", created);
-        }).WithName("CreateMatchSchedule").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("CreateMatchSchedule").WithOpenApi().RequirePermission(Permission.ScheduleManage);
 
         app.MapDelete("/Schedule/{scheduleId}", (int scheduleId) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             bool deleted = MatchScheduleTools.DeleteSchedule(conn, scheduleId);
             return deleted ? Results.NoContent() : Results.NotFound();
-        }).WithName("DeleteMatchSchedule").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeleteMatchSchedule").WithOpenApi().RequirePermission(Permission.ScheduleManage);
     }
 }

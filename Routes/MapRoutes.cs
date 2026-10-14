@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -8,11 +9,8 @@ namespace FishyAPI.Routes;
 
 public static class MapRoutes
 {
-    private static bool CanViewPrivatePools(HttpContext context)
-    {
-        string? role = context.User.FindFirstValue(ClaimTypes.Role);
-        return role == "Admin" || role == "Organizer";
-    }
+    /// <summary>Private map pools, and the maps in them, are only visible with MapPoolsViewPrivate.</summary>
+    private static bool CanViewPrivatePools(HttpContext context) => context.HasPermission(Permission.MapPoolsViewPrivate);
 
     public static void MapMapRoutes(WebApplication endpoints, ConnectionManager connManager)
     {
@@ -77,41 +75,41 @@ public static class MapRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             MapPool newMapPool = MapTools.AddMapPool(conn, mapPool);
             return Results.Created($"/Maps/GetMapPoolById/{newMapPool.MapPoolID}", newMapPool);
-        }).WithName("AddMapPool").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("AddMapPool").WithOpenApi().RequirePermission(Permission.MapPoolsManage);
 
         endpoints.MapPost("/Maps/AddMap", async (FrontFacingMap map) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             Map newMap = MapTools.AddMap(conn, map);
             return Results.Created($"/Maps/GetMapById/{newMap.MID}", newMap);
-        }).WithName("AddMap").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("AddMap").WithOpenApi().RequirePermission(Permission.MapsManage);
 
         endpoints.MapPut("/Maps/UpdateMapPool", async (MapPool mapPool) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             MapTools.UpdateMapPool(conn, mapPool);
             return Results.Created($"/Maps/GetMapPoolById/{mapPool.MapPoolID}", mapPool);
-        }).WithName("UpdateMapPool").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("UpdateMapPool").WithOpenApi().RequirePermission(Permission.MapPoolsManage);
 
         endpoints.MapPut("/Maps/UpdateMap", async (Map map) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             MapTools.UpdateMap(conn, map);
             return Results.Created($"/Maps/GetMapById/{map.MID}", map);
-        }).WithName("UpdateMap").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("UpdateMap").WithOpenApi().RequirePermission(Permission.MapsManage);
 
         endpoints.MapDelete("/Maps/DeleteMapPool/{MapPoolID}", (ulong MapPoolID) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             MapTools.DeleteMapPool(conn, MapPoolID);
             return Results.NoContent();
-        }).WithName("DeleteMapPool").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeleteMapPool").WithOpenApi().RequirePermission(Permission.MapPoolsManage);
 
         endpoints.MapDelete("/Maps/DeleteMap/{MID}", (ulong MID) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             MapTools.DeleteMap(conn, MID);
             return Results.NoContent();
-        }).WithName("DeleteMap").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeleteMap").WithOpenApi().RequirePermission(Permission.MapsManage);
     }
 }

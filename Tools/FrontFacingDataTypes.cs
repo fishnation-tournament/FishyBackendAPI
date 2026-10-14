@@ -25,8 +25,8 @@ public struct FrontFacingUser
     public string? DiscordUsername { get; set; }
 
     public DateTime RegistrationDate { get; set; }
-    public string? Role { get; set; }
-    public string? FrontendRole { get; set; }
+    public List<string> Roles { get; set; }
+    public string? Title { get; set; }
 
     [JsonConverter(typeof(RawJsonStringConverter))]
     public string? ScoreSaberProfile { get; set; }
@@ -45,8 +45,8 @@ public struct FrontFacingUser
         DiscordID = user.DiscordID;
         DiscordUsername = user.DiscordUsername;
         RegistrationDate = user.RegistrationDate;
-        Role = user.Role;
-        FrontendRole = user.FrontendRole;
+        Roles = user.Roles;
+        Title = user.Title;
         ScoreSaberProfile = user.ScoreSaberProfile;
         BeatLeaderProfile = user.BeatLeaderProfile;
     }
@@ -71,8 +71,7 @@ public struct AddUser
     public string? GoogleEmail { get; set; }
 
     public DateTime RegistrationDate { get; set; }
-    public string? Role { get; set; }
-    public string? FrontendRole { get; set; }
+    public string? Title { get; set; }
 
     [JsonConverter(typeof(RawJsonStringConverter))]
     public string? ScoreSaberProfile { get; set; }
@@ -419,4 +418,36 @@ public struct IssuedApiTokenResponse
     public DateTime CreatedAt { get; set; }
     public DateTime? ExpiresAt { get; set; }
     public string Token { get; set; }
+}
+
+public struct CreateRoleRequest
+{
+    /// <summary>Lowercase identifier, e.g. "map_pooler". Cannot be changed later.</summary>
+    public string RoleKey { get; set; }
+    public string DisplayName { get; set; }
+    public string? Description { get; set; }
+    public string? Color { get; set; }
+}
+
+public struct UpdateRoleRequest
+{
+    public string? DisplayName { get; set; }
+    public string? Description { get; set; }
+    public bool ClearDescription { get; set; }
+    public string? Color { get; set; }
+    public bool ClearColor { get; set; }
+}
+
+/// <summary>A role plus the permissions AccessPolicy grants it.</summary>
+public struct RoleWithPermissions
+{
+    public DataTypes.RoleDefinition Role { get; set; }
+    public List<Authorization.Permission> Permissions { get; set; }
+}
+
+public struct AccessResponse
+{
+    public ulong? UserID { get; set; }
+    public IReadOnlyList<string> Roles { get; set; }
+    public List<Authorization.Permission> Permissions { get; set; }
 }

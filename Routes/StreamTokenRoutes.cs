@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.DBInteractions;
 using FishyAPI.Tools.FrontFacingDataTypes;
@@ -15,7 +16,7 @@ public static class StreamTokenRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             List<StreamToken> tokens = StreamTokenTools.GetAllStreamTokens(conn);
             return Results.Ok(tokens);
-        }).WithName("GetAllStreamTokens").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("GetAllStreamTokens").WithOpenApi().RequirePermission(Permission.StreamTokensManage);
 
         endpoints.MapGet("/StreamTokens/GetStreamKey", (HttpContext context) =>
         {
@@ -31,7 +32,7 @@ public static class StreamTokenRoutes
                 return Results.NotFound("No stream token found for your account.");
 
             return Results.Ok(token.Value);
-        }).WithName("GetStreamKey").WithOpenApi().RequireAuthorization("User");
+        }).WithName("GetStreamKey").WithOpenApi().RequirePermission(Permission.StreamKeyReadOwn);
 
         endpoints.MapPost("/StreamTokens/Add", (AddStreamTokenRequest request) =>
         {
@@ -48,7 +49,7 @@ public static class StreamTokenRoutes
                 StreamKey = request.StreamKey
             });
             return Results.Created($"/StreamTokens/GetStreamKey", token);
-        }).WithName("AddStreamToken").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("AddStreamToken").WithOpenApi().RequirePermission(Permission.StreamTokensManage);
 
         endpoints.MapPut("/StreamTokens/Update/{userID}", (int userID, UpdateStreamTokenRequest request) =>
         {
@@ -63,7 +64,7 @@ public static class StreamTokenRoutes
                 return Results.NotFound($"No stream token found for UserID {userID}.");
 
             return Results.Ok(updated.Value);
-        }).WithName("UpdateStreamToken").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("UpdateStreamToken").WithOpenApi().RequirePermission(Permission.StreamTokensManage);
 
         endpoints.MapDelete("/StreamTokens/Delete/{userID}", (int userID) =>
         {
@@ -73,6 +74,6 @@ public static class StreamTokenRoutes
                 return Results.NotFound($"No stream token found for UserID {userID}.");
 
             return Results.NoContent();
-        }).WithName("DeleteStreamToken").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("DeleteStreamToken").WithOpenApi().RequirePermission(Permission.StreamTokensManage);
     }
 }

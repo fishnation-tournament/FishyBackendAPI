@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -61,7 +62,7 @@ public static class TournamentSeriesRoutes
             {
                 return Results.Conflict("A series with that slug already exists.");
             }
-        }).WithName("CreateSeries").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("CreateSeries").WithOpenApi().RequirePermission(Permission.SeriesManage);
 
         app.MapPut("/Series/{seriesId}", (int seriesId, UpdateTournamentSeriesRequest request) =>
         {
@@ -81,7 +82,7 @@ public static class TournamentSeriesRoutes
             {
                 return Results.Conflict("A series with that slug already exists.");
             }
-        }).WithName("UpdateSeries").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("UpdateSeries").WithOpenApi().RequirePermission(Permission.SeriesManage);
 
         app.MapDelete("/Series/{seriesId}", (int seriesId) =>
         {
@@ -95,6 +96,6 @@ public static class TournamentSeriesRoutes
             {
                 return Results.Conflict("Series still has seasons attached. Move or delete them first.");
             }
-        }).WithName("DeleteSeries").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("DeleteSeries").WithOpenApi().RequirePermission(Permission.SeriesManage);
     }
 }

@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -63,14 +64,14 @@ public static class ScoresRoutes
             FrontFacingQualifierScore qualifierScore = new FrontFacingQualifierScore(score);
             ScoreTools.CreateQualifierScore(conn, qualifierScore);
             return Results.Created($"/Scores/Qualifiers/{score.QualifierID}", qualifierScore);
-        }).WithName("AddQualifierScore").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("AddQualifierScore").WithOpenApi().RequirePermission(Permission.QualifierScoresManage);
 
         endpoints.MapDelete("/Scores/Qualifier/{scoreId}", (ulong scoreId) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             bool deleted = ScoreTools.DeleteQualifierScore(conn, scoreId);
             return deleted ? Results.NoContent() : Results.NotFound();
-        }).WithName("DeleteQualifierScore").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("DeleteQualifierScore").WithOpenApi().RequirePermission(Permission.QualifierScoresManage);
 
         // ── Match Scores ─────────────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ public static class ScoresRoutes
             }
 
             return Results.Created($"/Matches/GetMatchById/{score.MatchID}", score);
-        }).WithName("AddMatchScore").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("AddMatchScore").WithOpenApi().RequirePermission(Permission.MatchScoresManage);
 
         endpoints.MapPut("/Scores/Match/{scoreId}", async (ulong scoreId, UpdateMatchScoreRequest request) =>
         {
@@ -100,14 +101,14 @@ public static class ScoresRoutes
             if (updated == null) return Results.NotFound();
             await MatchWebSocketManager.BroadcastToMatch(updated.Value.MatchID, "score_updated", updated.Value);
             return Results.Ok(updated.Value);
-        }).WithName("UpdateMatchScore").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("UpdateMatchScore").WithOpenApi().RequirePermission(Permission.MatchScoresManage);
 
         endpoints.MapDelete("/Scores/Match/{scoreId}", (ulong scoreId) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             bool deleted = ScoreTools.DeleteMatchScore(conn, scoreId);
             return deleted ? Results.NoContent() : Results.NotFound();
-        }).WithName("DeleteMatchScore").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("DeleteMatchScore").WithOpenApi().RequirePermission(Permission.MatchScoresDelete);
 
         // ── Matches ───────────────────────────────────────────────────────────
 
@@ -137,7 +138,7 @@ public static class ScoresRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             Match created = MatchTools.CreateMatch(conn, match);
             return Results.Created($"/Matches/GetMatchById/{created.MatchID}", created);
-        }).WithName("CreateMatch").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("CreateMatch").WithOpenApi().RequirePermission(Permission.MatchesManage);
 
         endpoints.MapPost("/Matches/BulkCreate", (List<BulkCreateMatchEntry> entries) =>
         {
@@ -147,7 +148,7 @@ public static class ScoresRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             List<BulkMatchCreationResult> results = MatchTools.BulkCreateMatches(conn, entries);
             return Results.Ok(results);
-        }).WithName("BulkCreateMatches").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("BulkCreateMatches").WithOpenApi().RequirePermission(Permission.MatchesManage);
 
         endpoints.MapPut("/Matches/Update", async (Match match) =>
         {
@@ -158,14 +159,14 @@ public static class ScoresRoutes
                 MatchTools.AdvancePlayersFromMatch(conn, updated);
             await MatchWebSocketManager.BroadcastToMatch(updated.MatchID, "match_updated", updated);
             return Results.Ok(updated);
-        }).WithName("UpdateMatch").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("UpdateMatch").WithOpenApi().RequirePermission(Permission.MatchesUpdate);
 
         endpoints.MapDelete("/Matches/Delete/{MID}", (ulong MID) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             MatchTools.DeleteMatch(conn, MID);
             return Results.NoContent();
-        }).WithName("DeleteMatch").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeleteMatch").WithOpenApi().RequirePermission(Permission.MatchesManage);
 
         // A player may call a replay once per match when they lose a point.
         // Voids the scores for the most recently played map and marks the player's replay as spent.
@@ -187,6 +188,6 @@ public static class ScoresRoutes
             });
 
             return Results.Ok(new { match = updatedMatch.Value, preReplayScores });
-        }).WithName("CallReplay").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("CallReplay").WithOpenApi().RequirePermission(Permission.MatchesUpdate);
     }
 }

@@ -13,7 +13,8 @@ public class Tokenizer
         this.secretKey = secretKey;
     }
     
-    public string GenerateToken(DataTypes.User user, string role, DateTime expiry)
+    // Session tokens carry no role: permissions are resolved from user_roles on every request.
+    public string GenerateToken(DataTypes.User user, DateTime expiry)
     {
         var claims = new[]
         {
@@ -21,7 +22,6 @@ public class Tokenizer
             new Claim("uid", user.UID.ToString()),
             new Claim("discord_id", user.DiscordID?.ToString() ?? ""),
             new Claim("google_id", user.GoogleID ?? ""),
-            new Claim(ClaimTypes.Role, role),
             new Claim("token_type", "session")
         };
 

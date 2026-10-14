@@ -86,7 +86,7 @@ public static class DiscordAuth
                     UserTools.UpdateUser(dbConn, user);
                 }
                 
-                token = apiToken.GenerateToken(user, user.Role, DateTime.Now.AddDays(7));
+                token = apiToken.GenerateToken(user, DateTime.Now.AddDays(7));
                 var websiteRedirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
                 return;
@@ -103,8 +103,7 @@ public static class DiscordAuth
                 DiscordID = ulong.Parse(userData["id"].ToString()),
                 DiscordUsername = userData["username"].ToString(),
                 RegistrationDate = DateTime.Now,
-                Role = "User",
-                FrontendRole = "Unassigned"
+                Title = null
             };
 
             User newUser;
@@ -118,7 +117,7 @@ public static class DiscordAuth
                 newUser = UserTools.GetUserByDiscordId(dbConn, ulong.Parse(userData["id"].ToString()));
             }
 
-            token = apiToken.GenerateToken(newUser, "User", DateTime.Now.AddDays(7));
+            token = apiToken.GenerateToken(newUser, DateTime.Now.AddDays(7));
             var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
 
             // Return the token

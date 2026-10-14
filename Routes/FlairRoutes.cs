@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -33,21 +34,21 @@ public static class FlairRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             Flair created = FlairTools.CreateFlair(conn, request.Color, request.Name);
             return Results.Created($"/Flairs/{created.FlairID}", created);
-        }).WithName("CreateFlair").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("CreateFlair").WithOpenApi().RequirePermission(Permission.FlairsManage);
 
         app.MapPut("/Flairs/{flairId}", (int flairId, UpdateFlairRequest request) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             Flair? updated = FlairTools.UpdateFlair(conn, flairId, request.Color, request.Name);
             return updated.HasValue ? Results.Ok(updated.Value) : Results.NotFound();
-        }).WithName("UpdateFlair").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("UpdateFlair").WithOpenApi().RequirePermission(Permission.FlairsManage);
 
         app.MapDelete("/Flairs/{flairId}", (int flairId) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             bool deleted = FlairTools.DeleteFlair(conn, flairId);
             return deleted ? Results.NoContent() : Results.NotFound();
-        }).WithName("DeleteFlair").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeleteFlair").WithOpenApi().RequirePermission(Permission.FlairsManage);
 
         // --- Map flair association ---
 
@@ -58,13 +59,13 @@ public static class FlairRoutes
             if (!flair.HasValue) return Results.NotFound("Flair not found.");
             Map updated = MapTools.SetMapFlair(conn, mid, flairId);
             return Results.Ok(updated);
-        }).WithName("SetMapFlair").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("SetMapFlair").WithOpenApi().RequirePermission(Permission.FlairsManage);
 
         app.MapDelete("/Maps/{mid}/Flair", (ulong mid) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             Map updated = MapTools.ClearMapFlair(conn, mid);
             return Results.Ok(updated);
-        }).WithName("ClearMapFlair").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("ClearMapFlair").WithOpenApi().RequirePermission(Permission.FlairsManage);
     }
 }

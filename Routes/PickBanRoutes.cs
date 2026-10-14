@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -36,7 +37,7 @@ public static class PickBanRoutes
             await MatchWebSocketManager.BroadcastToMatch(created.MatchID, eventType, created);
 
             return Results.Created($"/PickBan/{created.PickBanID}", created);
-        }).WithName("CreatePickBan").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("CreatePickBan").WithOpenApi().RequirePermission(Permission.PickBansManage);
 
         app.MapDelete("/PickBan/{pickBanId}", async (int pickBanId) =>
         {
@@ -49,6 +50,6 @@ public static class PickBanRoutes
                 await MatchWebSocketManager.BroadcastToMatch(entry.Value.MatchID, "pick_ban_removed", new { pickBanId });
 
             return deleted ? Results.NoContent() : Results.NotFound();
-        }).WithName("DeletePickBan").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeletePickBan").WithOpenApi().RequirePermission(Permission.PickBansManage);
     }
 }

@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -61,7 +62,7 @@ public static class SeasonRoutes
             {
                 return Results.Conflict("That series already has a season with this SeasonNumber.");
             }
-        }).WithName("CreateSeason").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("CreateSeason").WithOpenApi().RequirePermission(Permission.SeasonsManage);
 
         app.MapPut("/Seasons/{seasonId}", (int seasonId, UpdateSeasonRequest request) =>
         {
@@ -81,7 +82,7 @@ public static class SeasonRoutes
             {
                 return Results.Conflict("That series already has a season with this SeasonNumber.");
             }
-        }).WithName("UpdateSeason").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("UpdateSeason").WithOpenApi().RequirePermission(Permission.SeasonsManage);
 
         app.MapDelete("/Seasons/{seasonId}", (int seasonId) =>
         {
@@ -95,7 +96,7 @@ public static class SeasonRoutes
             {
                 return Results.Conflict("Season still has settings or teams attached. Remove them first.");
             }
-        }).WithName("DeleteSeason").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("DeleteSeason").WithOpenApi().RequirePermission(Permission.SeasonsManage);
 
         // ── Season settings ──────────────────────────────────────────────────
 
@@ -119,13 +120,13 @@ public static class SeasonRoutes
                 return Results.BadRequest(error);
 
             return Results.Ok(SeasonSettingsTools.UpsertSettings(conn, merged!.Value));
-        }).WithName("UpsertSeasonSettings").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("UpsertSeasonSettings").WithOpenApi().RequirePermission(Permission.SeasonsManage);
 
         app.MapDelete("/Seasons/{seasonId}/Settings", (int seasonId) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             bool deleted = SeasonSettingsTools.DeleteSettings(conn, seasonId);
             return deleted ? Results.NoContent() : Results.NotFound();
-        }).WithName("DeleteSeasonSettings").WithOpenApi().RequireAuthorization("Admin");
+        }).WithName("DeleteSeasonSettings").WithOpenApi().RequirePermission(Permission.SeasonsManage);
     }
 }

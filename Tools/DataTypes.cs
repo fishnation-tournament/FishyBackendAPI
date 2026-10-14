@@ -28,8 +28,9 @@ public struct User
     public string? GoogleEmail { get; set; }
 
     public DateTime RegistrationDate { get; set; }
-    public string? Role { get; set; }
-    public string? FrontendRole { get; set; }
+    /// <summary>Role keys the user holds (from user_roles), e.g. ["user", "organizer"].</summary>
+    public List<string> Roles { get; set; }
+    public string? Title { get; set; }
 
     [System.Text.Json.Serialization.JsonConverter(typeof(RawJsonStringConverter))]
     public string? ScoreSaberProfile { get; set; }
@@ -37,6 +38,7 @@ public struct User
     [System.Text.Json.Serialization.JsonConverter(typeof(RawJsonStringConverter))]
     public string? BeatLeaderProfile { get; set; }
 
+    /// <summary>Reads the columns selected by UserTools.UserColumns, in that order.</summary>
     public User(MySqlDataReader reader)
     {
         UID = reader.GetUInt64(0);
@@ -50,10 +52,10 @@ public struct User
         GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
         GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
         RegistrationDate = reader.GetDateTime(10);
-        Role = reader.IsDBNull(11) ? null : reader.GetString(11);
-        FrontendRole = reader.IsDBNull(12) ? null : reader.GetString(12);
-        string? ssProf = reader.IsDBNull(13) ? null : reader.GetString(13);
-        string? blProf = reader.IsDBNull(14) ? null : reader.GetString(14);
+        Title = reader.IsDBNull(11) ? null : reader.GetString(11);
+        string? ssProf = reader.IsDBNull(12) ? null : reader.GetString(12);
+        string? blProf = reader.IsDBNull(13) ? null : reader.GetString(13);
+        Roles = reader.IsDBNull(14) ? new List<string>() : reader.GetString(14).Split(',').ToList();
 
         ScoreSaberProfile = NormalizeStoredProfileJson(ssProf, UID, "ScoreSaberProfile");
         BeatLeaderProfile = NormalizeStoredProfileJson(blProf, UID, "BeatLeaderProfile");
@@ -624,5 +626,41 @@ public struct AuditLog
         ActionDetail = reader.IsDBNull(5) ? null : reader.GetString(5);
         TokenType = reader.GetString(6);
         Timestamp = reader.GetDateTime(7);
+    }
+}
+
+public struct RoleDefinition
+{
+    public int RoleID { get; set; }
+    public string RoleKey { get; set; }
+    public string DisplayName { get; set; }
+    public string? Description { get; set; }
+    public string? Color { get; set; }
+    public bool IsSystem { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public RoleDefinition(MySqlDataReader reader)
+    {
+        RoleID = reader.GetInt32(0);
+        RoleKey = reader.GetString(1);
+        DisplayName = reader.GetString(2);
+        Description = reader.IsDBNull(3) ? null : reader.GetString(3);
+        Color = reader.IsDBNull(4) ? null : reader.GetString(4);
+        IsSystem = reader.GetBoolean(5);
+        CreatedAt = reader.GetDateTime(6);
+    }
+}
+
+public struct UserRoleAssignment
+{
+    public RoleDefinition Role { get; set; }
+    public DateTime AssignedAt { get; set; }
+    public ulong? AssignedByUID { get; set; }
+
+    public UserRoleAssignment(MySqlDataReader reader)
+    {
+        Role = new RoleDefinition(reader);
+        AssignedAt = reader.GetDateTime(7);
+        AssignedByUID = reader.IsDBNull(8) ? null : reader.GetUInt64(8);
     }
 }

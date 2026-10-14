@@ -5,6 +5,8 @@ using FishyAPI.Tools;
 using FishyAPI.Tools.DBInteractions;
 using FishyAPI.Routes;
 using FishyAPI.Tools.Authentication;
+using FishyAPI.Tools.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MySql.Data.MySqlClient;
@@ -82,12 +84,9 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"));
-    options.AddPolicy("Organizer", policy => policy.RequireClaim(ClaimTypes.Role, "Organizer", "Admin"));
-    options.AddPolicy("User", policy => policy.RequireClaim(ClaimTypes.Role, "User", "Organizer", "Admin"));
-});
+// Endpoints require permissions (see Tools/Authorization/AccessPolicy.cs); one policy per permission.
+builder.Services.AddAuthorization(options => options.AddPermissionPolicies());
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -136,6 +135,9 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Resolve the caller's roles and permissions from user_roles (current as of this request).
+app.UseUserAccess(connManager);
+
 app.UseAuthorization();
 
 // Audit log middleware: captures all authenticated PUT, POST, and DELETE requests.
@@ -169,7 +171,9 @@ app.Use(async (context, next) =>
         var uidClaim = context.User.FindFirstValue("uid");
         if (uidClaim != null && ulong.TryParse(uidClaim, out ulong uid))
         {
-            var role = context.User.FindFirstValue(ClaimTypes.Role) ?? "Unassigned";
+            var roles = context.GetAccess().Roles;
+            var role = roles.Count == 0 ? "none" : string.Join(",", roles);
+            if (role.Length > 50) role = role[..50];
             var tokenType = context.User.FindFirstValue("token_type") ?? "session";
             var actionContext = context.Request.Path.Value ?? "";
 
@@ -206,5 +210,16 @@ PickBanRoutes.MapPickBanRoutes(app, connManager);
 MatchScheduleRoutes.MapMatchScheduleRoutes(app, connManager);
 MatchWebSocketRoutes.MapMatchWebSocketRoutes(app);
 StreamTokenRoutes.MapStreamTokenRoutes(app, connManager);
+RoleRoutes.MapRoleRoutes(app, connManager);
+
+// Refuse to start if any write endpoint is unprotected or uses something other than a permission.
+AccessControl.ValidateEndpointSecurity(app);
+
+using (MySqlConnection roleCheckConn = connManager.IssueConnection())
+{
+    List<string> missingRoles = RoleTools.MissingRoleKeys(roleCheckConn, AccessPolicy.RolesWithGrants);
+    if (missingRoles.Count > 0)
+        Console.WriteLine($"WARNING: AccessPolicy grants permissions to roles missing from the roles table: {string.Join(", ", missingRoles)}");
+}
 
 app.Run();

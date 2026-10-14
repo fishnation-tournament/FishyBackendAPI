@@ -72,6 +72,22 @@ create index MapID
 create index UID
     on qualifier_scores (ScoresaberID);
 
+create table roles
+(
+    RoleID      int auto_increment
+        primary key,
+    RoleKey     varchar(50)                          not null comment 'Stable identifier the API grants permissions to, e.g. map_pooler',
+    DisplayName varchar(100)                         not null,
+    Description text                                 null,
+    Color       varchar(7)                           null comment 'Chip colour as #RRGGBB',
+    IsSystem    tinyint(1) default 0                 not null comment 'Granted permissions in the API; do not delete or change RoleKey',
+    CreatedAt   timestamp  default CURRENT_TIMESTAMP not null,
+    constraint roles_key_unique
+        unique (RoleKey),
+    constraint chk_roles_color
+        check ((`Color` is null) or regexp_like(`Color`, _utf8mb4'^#[0-9A-Fa-f]{6}$'))
+);
+
 create table tournament_series
 (
     SeriesID    int auto_increment
@@ -141,8 +157,7 @@ create table users
     GoogleID          char(255)                           null,
     GoogleEmail       char(255)                           null,
     RegistrationDate  timestamp default CURRENT_TIMESTAMP null,
-    Role              varchar(50)                         null,
-    FrontendRole      varchar(50)                         null comment 'Role that displays on the webpage',
+    Title             varchar(50)                         null comment 'Display title shown on the website; not used for access control',
     ScoreSaberProfile longtext                            null,
     BeatLeaderProfile longtext                            null,
     constraint users_pk
@@ -398,4 +413,25 @@ create table team_members
     constraint team_members_user_fk
         foreign key (UserID) references users (UserID)
 );
+
+create table user_roles
+(
+    UserID        int                                 not null,
+    RoleID        int                                 not null,
+    AssignedAt    timestamp default CURRENT_TIMESTAMP not null,
+    AssignedByUID int                                 null comment 'NULL when assigned by a migration or by the system',
+    primary key (UserID, RoleID),
+    constraint user_roles_assigned_by_fk
+        foreign key (AssignedByUID) references users (UserID)
+            on delete set null,
+    constraint user_roles_role_fk
+        foreign key (RoleID) references roles (RoleID)
+            on delete cascade,
+    constraint user_roles_user_fk
+        foreign key (UserID) references users (UserID)
+            on delete cascade
+);
+
+create index idx_user_roles_role
+    on user_roles (RoleID);
 

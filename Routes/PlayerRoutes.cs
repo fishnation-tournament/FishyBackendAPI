@@ -1,4 +1,5 @@
 ﻿using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.DBInteractions;
 using FishyAPI.Tools.FrontFacingDataTypes;
@@ -44,7 +45,7 @@ public static class PlayerRoutes
             });
 
             return Results.Created($"/Players/GetPlayerByID/{returnPlayer.PlayerID}", returnPlayer);
-        }).WithName("RegisterPlayer").WithOpenApi().RequireAuthorization("User");
+        }).WithName("RegisterPlayer").WithOpenApi().RequirePermission(Permission.PlayersRegisterSelf);
         endpoints.MapGet("/Players/GetPlayers", () =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
@@ -85,7 +86,7 @@ public static class PlayerRoutes
             using MySqlConnection conn = connManager.IssueConnection();
             List<Player> players = PlayerTools.GetPlayerByUID(conn, ssids);
             return players;
-        }).WithName("GetPlayersByUID").WithOpenApi();
+        }).WithName("GetPlayersByUID").WithOpenApi().AllowAnonymous();
 
         endpoints.MapPost("/Players/AddPlayer", (AddPlayer addPlayer) =>
         {
@@ -99,21 +100,21 @@ public static class PlayerRoutes
             };
             Player newPlayer = PlayerTools.AddPlayer(conn, player);
             return Results.Created($"/Players/GetPlayerByID/{newPlayer.PlayerID}", newPlayer);
-        }).WithName("AddPlayer").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("AddPlayer").WithOpenApi().RequirePermission(Permission.PlayersManage);
 
         endpoints.MapPut("/Players/UpdatePlayer", (Player player) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             PlayerTools.UpdatePlayer(conn, player);
             return Results.Created($"/Players/GetPlayerByID/{player.PlayerID}", player);
-        }).WithName("UpdatePlayer").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("UpdatePlayer").WithOpenApi().RequirePermission(Permission.PlayersManage);
 
         endpoints.MapDelete("/Players/DeletePlayer/{playerID}", (int playerID) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             PlayerTools.DeletePlayer(conn, playerID);
             return Results.NoContent();
-        }).WithName("DeletePlayer").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeletePlayer").WithOpenApi().RequirePermission(Permission.PlayersManage);
     }
 }
 

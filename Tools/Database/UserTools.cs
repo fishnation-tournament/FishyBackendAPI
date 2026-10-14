@@ -8,6 +8,14 @@ namespace FishyAPI.Tools;
 
 public static class UserTools
 {
+    /// <summary>Column list read by User(reader); RoleKeys is the user's roles as a comma-separated list.</summary>
+    private const string UserColumns = """
+        u.UserID, u.SSID, u.OptBLUID, u.Username, u.UserPfpLink, u.Description, u.DiscordID, u.DiscordName,
+        u.GoogleID, u.GoogleEmail, u.RegistrationDate, u.Title, u.ScoreSaberProfile, u.BeatLeaderProfile,
+        (SELECT GROUP_CONCAT(r.RoleKey ORDER BY r.RoleID) FROM user_roles ur JOIN roles r ON r.RoleID = ur.RoleID
+         WHERE ur.UserID = u.UserID) AS RoleKeys
+        """;
+
     private static List<User> ReadResults(MySqlDataReader reader)
     {
         List<User> users = new List<User>();
@@ -32,7 +40,7 @@ public static class UserTools
 
     public static List<User> GetUsers(MySqlConnection dbConn)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {UserColumns} FROM users u", dbConn);
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<User> users = ReadResults(reader);
 
@@ -42,7 +50,7 @@ public static class UserTools
 
     public static User GetUserById(MySqlConnection dbConn, ulong UID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE UserID = @UID", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {UserColumns} FROM users u WHERE u.UserID = @UID", dbConn);
         cmd.Parameters.AddWithValue("@UID", UID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         User user = ReadSingleResult(reader);
@@ -53,7 +61,7 @@ public static class UserTools
 
     public static User GetUserBySSID(MySqlConnection dbConn, ulong SSID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE SSID = @SSID", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {UserColumns} FROM users u WHERE u.SSID = @SSID", dbConn);
         cmd.Parameters.AddWithValue("@SSID", SSID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         User user = ReadSingleResult(reader);
@@ -64,7 +72,7 @@ public static class UserTools
 
     public static List<User> GetUsersByOptBLUID(MySqlConnection dbConn, ulong OptBLUID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE OptBLUID = @OptBLUID", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {UserColumns} FROM users u WHERE u.OptBLUID = @OptBLUID", dbConn);
         cmd.Parameters.AddWithValue("@OptBLUID", OptBLUID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<User> users = ReadResults(reader);
@@ -75,7 +83,7 @@ public static class UserTools
 
     public static List<User> GetUsersByName(MySqlConnection dbConn, string searchTerm)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE Username LIKE @searchTerm", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {UserColumns} FROM users u WHERE u.Username LIKE @searchTerm", dbConn);
         cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<User> users = ReadResults(reader);
@@ -86,8 +94,13 @@ public static class UserTools
 
     public static List<User> GetUsersByRole(MySqlConnection dbConn, string searchTerm)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE Role LIKE @searchTerm", dbConn);
-        cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
+        // Matches a role's key ('map_pooler') or display name ('Map Pooler').
+        MySqlCommand cmd = new MySqlCommand($"""
+            SELECT {UserColumns} FROM users u
+            WHERE EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.RoleID = ur.RoleID
+                          WHERE ur.UserID = u.UserID AND (r.RoleKey = @role OR r.DisplayName = @role))
+            """, dbConn);
+        cmd.Parameters.AddWithValue("@role", searchTerm);
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<User> users = ReadResults(reader);
 
@@ -97,7 +110,7 @@ public static class UserTools
 
     public static User GetUserByDiscordId(MySqlConnection dbConn, ulong DiscordID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE DiscordID = @DiscordID", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {UserColumns} FROM users u WHERE u.DiscordID = @DiscordID", dbConn);
         cmd.Parameters.AddWithValue("@DiscordID", DiscordID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         User user = ReadSingleResult(reader);
@@ -110,9 +123,9 @@ public static class UserTools
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO users
-            (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, RegistrationDate, Role, FrontendRole, ScoreSaberProfile, BeatLeaderProfile)
+            (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, RegistrationDate, Title, ScoreSaberProfile, BeatLeaderProfile)
         VALUES
-            (@SSID, @OptBLUID, @Username, @UserPfpLink, @Description, @DiscordID, @DiscordName, @GoogleID, @GoogleEmail, @RegistrationDate, @Role, @FrontendRole, @ScoreSaberProfile, @BeatLeaderProfile)
+            (@SSID, @OptBLUID, @Username, @UserPfpLink, @Description, @DiscordID, @DiscordName, @GoogleID, @GoogleEmail, @RegistrationDate, @Title, @ScoreSaberProfile, @BeatLeaderProfile)
         """, dbConn);
         cmd.Parameters.AddWithValue("@SSID", user.SSID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@OptBLUID", user.OptBLUID ?? (object)DBNull.Value);
@@ -124,13 +137,15 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@GoogleID", user.GoogleID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@GoogleEmail", user.GoogleEmail ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@Role", user.Role ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@FrontendRole", user.FrontendRole ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@Title", user.Title ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@ScoreSaberProfile", user.ScoreSaberProfile ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@BeatLeaderProfile", user.BeatLeaderProfile ?? (object)DBNull.Value);
         cmd.ExecuteNonQuery();
 
-        return GetUserById(dbConn, (ulong)cmd.LastInsertedId);
+        // Every account starts as a member; anything more is assigned through the role endpoints.
+        ulong newUid = (ulong)cmd.LastInsertedId;
+        RoleTools.AssignRole(dbConn, newUid, "user", null);
+        return GetUserById(dbConn, newUid);
     }
 
     public static void UpdateUser(MySqlConnection dbConn, User user)
@@ -147,8 +162,7 @@ public static class UserTools
             GoogleID = @GoogleID,
             GoogleEmail = @GoogleEmail,
             RegistrationDate = @RegistrationDate,
-            Role = @Role,
-            FrontendRole = @FrontendRole,
+            Title = @Title,
             ScoreSaberProfile = @ScoreSaberProfile,
             BeatLeaderProfile = @BeatLeaderProfile
         WHERE UserID = @UserID
@@ -163,8 +177,7 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@GoogleID", user.GoogleID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@GoogleEmail", user.GoogleEmail ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@Role", user.Role ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@FrontendRole", user.FrontendRole ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@Title", user.Title ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@ScoreSaberProfile", user.ScoreSaberProfile ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@BeatLeaderProfile", user.BeatLeaderProfile ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@UserID", user.UID);
@@ -178,17 +191,7 @@ public static class UserTools
         syncCmd.Parameters.AddWithValue("@UID", user.UID);
         syncCmd.ExecuteNonQuery();
 
-        Console.WriteLine($"Updated user {user.Username} (UID: {user.UID}) in the database. {user.Username} now has Role: {user.Role}, FrontendRole: {user.FrontendRole}, SSID: {user.SSID}, OptBLUID: {user.OptBLUID}");
-    }
-
-    public static void SetUserRole(MySqlConnection dbConn, ulong uid, string role)
-    {
-        MySqlCommand cmd = new MySqlCommand(
-            "UPDATE users SET Role = @Role WHERE UserID = @UID",
-            dbConn);
-        cmd.Parameters.AddWithValue("@Role", role);
-        cmd.Parameters.AddWithValue("@UID", uid);
-        cmd.ExecuteNonQuery();
+        Console.WriteLine($"Updated user {user.Username} (UID: {user.UID}) in the database. {user.Username} now has Title: {user.Title}, SSID: {user.SSID}, OptBLUID: {user.OptBLUID}");
     }
 
     public static void DeleteUser(MySqlConnection dbConn, ulong UID)
@@ -208,7 +211,7 @@ public static class UserTools
 
     public static User GetUserByGoogleId(MySqlConnection dbConn, string GoogleID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM users WHERE GoogleID = @GoogleID", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {UserColumns} FROM users u WHERE u.GoogleID = @GoogleID", dbConn);
         cmd.Parameters.AddWithValue("@GoogleID", GoogleID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         User user = ReadSingleResult(reader);

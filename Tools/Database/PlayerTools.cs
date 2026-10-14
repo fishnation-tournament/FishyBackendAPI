@@ -146,6 +146,7 @@ public static class PlayerTools
         cmd.Parameters.AddWithValue("@ScoresaberID", player.ScoresaberID ?? (object)DBNull.Value);
         cmd.ExecuteNonQuery();
 
+        RoleTools.AssignRole(dbConn, player.UID, "player", null);
         return GetPlayerByID(dbConn, (int)cmd.LastInsertedId);
     }
 

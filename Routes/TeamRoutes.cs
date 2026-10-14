@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -51,7 +52,7 @@ public static class TeamRoutes
             {
                 return Results.Conflict("Team name is already taken this season, or the captain is already on a team this season.");
             }
-        }).WithName("CreateTeam").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("CreateTeam").WithOpenApi().RequirePermission(Permission.TeamsManage);
 
         app.MapPut("/Teams/{teamId}", (int teamId, UpdateTeamRequest request) =>
         {
@@ -72,7 +73,7 @@ public static class TeamRoutes
             {
                 return Results.Conflict("Team name is already taken this season.");
             }
-        }).WithName("UpdateTeam").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("UpdateTeam").WithOpenApi().RequirePermission(Permission.TeamsManage);
 
         app.MapDelete("/Teams/{teamId}", (int teamId) =>
         {
@@ -86,7 +87,7 @@ public static class TeamRoutes
             {
                 return Results.Conflict("Team has lineups, pick/bans, or scores recorded and cannot be deleted.");
             }
-        }).WithName("DeleteTeam").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeleteTeam").WithOpenApi().RequirePermission(Permission.TeamsManage);
 
         // ── Members ──────────────────────────────────────────────────────────
 
@@ -112,13 +113,13 @@ public static class TeamRoutes
             }
 
             return Results.Created($"/Teams/{teamId}", TeamTools.GetTeamById(conn, teamId)!.Value);
-        }).WithName("AddTeamMember").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("AddTeamMember").WithOpenApi().RequirePermission(Permission.TeamsManage);
 
         app.MapDelete("/Teams/{teamId}/Members/{userId}", (int teamId, ulong userId) =>
         {
             using MySqlConnection conn = connManager.IssueConnection();
             bool removed = TeamTools.RemoveTeamMember(conn, teamId, userId);
             return removed ? Results.NoContent() : Results.NotFound();
-        }).WithName("RemoveTeamMember").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("RemoveTeamMember").WithOpenApi().RequirePermission(Permission.TeamsManage);
     }
 }

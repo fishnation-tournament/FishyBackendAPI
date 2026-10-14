@@ -67,7 +67,7 @@ public static class GoogleAuth
             if (UserTools.CheckUserExistsGID(dbConn, userData["id"].ToString()))
             {
                 var user = UserTools.GetUserByGoogleId(dbConn, userData["id"].ToString());
-                token = apiToken.GenerateToken(user, user.Role, DateTime.Now.AddDays(7));
+                token = apiToken.GenerateToken(user, DateTime.Now.AddDays(7));
                 var websiteRedirect = $"https://fishnation.xyz/auth/google/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
                 return;
@@ -86,13 +86,12 @@ public static class GoogleAuth
                 GoogleID = userData["id"].ToString(),
                 GoogleEmail = userData["email"].ToString(),
                 RegistrationDate = DateTime.Now,
-                Role = "User",
-                FrontendRole = "Unassigned"
+                Title = null
             };
 
             User newUser = UserTools.AddUser(dbConn, User);
 
-            token = apiToken.GenerateToken(newUser, "User", DateTime.Now.AddDays(7));
+            token = apiToken.GenerateToken(newUser, DateTime.Now.AddDays(7));
             var Redirect = $"https://fishnation.xyz/auth/google/callback?token={token}";
 
             // Return the token

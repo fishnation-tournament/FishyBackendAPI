@@ -1,4 +1,5 @@
 using FishyAPI.Tools;
+using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
@@ -54,7 +55,7 @@ public static class MatchLineupRoutes
 
             await MatchWebSocketManager.BroadcastToMatch(created.MatchID, "lineup_added", created);
             return Results.Created($"/Lineups/{created.LineupID}", created);
-        }).WithName("CreateLineup").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("CreateLineup").WithOpenApi().RequirePermission(Permission.LineupsManage);
 
         app.MapDelete("/Lineups/{lineupId}", async (ulong lineupId) =>
         {
@@ -67,6 +68,6 @@ public static class MatchLineupRoutes
                 await MatchWebSocketManager.BroadcastToMatch(lineup.Value.MatchID, "lineup_removed", new { lineupId });
 
             return deleted ? Results.NoContent() : Results.NotFound();
-        }).WithName("DeleteLineup").WithOpenApi().RequireAuthorization("Organizer");
+        }).WithName("DeleteLineup").WithOpenApi().RequirePermission(Permission.LineupsManage);
     }
 }
