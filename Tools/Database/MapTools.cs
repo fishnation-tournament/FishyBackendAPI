@@ -5,6 +5,10 @@ namespace FishyAPI.Tools;
 
 public static class MapTools
 {
+    /// <summary>Explicit column list; MapPool(reader) reads these by ordinal.</summary>
+    private const string MapPoolColumns =
+        "MPID, MapPoolName, MapPoolDescription, Season, DownloadLink, OneClickLink, Visibility, PoolType, GeneratedAt";
+
     private static bool MapsTableHasTagsColumn(MySqlConnection dbConn)
     {
         using MySqlCommand cmd = new MySqlCommand(
@@ -98,7 +102,7 @@ public static class MapTools
     
     public static List<MapPool> GetMapPools(MySqlConnection dbConn, bool includePrivate = false)
     {
-        string query = includePrivate ? "SELECT * FROM map_pools" : "SELECT * FROM map_pools WHERE Visibility = 'Public'";
+        string query = includePrivate ? $"SELECT {MapPoolColumns} FROM map_pools" : $"SELECT {MapPoolColumns} FROM map_pools WHERE Visibility = 'Public'";
         MySqlCommand cmd = new MySqlCommand(query, dbConn);
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<MapPool> mapPools = ReadMapPools(dbConn, reader);
@@ -108,7 +112,7 @@ public static class MapTools
 
     public static MapPool GetMapPoolById(MySqlConnection dbConn, ulong MapPoolID, bool includePrivate = false)
     {
-        string query = includePrivate ? "SELECT * FROM map_pools WHERE MPID = @MapPoolID" : "SELECT * FROM map_pools WHERE MPID = @MapPoolID AND Visibility = 'Public'";
+        string query = includePrivate ? $"SELECT {MapPoolColumns} FROM map_pools WHERE MPID = @MapPoolID" : $"SELECT {MapPoolColumns} FROM map_pools WHERE MPID = @MapPoolID AND Visibility = 'Public'";
         MySqlCommand cmd = new MySqlCommand(query, dbConn);
         cmd.Parameters.AddWithValue("@MapPoolID", MapPoolID);
         using MySqlDataReader reader = cmd.ExecuteReader();
@@ -119,7 +123,7 @@ public static class MapTools
 
     public static List<MapPool> GetMapPoolByName(MySqlConnection dbConn, string searchTerm, bool includePrivate = false)
     {
-        string query = includePrivate ? "SELECT * FROM map_pools WHERE MapPoolName LIKE @searchTerm" : "SELECT * FROM map_pools WHERE MapPoolName LIKE @searchTerm AND Visibility = 'Public'";
+        string query = includePrivate ? $"SELECT {MapPoolColumns} FROM map_pools WHERE MapPoolName LIKE @searchTerm" : $"SELECT {MapPoolColumns} FROM map_pools WHERE MapPoolName LIKE @searchTerm AND Visibility = 'Public'";
         MySqlCommand cmd = new MySqlCommand(query, dbConn);
         cmd.Parameters.AddWithValue("@searchTerm", $"%{searchTerm}%");
         using MySqlDataReader reader = cmd.ExecuteReader();
@@ -130,7 +134,7 @@ public static class MapTools
 
     public static List<MapPool> GetMapPoolsBySeason(MySqlConnection dbConn, int season, bool includePrivate = false)
     {
-        string query = includePrivate ? "SELECT * FROM map_pools WHERE Season = @season" : "SELECT * FROM map_pools WHERE Season = @season AND Visibility = 'Public'";
+        string query = includePrivate ? $"SELECT {MapPoolColumns} FROM map_pools WHERE Season = @season" : $"SELECT {MapPoolColumns} FROM map_pools WHERE Season = @season AND Visibility = 'Public'";
         MySqlCommand cmd = new MySqlCommand(query, dbConn);
         cmd.Parameters.AddWithValue("@season", season);
         using MySqlDataReader reader = cmd.ExecuteReader();
@@ -289,9 +293,9 @@ public static class MapTools
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO map_pools
-            (MapPoolName, MapPoolDescription, Season, DownloadLink, OneClickLink, Visibility)
+            (MapPoolName, MapPoolDescription, Season, DownloadLink, OneClickLink, Visibility, PoolType, GeneratedAt)
         VALUES
-            (@MapPoolName, @MapPoolDescription, @Season,  @DownloadLink, @OneClickLink, @Visibility)
+            (@MapPoolName, @MapPoolDescription, @Season,  @DownloadLink, @OneClickLink, @Visibility, @PoolType, @GeneratedAt)
         """, dbConn);
         cmd.Parameters.AddWithValue("@MapPoolName", frontFacingMapPool.MapPoolName);
         cmd.Parameters.AddWithValue("@MapPoolDescription", frontFacingMapPool.MapPoolDescription);
@@ -299,6 +303,10 @@ public static class MapTools
         cmd.Parameters.AddWithValue("@DownloadLink", frontFacingMapPool.DownloadLink);
         cmd.Parameters.AddWithValue("@OneClickLink", frontFacingMapPool.OneClickLink);
         cmd.Parameters.AddWithValue("@Visibility", frontFacingMapPool.Visibility);
+        cmd.Parameters.AddWithValue("@PoolType", (frontFacingMapPool.PoolType ?? PoolType.Season).ToDb());
+        cmd.Parameters.AddWithValue("@GeneratedAt", frontFacingMapPool.GeneratedAt.HasValue
+            ? frontFacingMapPool.GeneratedAt.Value.ToString("yyyy-MM-dd HH:mm:ss")
+            : (object)DBNull.Value);
         cmd.ExecuteNonQuery();
 
         return GetMapPoolById(dbConn, (ulong)cmd.LastInsertedId);
@@ -313,7 +321,9 @@ public static class MapTools
             Season = @Season,
             DownloadLink = @DownloadLink,
             OneClickLink = @OneClickLink,
-            Visibility = @Visibility
+            Visibility = @Visibility,
+            PoolType = @PoolType,
+            GeneratedAt = @GeneratedAt
         WHERE MPID = @MPID
         """, dbConn);
         cmd.Parameters.AddWithValue("@MapPoolName", mapPool.MapPoolName);
@@ -322,6 +332,10 @@ public static class MapTools
         cmd.Parameters.AddWithValue("@DownloadLink", mapPool.DownloadLink);
         cmd.Parameters.AddWithValue("@OneClickLink", mapPool.OneClickLink);
         cmd.Parameters.AddWithValue("@Visibility", mapPool.Visibility);
+        cmd.Parameters.AddWithValue("@PoolType", mapPool.PoolType.ToDb());
+        cmd.Parameters.AddWithValue("@GeneratedAt", mapPool.GeneratedAt.HasValue
+            ? mapPool.GeneratedAt.Value.ToString("yyyy-MM-dd HH:mm:ss")
+            : (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@MPID", mapPool.MapPoolID);
         cmd.ExecuteNonQuery();
     }

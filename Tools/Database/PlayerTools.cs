@@ -112,10 +112,10 @@ public static class PlayerTools
         return players;
     }
 
-    public static bool IsPlayerInCurrentSeason(MySqlConnection dbConn, ulong uid)
+    public static bool IsPlayerInSeason(MySqlConnection dbConn, ulong uid, int seasonId)
     {
         MySqlCommand cmd = new MySqlCommand($"SELECT * FROM players WHERE Season = @season AND UID = @uid LIMIT 1", dbConn);
-        cmd.Parameters.AddWithValue("@season", 2);
+        cmd.Parameters.AddWithValue("@season", seasonId);
         cmd.Parameters.AddWithValue("@uid", uid);
         using MySqlDataReader reader = cmd.ExecuteReader();
         Player player = ReadSingleResult(dbConn, reader);
@@ -141,7 +141,7 @@ public static class PlayerTools
             (@UID, @Season, @Seed, @ScoresaberID)
         """, dbConn);
         cmd.Parameters.AddWithValue("@UID", player.UID);
-        cmd.Parameters.AddWithValue("@Season", player.Season);
+        cmd.Parameters.AddWithValue("@Season", player.Season ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@Seed", player.Seed ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@ScoresaberID", player.ScoresaberID ?? (object)DBNull.Value);
         cmd.ExecuteNonQuery();
@@ -160,7 +160,7 @@ public static class PlayerTools
         WHERE PlayerID = @PlayerID
         """, dbConn);
         cmd.Parameters.AddWithValue("@UID", player.UID);
-        cmd.Parameters.AddWithValue("@Season", player.Season);
+        cmd.Parameters.AddWithValue("@Season", player.Season ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@Seed", player.Seed ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@ScoresaberID", player.ScoresaberID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@PlayerID", player.PlayerID);

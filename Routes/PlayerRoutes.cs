@@ -27,7 +27,7 @@ public static class PlayerRoutes
             if (!activeSeason.HasValue)
                 return Results.BadRequest("There is no active season to register for.");
 
-            if (PlayerTools.IsPlayerInCurrentSeason(conn, uid))
+            if (PlayerTools.IsPlayerInSeason(conn, uid, activeSeason.Value.SeasonID))
             {
                 Console.WriteLine($"Player with UID {uid} is already registered for season {activeSeason.Value.SeasonID}.");
                 return Results.BadRequest("Player is already registered for the current season.");

@@ -13,6 +13,7 @@ public class PickBanTools
                pb.match_id    AS MatchID,
                pb.pick        AS Pick,
                pb.player_id   AS PlayerID,
+               pb.team_id     AS TeamID,
                pb.map_id      AS MapRefID,
                m.MapID, m.BSMapID, m.MapName, m.MapImageLink, m.MPID, m.Season, m.Difficulty, m.Tags,
                f.flair_id AS FlairID, f.color AS FlairColor, f.name AS FlairName
@@ -52,11 +53,12 @@ public class PickBanTools
         Console.WriteLine(JsonSerializer.Serialize(request));
         
         MySqlCommand cmd = new MySqlCommand(
-            "INSERT INTO pick_ban (match_id, pick, player_id, map_id) VALUES (@MatchID, @IsPick, @PlayerID, @MapID)",
+            "INSERT INTO pick_ban (match_id, pick, player_id, team_id, map_id) VALUES (@MatchID, @IsPick, @PlayerID, @TeamID, @MapID)",
             dbConn);
         cmd.Parameters.AddWithValue("@MatchID", request.MatchID);
         cmd.Parameters.AddWithValue("@IsPick", request.IsPick ? 1 : 0);
-        cmd.Parameters.AddWithValue("@PlayerID", request.PlayerID);
+        cmd.Parameters.AddWithValue("@PlayerID", request.PlayerID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@TeamID", request.TeamID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@MapID", request.MapID);
         cmd.ExecuteNonQuery();
 

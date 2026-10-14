@@ -137,6 +137,9 @@ public struct FrontFacingMapPool
     public string DownloadLink { get; set; }
     public string OneClickLink { get; set; }
     public string Visibility { get; set; }
+    /// <summary>Defaults to Season when omitted.</summary>
+    public PoolType? PoolType { get; set; }
+    public DateTime? GeneratedAt { get; set; }
     public List<FrontFacingMap> Maps { get; set; }
 }
 
@@ -164,6 +167,9 @@ public struct FrontFacingMatch
     public int IsLosersBracket { get; set; }
     public ulong? WinnerGoesToMatch { get; set; }
     public ulong? LoserGoesToMatch  { get; set; }
+    public int? Team1ID { get; set; }
+    public int? Team2ID { get; set; }
+    public int? WinnerTeamID { get; set; }
 }
 
 public struct UpdateMatchScoreRequest
@@ -203,6 +209,9 @@ public struct BulkCreateMatchEntry
     public bool IsLosersBracket {  get; set; }
     public ulong? WinnerGoesToMatch { get; set; }
     public ulong? LoserGoesToMatch { get; set; }
+    public int? Team1ID { get; set; }
+    public int? Team2ID { get; set; }
+    public int? WinnerTeamID { get; set; }
     // Optional schedule — omit ScheduledAt to skip creating a schedule entry
     public DateTime? ScheduledAt { get; set; }
     public string? ScheduleNotes { get; set; }
@@ -220,7 +229,10 @@ public struct CreatePickBanRequest
     public ulong MatchID { get; set; }
     /// <summary>true = pick, false = ban</summary>
     public bool IsPick { get; set; }
-    public int PlayerID { get; set; }
+    /// <summary>Acting player for solo matches. Optional when TeamID is given.</summary>
+    public int? PlayerID { get; set; }
+    /// <summary>Acting team for team matches.</summary>
+    public int? TeamID { get; set; }
     public ulong MapID { get; set; }
 }
 
@@ -241,6 +253,7 @@ public struct FrontFacingMatchScore
     public int MaxScore { get; set; }
     public int Misses { get; set; }
     public bool IsReplayAttempt { get; set; }
+    public int? TeamID { get; set; }
 }
 
 public struct AddQualifierScore
@@ -288,6 +301,10 @@ public struct CreateSeasonRequest
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public DateTime? QualifierCutoff { get; set; }
+    public string? DisplayName { get; set; }
+    /// <summary>Defaults to 1 when omitted.</summary>
+    public int? SeriesID { get; set; }
+    public int? SeasonNumber { get; set; }
 }
 
 public struct UpdateSeasonRequest
@@ -297,6 +314,67 @@ public struct UpdateSeasonRequest
     public DateTime? EndDate { get; set; }
     public DateTime? QualifierCutoff { get; set; }
     public bool ClearQualifierCutoff { get; set; }
+    public string? DisplayName { get; set; }
+    public bool ClearDisplayName { get; set; }
+    public int? SeriesID { get; set; }
+    public int? SeasonNumber { get; set; }
+    public bool ClearSeasonNumber { get; set; }
+}
+
+public struct CreateTournamentSeriesRequest
+{
+    public string SeriesName { get; set; }
+    public string Slug { get; set; }
+    public string? Description { get; set; }
+}
+
+public struct UpdateTournamentSeriesRequest
+{
+    public string? SeriesName { get; set; }
+    public string? Slug { get; set; }
+    public string? Description { get; set; }
+}
+
+public struct UpsertSeasonSettingsRequest
+{
+    public string? BracketFormat { get; set; }
+    public ParticipantType? ParticipantType { get; set; }
+    public int? TeamMaxSize { get; set; }
+    public int? TeamActivePlayers { get; set; }
+    public MapPoolMode? MapPoolMode { get; set; }
+}
+
+public struct CreateTeamRequest
+{
+    public int SeasonID { get; set; }
+    public string TeamName { get; set; }
+    public string? TeamLogoLink { get; set; }
+    public int? Seed { get; set; }
+    public ulong? CaptainUID { get; set; }
+}
+
+public struct UpdateTeamRequest
+{
+    public string? TeamName { get; set; }
+    public string? TeamLogoLink { get; set; }
+    public bool ClearTeamLogoLink { get; set; }
+    public int? Seed { get; set; }
+    public bool ClearSeed { get; set; }
+    public ulong? CaptainUID { get; set; }
+    public bool ClearCaptain { get; set; }
+}
+
+public struct AddTeamMemberRequest
+{
+    public ulong UserID { get; set; }
+}
+
+public struct CreateMatchLineupRequest
+{
+    public ulong MatchID { get; set; }
+    public ulong MapID { get; set; }
+    public int TeamID { get; set; }
+    public ulong UserID { get; set; }
 }
 
 public struct CreateFlairRequest

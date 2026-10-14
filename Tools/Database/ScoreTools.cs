@@ -5,6 +5,10 @@ namespace FishyAPI.Tools;
 
 public class ScoreTools
 {
+    /// <summary>Explicit column list; MatchScore(reader) reads these by ordinal.</summary>
+    private const string MatchScoreColumns =
+        "ScoreID, UID, MapID, MatchID, Score, MaxScore, Misses, ReplayCalledAfter, IsReplayAttempt, TeamID";
+
     public static List<MatchScore> ReadMatchScores(MySqlDataReader reader)
     {
         List<MatchScore> scores = new List<MatchScore>();
@@ -56,7 +60,7 @@ public class ScoreTools
 
     public static List<MatchScore> GetMatchScores(MySqlConnection dbConn, ulong MatchID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM player_scores WHERE MatchID = @MatchID", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {MatchScoreColumns} FROM player_scores WHERE MatchID = @MatchID", dbConn);
         cmd.Parameters.AddWithValue("@MatchID", MatchID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<MatchScore> scores = ReadMatchScores(reader);
@@ -138,9 +142,9 @@ public class ScoreTools
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO player_scores
-            (UID, MapID, MatchID, Score, MaxScore, Misses, IsReplayAttempt)
+            (UID, MapID, MatchID, Score, MaxScore, Misses, IsReplayAttempt, TeamID)
         VALUES
-            (@UID, @MapID, @MatchID, @Score, @MaxScore, @Misses, @IsReplayAttempt)
+            (@UID, @MapID, @MatchID, @Score, @MaxScore, @Misses, @IsReplayAttempt, @TeamID)
         """, dbConn);
         cmd.Parameters.AddWithValue("@UID", score.UID);
         cmd.Parameters.AddWithValue("@MapID", score.MapID);
@@ -149,6 +153,7 @@ public class ScoreTools
         cmd.Parameters.AddWithValue("@MaxScore", score.MaxScore);
         cmd.Parameters.AddWithValue("@Misses", score.Misses);
         cmd.Parameters.AddWithValue("@IsReplayAttempt", score.IsReplayAttempt ? 1 : 0);
+        cmd.Parameters.AddWithValue("@TeamID", score.TeamID ?? (object)DBNull.Value);
         cmd.ExecuteNonQuery();
 
         return GetMatchScoreById(dbConn, (ulong)cmd.LastInsertedId);
@@ -156,7 +161,7 @@ public class ScoreTools
 
     public static MatchScore? GetMatchScoreById(MySqlConnection dbConn, ulong scoreId)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM player_scores WHERE ScoreID = @ScoreID LIMIT 1", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {MatchScoreColumns} FROM player_scores WHERE ScoreID = @ScoreID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@ScoreID", scoreId);
         using MySqlDataReader reader = cmd.ExecuteReader();
         if (!reader.Read()) return null;
@@ -200,7 +205,7 @@ public class ScoreTools
         flagCmd.ExecuteNonQuery();
 
         MySqlCommand getCmd = new MySqlCommand(
-            "SELECT * FROM player_scores WHERE MatchID = @MatchID AND MapID = @MapID",
+            $"SELECT {MatchScoreColumns} FROM player_scores WHERE MatchID = @MatchID AND MapID = @MapID",
             dbConn);
         getCmd.Parameters.AddWithValue("@MatchID", matchId);
         getCmd.Parameters.AddWithValue("@MapID", mapId);

@@ -40,7 +40,7 @@ public class MatchScheduleTools
     public static List<Match> GetUpcomingSchedules(MySqlConnection dbConn)
     {
         MySqlCommand cmd = new MySqlCommand(
-            "SELECT * FROM matches WHERE MatchDateTime >= UTC_TIMESTAMP() ORDER BY MatchDateTime",
+            $"SELECT {MatchTools.MatchColumns} FROM matches WHERE MatchDateTime >= UTC_TIMESTAMP() ORDER BY MatchDateTime",
             dbConn);
         List<Match> schedules;
         using (MySqlDataReader reader = cmd.ExecuteReader())
@@ -51,7 +51,7 @@ public class MatchScheduleTools
     public static List<Match> GetSchedules(MySqlConnection dbConn)
     {
         MySqlCommand cmd = new MySqlCommand(
-            "SELECT * FROM matches ORDER BY MatchDateTime",
+            $"SELECT {MatchTools.MatchColumns} FROM matches ORDER BY MatchDateTime",
             dbConn);
         List<Match> schedules;
         using (MySqlDataReader reader = cmd.ExecuteReader())

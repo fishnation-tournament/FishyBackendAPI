@@ -26,6 +26,9 @@ public static class PickBanRoutes
 
         app.MapPost("/PickBan", async (CreatePickBanRequest request) =>
         {
+            if (!request.PlayerID.HasValue && !request.TeamID.HasValue)
+                return Results.BadRequest("Either PlayerID or TeamID is required.");
+
             using MySqlConnection conn = connManager.IssueConnection();
             PickBan created = PickBanTools.CreatePickBan(conn, request);
 

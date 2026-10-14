@@ -6,6 +6,13 @@ namespace FishyAPI.Tools;
 
 public class MatchTools
 {
+    /// <summary>Explicit column list; Match(reader) reads these by ordinal.</summary>
+    public const string MatchColumns =
+        "MatchID, Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, " +
+        "Season, MapPoolID, Status, BestOf, Player1ReplayUsed, Player2ReplayUsed, IsStreamed, CoordinatorUID, " +
+        "RoundName, RoundOrder, BanCount, PickCount, LocalMatchID, IsLosersBracket, WinnerGoesToMatch, LoserGoesToMatch, " +
+        "Team1ID, Team2ID, WinnerTeamID";
+
     private static void PopulateMatchProfiles(MySqlConnection dbConn, ref Match match)
     {
         if (match.Player1ID.HasValue)
@@ -14,6 +21,10 @@ public class MatchTools
             match.Player2User = new FrontFacingUser(UserTools.GetUserById(dbConn, match.Player2ID.Value));
         if (match.CoordinatorUID.HasValue)
             match.CoordinatorUser = new FrontFacingUser(UserTools.GetUserById(dbConn, match.CoordinatorUID.Value));
+        if (match.Team1ID.HasValue)
+            match.Team1 = TeamTools.GetTeamById(dbConn, match.Team1ID.Value);
+        if (match.Team2ID.HasValue)
+            match.Team2 = TeamTools.GetTeamById(dbConn, match.Team2ID.Value);
     }
 
     public static List<Match> ReadMatches(MySqlConnection dbConn, MySqlDataReader reader)
@@ -30,6 +41,7 @@ public class MatchTools
             var tempMatch = matches[i];
             tempMatch.Scores = ScoreTools.GetMatchScores(dbConn, tempMatch.MatchID);
             tempMatch.PickBans = PickBanTools.GetPickBansByMatch(dbConn, tempMatch.MatchID);
+            tempMatch.Lineups = MatchLineupTools.GetLineupsByMatch(dbConn, tempMatch.MatchID);
             PopulateMatchProfiles(dbConn, ref tempMatch);
             matches[i] = tempMatch;
         }
@@ -48,13 +60,14 @@ public class MatchTools
 
         match.Scores = ScoreTools.GetMatchScores(dbConn, match.MatchID);
         match.PickBans = PickBanTools.GetPickBansByMatch(dbConn, match.MatchID);
+        match.Lineups = MatchLineupTools.GetLineupsByMatch(dbConn, match.MatchID);
         PopulateMatchProfiles(dbConn, ref match);
         return match;
     }
 
     public static List<Match> GetMatches(MySqlConnection dbConn)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM matches", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {MatchColumns} FROM matches", dbConn);
         using MySqlDataReader reader = cmd.ExecuteReader();
         List<Match> matches = ReadMatches(dbConn, reader);
 
@@ -64,8 +77,8 @@ public class MatchTools
     public static List<Match> GetMatchesBySeason(MySqlConnection dbConn, int season, bool sortByRound = false)
     {
         string sql = sortByRound
-            ? "SELECT * FROM matches WHERE Season = @season ORDER BY RoundOrder IS NULL, RoundOrder ASC"
-            : "SELECT * FROM matches WHERE Season = @season";
+            ? $"SELECT {MatchColumns} FROM matches WHERE Season = @season ORDER BY RoundOrder IS NULL, RoundOrder ASC"
+            : $"SELECT {MatchColumns} FROM matches WHERE Season = @season";
         MySqlCommand cmd = new MySqlCommand(sql, dbConn);
         cmd.Parameters.AddWithValue("@season", season);
         using MySqlDataReader reader = cmd.ExecuteReader();
@@ -74,7 +87,7 @@ public class MatchTools
 
     public static Match GetMatchById(MySqlConnection dbConn, ulong MID)
     {
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM matches WHERE MatchID = @MID LIMIT 1", dbConn);
+        MySqlCommand cmd = new MySqlCommand($"SELECT {MatchColumns} FROM matches WHERE MatchID = @MID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@MID", MID);
         using MySqlDataReader reader = cmd.ExecuteReader();
         Match match = ReadSingleMatch(dbConn, reader);
@@ -86,9 +99,9 @@ public class MatchTools
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO matches
-            (Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, Season, MapPoolID, Status, BestOf, IsStreamed, CoordinatorUID, RoundName, RoundOrder, BanCount, PickCount, LocalMatchID, IsLosersBracket, WinnerGoesToMatch, LoserGoesToMatch)
+            (Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, Season, MapPoolID, Status, BestOf, IsStreamed, CoordinatorUID, RoundName, RoundOrder, BanCount, PickCount, LocalMatchID, IsLosersBracket, WinnerGoesToMatch, LoserGoesToMatch, Team1ID, Team2ID, WinnerTeamID)
         VALUES
-            (@Player1UID, @Player2UID, @Player1Points, @Player2Points, @MatchDateTime, @MatchComplete, @WinnerUID, @Season, @MapPoolID, @Status, @BestOf, @IsStreamed, @CoordinatorUID, @RoundName, @RoundOrder, @BanCount, @PickCount, @LocalMatchID, @IsLosersBracket, @WinnerGoesToMatch, @LoserGoesToMatch)""
+            (@Player1UID, @Player2UID, @Player1Points, @Player2Points, @MatchDateTime, @MatchComplete, @WinnerUID, @Season, @MapPoolID, @Status, @BestOf, @IsStreamed, @CoordinatorUID, @RoundName, @RoundOrder, @BanCount, @PickCount, @LocalMatchID, @IsLosersBracket, @WinnerGoesToMatch, @LoserGoesToMatch, @Team1ID, @Team2ID, @WinnerTeamID)
         """, dbConn);
         cmd.Parameters.AddWithValue("@Player1UID", frontFacingMatch.Player1ID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@Player2UID", frontFacingMatch.Player2ID ?? (object)DBNull.Value);
@@ -111,6 +124,9 @@ public class MatchTools
         cmd.Parameters.AddWithValue("@IsLosersBracket", frontFacingMatch.IsLosersBracket);
         cmd.Parameters.AddWithValue("@WinnerGoesToMatch", frontFacingMatch.WinnerGoesToMatch.HasValue && frontFacingMatch.WinnerGoesToMatch != 0 ? frontFacingMatch.WinnerGoesToMatch.Value : DBNull.Value);
         cmd.Parameters.AddWithValue("@LoserGoesToMatch", frontFacingMatch.LoserGoesToMatch.HasValue && frontFacingMatch.LoserGoesToMatch != 0 ? frontFacingMatch.LoserGoesToMatch.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("@Team1ID", frontFacingMatch.Team1ID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@Team2ID", frontFacingMatch.Team2ID ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@WinnerTeamID", frontFacingMatch.WinnerTeamID ?? (object)DBNull.Value);
         cmd.ExecuteNonQuery();
         return GetMatchById(dbConn, (ulong)cmd.LastInsertedId);
     }
@@ -143,7 +159,10 @@ public class MatchTools
             LocalMatchID = @LocalMatchID,
             IsLosersBracket = @IsLosersBracket,
             WinnerGoesToMatch = @WinnerGoesToMatch,
-            LoserGoesToMatch = @LoserGoesToMatch
+            LoserGoesToMatch = @LoserGoesToMatch,
+            Team1ID = @Team1ID,
+            Team2ID = @Team2ID,
+            WinnerTeamID = @WinnerTeamID
         WHERE MatchID = @MatchID
         """, dbConn);
         cmd.Parameters.AddWithValue("@Player1UID", match.Player1ID.HasValue && match.Player1ID != 0 ? (object)match.Player1ID.Value : DBNull.Value);
@@ -170,6 +189,9 @@ public class MatchTools
         cmd.Parameters.AddWithValue("@IsLosersBracket", match.IsLosersBracket);
         cmd.Parameters.AddWithValue("@WinnerGoesToMatch", match.WinnerGoesToMatch.HasValue && match.WinnerGoesToMatch != 0 ? match.WinnerGoesToMatch.Value : DBNull.Value);
         cmd.Parameters.AddWithValue("@LoserGoesToMatch", match.LoserGoesToMatch.HasValue && match.LoserGoesToMatch != 0 ? match.LoserGoesToMatch.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("@Team1ID", match.Team1ID.HasValue && match.Team1ID != 0 ? match.Team1ID.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("@Team2ID", match.Team2ID.HasValue && match.Team2ID != 0 ? match.Team2ID.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("@WinnerTeamID", match.WinnerTeamID.HasValue && match.WinnerTeamID != 0 ? match.WinnerTeamID.Value : DBNull.Value);
         cmd.ExecuteNonQuery();
     }
 
@@ -212,9 +234,9 @@ public class MatchTools
                 // Insert match
                 MySqlCommand matchCmd = new MySqlCommand("""
                 INSERT INTO matches
-                    (Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, Season, MapPoolID, Status, BestOf, IsStreamed, CoordinatorUID, RoundName, RoundOrder, BanCount, PickCount, LocalMatchID, IsLosersBracket, WinnerGoesToMatch, LoserGoesToMatch)
+                    (Player1UID, Player2UID, Player1Points, Player2Points, MatchDateTime, MatchComplete, WinnerUID, Season, MapPoolID, Status, BestOf, IsStreamed, CoordinatorUID, RoundName, RoundOrder, BanCount, PickCount, LocalMatchID, IsLosersBracket, WinnerGoesToMatch, LoserGoesToMatch, Team1ID, Team2ID, WinnerTeamID)
                 VALUES
-                    (@Player1UID, @Player2UID, @Player1Points, @Player2Points, @MatchDateTime, @MatchComplete, @WinnerUID, @Season, @MapPoolID, @Status, @BestOf, @IsStreamed, @CoordinatorUID, @RoundName, @RoundOrder, @BanCount, @PickCount, @LocalMatchID, @IsLosersBracket, @WinnerGoesToMatch, @LoserGoesToMatch)
+                    (@Player1UID, @Player2UID, @Player1Points, @Player2Points, @MatchDateTime, @MatchComplete, @WinnerUID, @Season, @MapPoolID, @Status, @BestOf, @IsStreamed, @CoordinatorUID, @RoundName, @RoundOrder, @BanCount, @PickCount, @LocalMatchID, @IsLosersBracket, @WinnerGoesToMatch, @LoserGoesToMatch, @Team1ID, @Team2ID, @WinnerTeamID)
                 """, dbConn, transaction);
                 matchCmd.Parameters.AddWithValue("@Player1UID", entry.Player1ID ?? (object)DBNull.Value);
                 matchCmd.Parameters.AddWithValue("@Player2UID", entry.Player2ID ?? (object)DBNull.Value);
@@ -237,6 +259,9 @@ public class MatchTools
                 matchCmd.Parameters.AddWithValue("@IsLosersBracket", entry.IsLosersBracket);
                 matchCmd.Parameters.AddWithValue("@WinnerGoesToMatch", entry.WinnerGoesToMatch.HasValue && entry.WinnerGoesToMatch != 0 ? (object)entry.WinnerGoesToMatch.Value : DBNull.Value);
                 matchCmd.Parameters.AddWithValue("@LoserGoesToMatch", entry.LoserGoesToMatch.HasValue && entry.LoserGoesToMatch != 0 ? (object)entry.LoserGoesToMatch.Value : DBNull.Value);
+                matchCmd.Parameters.AddWithValue("@Team1ID", entry.Team1ID ?? (object)DBNull.Value);
+                matchCmd.Parameters.AddWithValue("@Team2ID", entry.Team2ID ?? (object)DBNull.Value);
+                matchCmd.Parameters.AddWithValue("@WinnerTeamID", entry.WinnerTeamID ?? (object)DBNull.Value);
                 matchCmd.ExecuteNonQuery();
 
                 ulong matchId = (ulong)matchCmd.LastInsertedId;
@@ -298,46 +323,62 @@ public class MatchTools
 
     /// <summary>
     /// When a match is finished, advances the winner and loser to their next matches.
-    /// The advancing player fills whichever player slot (Player1 or Player2) is currently NULL in the target match.
+    /// The advancing player (or team, for team matches) fills whichever slot (1 or 2) is currently NULL in the target match.
     /// Does nothing if WinnerGoesToMatch / LoserGoesToMatch is null, or if both slots in the target are already filled.
     /// </summary>
     public static void AdvancePlayersFromMatch(MySqlConnection dbConn, Match finishedMatch)
     {
-        if (!finishedMatch.Complete || !finishedMatch.WinnerID.HasValue) return;
+        if (!finishedMatch.Complete) return;
 
-        ulong winnerUID = finishedMatch.WinnerID.Value;
-        ulong? loserUID = finishedMatch.Player1ID == winnerUID ? finishedMatch.Player2ID : finishedMatch.Player1ID;
+        if (finishedMatch.WinnerID.HasValue)
+        {
+            ulong winnerUID = finishedMatch.WinnerID.Value;
+            ulong? loserUID = finishedMatch.Player1ID == winnerUID ? finishedMatch.Player2ID : finishedMatch.Player1ID;
 
-        if (finishedMatch.WinnerGoesToMatch.HasValue)
-            AdvancePlayerToMatch(dbConn, finishedMatch.WinnerGoesToMatch.Value, winnerUID);
+            if (finishedMatch.WinnerGoesToMatch.HasValue)
+                AdvanceToMatch(dbConn, finishedMatch.WinnerGoesToMatch.Value, "Player1UID", "Player2UID", winnerUID);
 
-        if (finishedMatch.LoserGoesToMatch.HasValue && loserUID.HasValue)
-            AdvancePlayerToMatch(dbConn, finishedMatch.LoserGoesToMatch.Value, loserUID.Value);
+            if (finishedMatch.LoserGoesToMatch.HasValue && loserUID.HasValue)
+                AdvanceToMatch(dbConn, finishedMatch.LoserGoesToMatch.Value, "Player1UID", "Player2UID", loserUID.Value);
+        }
+
+        if (finishedMatch.WinnerTeamID.HasValue)
+        {
+            int winnerTeamID = finishedMatch.WinnerTeamID.Value;
+            int? loserTeamID = finishedMatch.Team1ID == winnerTeamID ? finishedMatch.Team2ID : finishedMatch.Team1ID;
+
+            if (finishedMatch.WinnerGoesToMatch.HasValue)
+                AdvanceToMatch(dbConn, finishedMatch.WinnerGoesToMatch.Value, "Team1ID", "Team2ID", (ulong)winnerTeamID);
+
+            if (finishedMatch.LoserGoesToMatch.HasValue && loserTeamID.HasValue)
+                AdvanceToMatch(dbConn, finishedMatch.LoserGoesToMatch.Value, "Team1ID", "Team2ID", (ulong)loserTeamID.Value);
+        }
     }
 
-    private static void AdvancePlayerToMatch(MySqlConnection dbConn, ulong targetMatchID, ulong playerUID)
+    // slot1Column/slot2Column are always one of the hard-coded pairs above, never user input.
+    private static void AdvanceToMatch(MySqlConnection dbConn, ulong targetMatchID, string slot1Column, string slot2Column, ulong participantID)
     {
         MySqlCommand checkCmd = new MySqlCommand(
-            "SELECT Player1UID, Player2UID FROM matches WHERE MatchID = @MatchID LIMIT 1", dbConn);
+            $"SELECT {slot1Column}, {slot2Column} FROM matches WHERE MatchID = @MatchID LIMIT 1", dbConn);
         checkCmd.Parameters.AddWithValue("@MatchID", targetMatchID);
 
         using MySqlDataReader reader = checkCmd.ExecuteReader();
         if (!reader.Read()) return;
 
-        bool p1Null = reader.IsDBNull(0);
-        bool p2Null = reader.IsDBNull(1);
-        ulong? p1UID = p1Null ? null : reader.GetUInt64(0);
-        ulong? p2UID = p2Null ? null : reader.GetUInt64(1);
+        bool s1Null = reader.IsDBNull(0);
+        bool s2Null = reader.IsDBNull(1);
+        ulong? s1 = s1Null ? null : Convert.ToUInt64(reader.GetValue(0));
+        ulong? s2 = s2Null ? null : Convert.ToUInt64(reader.GetValue(1));
         reader.Close();
 
-        if (p1UID == playerUID || p2UID == playerUID) return;
+        if (s1 == participantID || s2 == participantID) return;
 
-        string? column = p1Null ? "Player1UID" : (p2Null ? "Player2UID" : null);
+        string? column = s1Null ? slot1Column : (s2Null ? slot2Column : null);
         if (column == null) return;
 
         MySqlCommand updateCmd = new MySqlCommand(
-            $"UPDATE matches SET {column} = @PlayerUID WHERE MatchID = @MatchID", dbConn);
-        updateCmd.Parameters.AddWithValue("@PlayerUID", playerUID);
+            $"UPDATE matches SET {column} = @ParticipantID WHERE MatchID = @MatchID", dbConn);
+        updateCmd.Parameters.AddWithValue("@ParticipantID", participantID);
         updateCmd.Parameters.AddWithValue("@MatchID", targetMatchID);
         updateCmd.ExecuteNonQuery();
     }
