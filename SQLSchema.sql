@@ -40,6 +40,16 @@ create table maps
         foreign key (flair) references flairs (flair_id)
 );
 
+create table matches_forfeit_backup_005
+(
+    MatchID       bigint      not null
+        primary key,
+    Status        varchar(50) null,
+    Player1Points int         null,
+    Player2Points int         null,
+    WinnerUID     int         null
+);
+
 create table players
 (
     PlayerID     int auto_increment
