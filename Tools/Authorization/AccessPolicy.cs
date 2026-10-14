@@ -26,7 +26,7 @@ public static class AccessPolicy
         ["caster"]      = [],
         ["map_pooler"]  = [.. Staff, .. MapPooling],
         ["coordinator"] = [.. Staff, .. MatchDay, MapPoolsViewPrivate],
-        ["organizer"]   = [.. Staff, .. MatchDay, .. MapPooling, MatchesManage, TeamsManage, PlayersManage, UsersManage],
+        ["organizer"]   = [.. Staff, .. MatchDay, .. MapPooling, MatchesManage, MatchesOverride, TeamsManage, PlayersManage, UsersManage],
         ["admin"]       = Enum.GetValues<Permission>(),
     };
     // ─────────────────────────────────────────────────────────────────────────

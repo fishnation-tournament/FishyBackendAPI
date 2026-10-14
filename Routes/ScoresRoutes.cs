@@ -3,6 +3,7 @@ using FishyAPI.Tools.Authorization;
 using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
 using FishyAPI.Tools.DBInteractions;
+using FishyAPI.Tools.MatchFlow;
 using MySql.Data.MySqlClient;
 using System.Threading.Tasks;
 
@@ -82,32 +83,32 @@ public static class ScoresRoutes
             return scores;
         }).WithName("GetMatchScores").WithOpenApi();
 
-        endpoints.MapPost("/Scores/AddMatchScore", async (FrontFacingMatchScore score) =>
-        {
-            using MySqlConnection conn = connManager.IssueConnection();
-            MatchScore? completeScore = ScoreTools.CreateMatchScore(conn, score);
-            if (completeScore != null)
-            {
-                await MatchWebSocketManager.BroadcastToMatch(score.MatchID, "score_posted", completeScore);
-            }
+        // Overrides: edit a match's score records directly (e.g. to fix a past map). Coordinators normally use
+        // POST /Matches/{id}/Scores. Points, winner and replay flags are recomputed from the records afterwards.
 
-            return Results.Created($"/Matches/GetMatchById/{score.MatchID}", score);
-        }).WithName("AddMatchScore").WithOpenApi().RequirePermission(Permission.MatchScoresManage);
+        endpoints.MapPost("/Scores/AddMatchScore", async (FrontFacingMatchScore score) =>
+            MatchFlowRoutes.ToResult(await MatchActions.Run(connManager, score.MatchID, null, false, "score_override",
+                (conn, ctx, state) => MatchActions.OverrideAddScore(conn, ctx, state, score))))
+            .WithName("AddMatchScore").WithOpenApi().RequirePermission(Permission.MatchesOverride);
 
         endpoints.MapPut("/Scores/Match/{scoreId}", async (ulong scoreId, UpdateMatchScoreRequest request) =>
         {
-            using MySqlConnection conn = connManager.IssueConnection();
-            MatchScore? updated = ScoreTools.UpdateMatchScore(conn, scoreId, request);
-            if (updated == null) return Results.NotFound();
-            await MatchWebSocketManager.BroadcastToMatch(updated.Value.MatchID, "score_updated", updated.Value);
-            return Results.Ok(updated.Value);
-        }).WithName("UpdateMatchScore").WithOpenApi().RequirePermission(Permission.MatchScoresManage);
+            MatchScore? existing;
+            using (MySqlConnection conn = connManager.IssueConnection())
+                existing = ScoreTools.GetMatchScoreById(conn, scoreId);
+            if (existing == null) return Results.NotFound();
+            return MatchFlowRoutes.ToResult(await MatchActions.Run(connManager, existing.Value.MatchID, null, false, "score_override",
+                (conn, ctx, state) => MatchActions.OverrideUpdateScore(conn, ctx, scoreId, request)));
+        }).WithName("UpdateMatchScore").WithOpenApi().RequirePermission(Permission.MatchesOverride);
 
-        endpoints.MapDelete("/Scores/Match/{scoreId}", (ulong scoreId) =>
+        endpoints.MapDelete("/Scores/Match/{scoreId}", async (ulong scoreId) =>
         {
-            using MySqlConnection conn = connManager.IssueConnection();
-            bool deleted = ScoreTools.DeleteMatchScore(conn, scoreId);
-            return deleted ? Results.NoContent() : Results.NotFound();
+            MatchScore? existing;
+            using (MySqlConnection conn = connManager.IssueConnection())
+                existing = ScoreTools.GetMatchScoreById(conn, scoreId);
+            if (existing == null) return Results.NotFound();
+            return MatchFlowRoutes.ToResult(await MatchActions.Run(connManager, existing.Value.MatchID, null, false, "score_override",
+                (conn, ctx, state) => MatchActions.OverrideDeleteScore(conn, ctx, scoreId)));
         }).WithName("DeleteMatchScore").WithOpenApi().RequirePermission(Permission.MatchScoresDelete);
 
         // ── Matches ───────────────────────────────────────────────────────────
@@ -150,15 +151,15 @@ public static class ScoresRoutes
             return Results.Ok(results);
         }).WithName("BulkCreateMatches").WithOpenApi().RequirePermission(Permission.MatchesManage);
 
+        // Edits match details only. Result fields in the body (points, winner, complete, replays, status) are
+        // ignored: results come from the match's records via the guarded actions.
         endpoints.MapPut("/Matches/Update", async (Match match) =>
         {
+            ActionOutcome outcome = await MatchActions.Run(connManager, match.MatchID, null, false, "match_details_updated",
+                (conn, ctx, state) => MatchActions.UpdateMetadata(conn, ctx, state, match));
+            if (outcome.Status != 200) return MatchFlowRoutes.ToResult(outcome);
             using MySqlConnection conn = connManager.IssueConnection();
-            MatchTools.UpdateMatch(conn, match);
-            Match updated = MatchTools.GetMatchById(conn, match.MatchID);
-            if (updated.Complete)
-                MatchTools.AdvancePlayersFromMatch(conn, updated);
-            await MatchWebSocketManager.BroadcastToMatch(updated.MatchID, "match_updated", updated);
-            return Results.Ok(updated);
+            return Results.Ok(MatchTools.GetMatchById(conn, match.MatchID));
         }).WithName("UpdateMatch").WithOpenApi().RequirePermission(Permission.MatchesUpdate);
 
         endpoints.MapDelete("/Matches/Delete/{MID}", (ulong MID) =>
@@ -168,26 +169,16 @@ public static class ScoresRoutes
             return Results.NoContent();
         }).WithName("DeleteMatch").WithOpenApi().RequirePermission(Permission.MatchesManage);
 
-        // A player may call a replay once per match when they lose a point.
-        // Voids the scores for the most recently played map and marks the player's replay as spent.
+        // Legacy: same rules as POST /Matches/{id}/Replay, identifying the caller by ScoreSaber ID.
         endpoints.MapPost("/Matches/{matchId}/CallReplay", async (ulong matchId, CallReplayRequest request) =>
-        {
-            using MySqlConnection conn = connManager.IssueConnection();
-
-            Match? updatedMatch = MatchTools.SetPlayerReplayUsed(conn, matchId, request.CallingPlayerUID);
-            if (updatedMatch == null)
-                return Results.BadRequest("Replay not available: match not found, player not in match, or replay already used.");
-
-            List<MatchScore> preReplayScores = ScoreTools.FlagPreReplayScores(conn, matchId);
-
-            await MatchWebSocketManager.BroadcastToMatch(matchId, "replay_called", new
-            {
-                callingPlayerUID = request.CallingPlayerUID,
-                preReplayScores,
-                match = updatedMatch.Value
-            });
-
-            return Results.Ok(new { match = updatedMatch.Value, preReplayScores });
-        }).WithName("CallReplay").WithOpenApi().RequirePermission(Permission.MatchesUpdate);
+            MatchFlowRoutes.ToResult(await MatchActions.Run(connManager, matchId, null, false, "replay_called",
+                (conn, ctx, state) =>
+                {
+                    Participant? caller = ctx.Participants.FirstOrDefault(p => p.Ssid == request.CallingPlayerUID);
+                    return caller == null
+                        ? new ActionError(400, "The calling player isn't in this match.")
+                        : MatchActions.CallReplay(conn, ctx, state, caller.Side);
+                })))
+            .WithName("CallReplay").WithOpenApi().RequirePermission(Permission.MatchesUpdate);
     }
 }

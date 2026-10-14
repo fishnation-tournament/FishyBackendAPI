@@ -37,7 +37,7 @@ public static class MatchWebSocketManager
         }
     }
 
-    public static async Task BroadcastToMatch(ulong matchId, string eventType, object data)
+    public static async Task BroadcastToMatch(ulong matchId, string eventType, object data, JsonSerializerOptions? options = null)
     {
         Console.WriteLine($"[WS] BroadcastToMatch called — matchId={matchId}, event={eventType}, connections={_connections.Count}");
         List<WebSocket> snapshot;
@@ -55,7 +55,7 @@ public static class MatchWebSocketManager
         string payload;
         try
         {
-            payload = JsonSerializer.Serialize(new { @event = eventType, matchId, data });
+            payload = JsonSerializer.Serialize(new { @event = eventType, matchId, data }, options);
         }
         catch (Exception ex)
         {

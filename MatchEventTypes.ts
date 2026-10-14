@@ -126,6 +126,87 @@ export interface ReplayCalledEvent {
     data:    ReplayCalledData;
 }
 
+// ─── Server-computed match state (GET /Matches/{id}/State, event "match_state") ─
+//
+// The server owns the match rules. Render this; send `version` back as `expectedVersion` with every action
+// (POST /Matches/{id}/PickBan | Scores | Replay | ConfirmResult | Tiebreaker | Forfeit | Undo).
+// Unlike the legacy events, match_state uses camelCase field names (same as the REST API).
+
+export type MatchStatus    = "not_started" | "in_progress" | "complete" | "forfeit";
+export type NextActionType = "none" | "ban" | "pick" | "set_lineup" | "submit_scores" | "set_tiebreaker" | "replay_or_confirm";
+export type PoolMapStatus  = "available" | "banned" | "picked" | "tiebreaker";
+export type GameStatus     = "awaiting_lineup" | "awaiting_scores" | "replaying" | "settled";
+export type AttemptKind    = "initial" | "replay" | "tie_replay";
+
+export interface MatchState {
+    matchId:             number;
+    version:             string;
+    status:              MatchStatus;
+    bestOf:              number | null;
+    winsNeeded:          number | null;
+    isTeamMatch:         boolean;
+    format:              { poolSize: number; bans: number | null; picks: number | null; tiebreakerSource: "pool" | "secret" | null; supported: boolean; problem: string | null };
+    sides:               SideState[];         // [side 1, side 2]
+    winnerSide:          1 | 2 | null;
+    next:                NextAction;
+    replayWindow:        { side: 1 | 2; mapId: number; isDecidingMap: boolean } | null;
+    sequence:            { step: number; cycle: number; action: "ban" | "pick"; side: 1 | 2; done: boolean; mapId: number | null; pickBanId: number | null }[];
+    maps:                { mapId: number; map: object; status: PoolMapStatus; side: 1 | 2 | null; playOrder: number | null }[];
+    games:               GameState[];         // maps actually played, in order
+    storedResultDiffers: boolean;             // older matches only
+    deviations:          string[];            // older matches only
+}
+
+export interface SideState {
+    side:            1 | 2;
+    userId:          number | null;
+    teamId:          number | null;
+    name:            string | null;
+    points:          number;
+    replayUsed:      boolean;
+    replayAvailable: boolean;
+    isWinner:        boolean;
+}
+
+export interface NextAction {
+    action:                 NextActionType;
+    side:                   1 | 2 | null;
+    step:                   number | null;
+    mapId:                  number | null;
+    attempt:                number | null;
+    attemptKind:            AttemptKind | null;
+    awaitingScoresFrom:     number[];        // user IDs
+    awaitingLineupFromSides: number[];
+    message:                string | null;
+}
+
+export interface GameState {
+    order:                  number;
+    mapId:                  number;
+    map:                    object | null;
+    isTiebreaker:           boolean;
+    pickedBySide:           1 | 2 | null;
+    status:                 GameStatus;
+    winnerSide:             1 | 2 | null;
+    attempts: {
+        number:       number;
+        kind:         AttemptKind;
+        calledBySide: 1 | 2 | null;
+        complete:     boolean;
+        side1Total:   number | null;
+        side2Total:   number | null;
+        scores: { scoreId: number; userId: number | null; scoresaberId: string; side: 1 | 2; score: number; maxScore: number; misses: number; counted: boolean }[];
+    }[];
+    awaitingScoresFrom:      number[];
+    awaitingLineupFromSides: number[];
+}
+
+export interface MatchStateEvent {
+    event:   "match_state";
+    matchId: number;
+    data:    { action: string; state: MatchState };
+}
+
 // ─── Parent Union ─────────────────────────────────────────────────────────────
 
 export type MatchEvent =
@@ -135,7 +216,8 @@ export type MatchEvent =
     | BanAddedEvent
     | PickBanRemovedEvent
     | MatchUpdatedEvent
-    | ReplayCalledEvent;
+    | ReplayCalledEvent
+    | MatchStateEvent;
 
 // ─── Parsing Helper ───────────────────────────────────────────────────────────
 //

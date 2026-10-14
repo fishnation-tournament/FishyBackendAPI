@@ -205,6 +205,7 @@ SeasonRoutes.MapSeasonRoutes(app, connManager);
 TournamentSeriesRoutes.MapTournamentSeriesRoutes(app, connManager);
 TeamRoutes.MapTeamRoutes(app, connManager);
 MatchLineupRoutes.MapMatchLineupRoutes(app, connManager);
+MatchFlowRoutes.MapMatchFlowRoutes(app, connManager);
 AuditLogRoutes.MapAuditLogRoutes(app, connManager);
 PickBanRoutes.MapPickBanRoutes(app, connManager);
 MatchScheduleRoutes.MapMatchScheduleRoutes(app, connManager);

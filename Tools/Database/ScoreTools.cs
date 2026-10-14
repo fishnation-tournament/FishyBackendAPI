@@ -182,37 +182,6 @@ public class ScoreTools
         return GetMatchScoreById(dbConn, scoreId);
     }
 
-    /// <summary>
-    /// Marks all scores for the most recently played map in the given match with ReplayCalledAfter = 1.
-    /// The scores remain valid reference points — the replaying player must beat them.
-    /// Returns the flagged score entries, or an empty list if there are no scores.
-    /// </summary>
-    public static List<MatchScore> FlagPreReplayScores(MySqlConnection dbConn, ulong matchId)
-    {
-        MySqlCommand findCmd = new MySqlCommand(
-                "SELECT MapID FROM player_scores WHERE MatchID = @MatchID AND ReplayCalledAfter = 0 ORDER BY ScoreID DESC LIMIT 1",
-            dbConn);
-        findCmd.Parameters.AddWithValue("@MatchID", matchId);
-        object? result = findCmd.ExecuteScalar();
-        if (result == null || result == DBNull.Value) return new List<MatchScore>();
-        ulong mapId = Convert.ToUInt64(result);
-
-        MySqlCommand flagCmd = new MySqlCommand(
-            "UPDATE player_scores SET ReplayCalledAfter = 1 WHERE MatchID = @MatchID AND MapID = @MapID",
-            dbConn);
-        flagCmd.Parameters.AddWithValue("@MatchID", matchId);
-        flagCmd.Parameters.AddWithValue("@MapID", mapId);
-        flagCmd.ExecuteNonQuery();
-
-        MySqlCommand getCmd = new MySqlCommand(
-            $"SELECT {MatchScoreColumns} FROM player_scores WHERE MatchID = @MatchID AND MapID = @MapID",
-            dbConn);
-        getCmd.Parameters.AddWithValue("@MatchID", matchId);
-        getCmd.Parameters.AddWithValue("@MapID", mapId);
-        using MySqlDataReader reader = getCmd.ExecuteReader();
-        return ReadMatchScores(reader);
-    }
-
     public static bool DeleteMatchScore(MySqlConnection dbConn, ulong scoreId)
     {
         MySqlCommand cmd = new MySqlCommand("DELETE FROM player_scores WHERE ScoreID = @ScoreID", dbConn);

@@ -451,3 +451,47 @@ public struct AccessResponse
     public IReadOnlyList<string> Roles { get; set; }
     public List<Authorization.Permission> Permissions { get; set; }
 }
+
+// ── Guarded match actions (see Routes/MatchFlowRoutes.cs) ────────────────────
+
+public struct MatchVersionedAction
+{
+    /// <summary>The version from the match state you acted on.</summary>
+    public string? ExpectedVersion { get; set; }
+}
+
+public struct MatchPickBanAction
+{
+    public ulong MapID { get; set; }
+    public string? ExpectedVersion { get; set; }
+}
+
+public struct MatchScoreAction
+{
+    /// <summary>The player's user ID (not their ScoreSaber ID).</summary>
+    public ulong UserID { get; set; }
+    public int Score { get; set; }
+    public int MaxScore { get; set; }
+    public int Misses { get; set; }
+    public string? ExpectedVersion { get; set; }
+}
+
+public struct MatchReplayAction
+{
+    /// <summary>Optional: the side you expect to be calling it (rejected if it isn't theirs to call).</summary>
+    public int? Side { get; set; }
+    public string? ExpectedVersion { get; set; }
+}
+
+public struct MatchTiebreakerAction
+{
+    public ulong MapID { get; set; }
+    public string? ExpectedVersion { get; set; }
+}
+
+public struct MatchForfeitAction
+{
+    /// <summary>The side (1 or 2) that forfeits.</summary>
+    public int Side { get; set; }
+    public string? ExpectedVersion { get; set; }
+}

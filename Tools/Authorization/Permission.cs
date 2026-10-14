@@ -50,6 +50,11 @@ public enum Permission
     LineupsManage,
     /// <summary>Create and remove match schedule entries.</summary>
     ScheduleManage,
+    /// <summary>
+    /// Correct a match's records directly (picks/bans, scores, replays) outside the normal turn order.
+    /// Results are still recomputed from the records, never set by hand.
+    /// </summary>
+    MatchesOverride,
 
     // ── Tournament ───────────────────────────────────────────────────────────
     /// <summary>Create, edit and delete teams and their rosters.</summary>
