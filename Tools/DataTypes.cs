@@ -24,9 +24,6 @@ public struct User
     public ulong? DiscordID { get; set; }
     public string? DiscordUsername { get; set; }
 
-    public string? GoogleID { get; set; }
-    public string? GoogleEmail { get; set; }
-
     public DateTime RegistrationDate { get; set; }
     /// <summary>Role keys the user holds (from user_roles), e.g. ["user", "organizer"].</summary>
     public List<string> Roles { get; set; }
@@ -49,13 +46,11 @@ public struct User
         UserBio = reader.IsDBNull(5) ? null : reader.GetString(5);
         DiscordID = reader.IsDBNull(6) ? null : reader.GetUInt64(6);
         DiscordUsername = reader.IsDBNull(7) ? null : reader.GetString(7);
-        GoogleID = reader.IsDBNull(8) ? null : reader.GetString(8);
-        GoogleEmail = reader.IsDBNull(9) ? null : reader.GetString(9);
-        RegistrationDate = reader.GetDateTime(10);
-        Title = reader.IsDBNull(11) ? null : reader.GetString(11);
-        string? ssProf = reader.IsDBNull(12) ? null : reader.GetString(12);
-        string? blProf = reader.IsDBNull(13) ? null : reader.GetString(13);
-        Roles = reader.IsDBNull(14) ? new List<string>() : reader.GetString(14).Split(',').ToList();
+        RegistrationDate = reader.GetDateTime(8);
+        Title = reader.IsDBNull(9) ? null : reader.GetString(9);
+        string? ssProf = reader.IsDBNull(10) ? null : reader.GetString(10);
+        string? blProf = reader.IsDBNull(11) ? null : reader.GetString(11);
+        Roles = reader.IsDBNull(12) ? new List<string>() : reader.GetString(12).Split(',').ToList();
 
         ScoreSaberProfile = NormalizeStoredProfileJson(ssProf, UID, "ScoreSaberProfile");
         BeatLeaderProfile = NormalizeStoredProfileJson(blProf, UID, "BeatLeaderProfile");

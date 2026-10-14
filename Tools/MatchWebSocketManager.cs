@@ -8,6 +8,8 @@ public static class MatchWebSocketManager
 {
     private static readonly ConcurrentDictionary<ulong, List<WebSocket>> _connections = new();
     private static readonly object _lock = new();
+    // Same camelCase naming as the REST responses.
+    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
 
     public static void AddConnection(ulong matchId, WebSocket socket)
     {
@@ -55,7 +57,7 @@ public static class MatchWebSocketManager
         string payload;
         try
         {
-            payload = JsonSerializer.Serialize(new { @event = eventType, matchId, data }, options);
+            payload = JsonSerializer.Serialize(new { @event = eventType, matchId, data }, options ?? WebJson);
         }
         catch (Exception ex)
         {

@@ -67,9 +67,6 @@ public struct AddUser
     public ulong? DiscordID { get; set; }
     public string? DiscordUsername { get; set; }
 
-    public string? GoogleID { get; set; }
-    public string? GoogleEmail { get; set; }
-
     public DateTime RegistrationDate { get; set; }
     public string? Title { get; set; }
 
@@ -139,7 +136,8 @@ public struct FrontFacingMapPool
     /// <summary>Defaults to Season when omitted.</summary>
     public PoolType? PoolType { get; set; }
     public DateTime? GeneratedAt { get; set; }
-    public List<FrontFacingMap> Maps { get; set; }
+    /// <summary>Optional. Saved into the new pool; each map's MapPoolID and Season are taken from the pool.</summary>
+    public List<FrontFacingMap>? Maps { get; set; }
 }
 
 public struct FrontFacingMatch
@@ -151,7 +149,7 @@ public struct FrontFacingMatch
     public ulong? WinnerID { get; set; }
     public int Player1Score { get; set; }
     public int Player2Score { get; set; }
-    public DateTime MatchDate { get; set; }
+    public DateTime? MatchDate { get; set; }
     public List<FrontFacingMatchScore> Scores { get; set; }
     public int Season { get; set; }
     public string? Status { get; set; }
@@ -163,7 +161,8 @@ public struct FrontFacingMatch
     public int? BanCount { get; set; }
     public int? PickCount { get; set; }
     public int LocalMatchID  { get; set; }
-    public int IsLosersBracket { get; set; }
+    [JsonConverter(typeof(FlexibleBoolConverter))]
+    public bool IsLosersBracket { get; set; }
     public ulong? WinnerGoesToMatch { get; set; }
     public ulong? LoserGoesToMatch  { get; set; }
     public int? Team1ID { get; set; }
@@ -205,7 +204,8 @@ public struct BulkCreateMatchEntry
     public int? BanCount { get; set; }
     public int? PickCount { get; set; }
     public int LocalMatchID { get; set; }
-    public bool IsLosersBracket {  get; set; }
+    [JsonConverter(typeof(FlexibleBoolConverter))]
+    public bool IsLosersBracket { get; set; }
     public ulong? WinnerGoesToMatch { get; set; }
     public ulong? LoserGoesToMatch { get; set; }
     public int? Team1ID { get; set; }

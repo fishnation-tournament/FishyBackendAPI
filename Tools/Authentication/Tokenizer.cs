@@ -21,7 +21,6 @@ public class Tokenizer
             new Claim(JwtRegisteredClaimNames.Sub, user.UID.ToString()),
             new Claim("uid", user.UID.ToString()),
             new Claim("discord_id", user.DiscordID?.ToString() ?? ""),
-            new Claim("google_id", user.GoogleID ?? ""),
             new Claim("token_type", "session")
         };
 

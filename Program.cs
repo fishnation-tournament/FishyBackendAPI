@@ -198,7 +198,6 @@ ScoresRoutes.RegisterScoresRoutes(app, connManager);
 PlayerRoutes.MapPlayerRoutes(app, connManager);
 UserRoutes.MapUserRoutes(app, connManager);
 DiscordAuth.MapAuthRoutes(app, apiTokenizer, connManager);
-GoogleAuth.MapAuthRoutes(app, apiTokenizer, connManager);
 SteamAuth.MapAuthRoutes(app, SteamKey, connManager);
 ApiTokenRoutes.MapApiTokenRoutes(app, apiTokenizer, connManager);
 SeasonRoutes.MapSeasonRoutes(app, connManager);

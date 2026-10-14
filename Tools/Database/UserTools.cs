@@ -1,6 +1,5 @@
 ﻿using FishyAPI.Tools.DataTypes;
 using FishyAPI.Tools.FrontFacingDataTypes;
-using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 
@@ -11,7 +10,7 @@ public static class UserTools
     /// <summary>Column list read by User(reader); RoleKeys is the user's roles as a comma-separated list.</summary>
     private const string UserColumns = """
         u.UserID, u.SSID, u.OptBLUID, u.Username, u.UserPfpLink, u.Description, u.DiscordID, u.DiscordName,
-        u.GoogleID, u.GoogleEmail, u.RegistrationDate, u.Title, u.ScoreSaberProfile, u.BeatLeaderProfile,
+        u.RegistrationDate, u.Title, u.ScoreSaberProfile, u.BeatLeaderProfile,
         (SELECT GROUP_CONCAT(r.RoleKey ORDER BY r.RoleID) FROM user_roles ur JOIN roles r ON r.RoleID = ur.RoleID
          WHERE ur.UserID = u.UserID) AS RoleKeys
         """;
@@ -123,9 +122,9 @@ public static class UserTools
     {
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO users
-            (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, GoogleID, GoogleEmail, RegistrationDate, Title, ScoreSaberProfile, BeatLeaderProfile)
+            (SSID, OptBLUID, Username, UserPfpLink, Description, DiscordID, DiscordName, RegistrationDate, Title, ScoreSaberProfile, BeatLeaderProfile)
         VALUES
-            (@SSID, @OptBLUID, @Username, @UserPfpLink, @Description, @DiscordID, @DiscordName, @GoogleID, @GoogleEmail, @RegistrationDate, @Title, @ScoreSaberProfile, @BeatLeaderProfile)
+            (@SSID, @OptBLUID, @Username, @UserPfpLink, @Description, @DiscordID, @DiscordName, @RegistrationDate, @Title, @ScoreSaberProfile, @BeatLeaderProfile)
         """, dbConn);
         cmd.Parameters.AddWithValue("@SSID", user.SSID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@OptBLUID", user.OptBLUID ?? (object)DBNull.Value);
@@ -134,8 +133,6 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@Description", user.UserBio ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@DiscordID", user.DiscordID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@DiscordName", user.DiscordUsername ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@GoogleID", user.GoogleID ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@GoogleEmail", user.GoogleEmail ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
         cmd.Parameters.AddWithValue("@Title", user.Title ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@ScoreSaberProfile", user.ScoreSaberProfile ?? (object)DBNull.Value);
@@ -159,8 +156,6 @@ public static class UserTools
             Description = @Description,
             DiscordID = @DiscordID,
             DiscordName = @DiscordName,
-            GoogleID = @GoogleID,
-            GoogleEmail = @GoogleEmail,
             RegistrationDate = @RegistrationDate,
             Title = @Title,
             ScoreSaberProfile = @ScoreSaberProfile,
@@ -174,8 +169,6 @@ public static class UserTools
         cmd.Parameters.AddWithValue("@Description", user.UserBio ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@DiscordID", user.DiscordID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@DiscordName", user.DiscordUsername ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@GoogleID", user.GoogleID ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@GoogleEmail", user.GoogleEmail ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate.ToString("yyyy-MM-dd HH:mm:ss"));
         cmd.Parameters.AddWithValue("@Title", user.Title ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@ScoreSaberProfile", user.ScoreSaberProfile ?? (object)DBNull.Value);
@@ -205,25 +198,6 @@ public static class UserTools
     {
         MySqlCommand cmd = new MySqlCommand("SELECT 1 FROM users WHERE DiscordID = @DiscordID LIMIT 1", dbConn);
         cmd.Parameters.AddWithValue("@DiscordID", DiscordID);
-        object? result = cmd.ExecuteScalar();
-        return result != null;
-    }
-
-    public static User GetUserByGoogleId(MySqlConnection dbConn, string GoogleID)
-    {
-        MySqlCommand cmd = new MySqlCommand($"SELECT {UserColumns} FROM users u WHERE u.GoogleID = @GoogleID", dbConn);
-        cmd.Parameters.AddWithValue("@GoogleID", GoogleID);
-        using MySqlDataReader reader = cmd.ExecuteReader();
-        User user = ReadSingleResult(reader);
-
-        reader.Close();
-        return user;
-    }
-
-    public static bool CheckUserExistsGID(MySqlConnection dbConn, string GoogleID)
-    {
-        MySqlCommand cmd = new MySqlCommand("SELECT 1 FROM users WHERE GoogleID = @GoogleID LIMIT 1", dbConn);
-        cmd.Parameters.AddWithValue("@GoogleID", GoogleID);
         object? result = cmd.ExecuteScalar();
         return result != null;
     }

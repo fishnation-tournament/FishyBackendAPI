@@ -222,7 +222,12 @@ public static class MapTools
 
     public static Map AddMap(MySqlConnection dbConn, FrontFacingMap frontFacingMap) //POST
     {
-        bool hasTagsColumn = MapsTableHasTagsColumn(dbConn);
+        ulong newMapId = InsertMap(dbConn, frontFacingMap, MapsTableHasTagsColumn(dbConn), null);
+        return GetMapById(dbConn, newMapId, includePrivate: true);
+    }
+
+    private static ulong InsertMap(MySqlConnection dbConn, FrontFacingMap frontFacingMap, bool hasTagsColumn, MySqlTransaction? transaction)
+    {
 
         string insertSql = hasTagsColumn
             ? """
@@ -238,7 +243,7 @@ public static class MapTools
                   (@BSMapID, @MapName, @MapImageLink, @MPID, @Season, @Difficulty)
               """;
 
-        MySqlCommand cmd = new MySqlCommand(insertSql, dbConn);
+        MySqlCommand cmd = new MySqlCommand(insertSql, dbConn, transaction);
         cmd.Parameters.AddWithValue("@BSMapID", frontFacingMap.BSMapID);
         cmd.Parameters.AddWithValue("@MapName", frontFacingMap.MapName);
         cmd.Parameters.AddWithValue("@MapImageLink", frontFacingMap.MapImageLink);
@@ -251,7 +256,7 @@ public static class MapTools
         }
         cmd.ExecuteNonQuery();
 
-        return GetMapById(dbConn, (ulong)cmd.LastInsertedId, includePrivate: true);
+        return (ulong)cmd.LastInsertedId;
     }
 
     public static void UpdateMap(MySqlConnection dbConn, Map map) //PUT
@@ -303,14 +308,19 @@ public static class MapTools
         cmd.ExecuteNonQuery();
     }
 
+    /// <summary>Creates the pool and any maps listed in it, all or nothing.</summary>
     public static MapPool AddMapPool(MySqlConnection dbConn, FrontFacingMapPool frontFacingMapPool) //POST
     {
+        List<FrontFacingMap> maps = frontFacingMapPool.Maps ?? new List<FrontFacingMap>();
+        bool hasTagsColumn = maps.Count > 0 && MapsTableHasTagsColumn(dbConn);
+
+        using MySqlTransaction transaction = dbConn.BeginTransaction();
         MySqlCommand cmd = new MySqlCommand("""
         INSERT INTO map_pools
             (MapPoolName, MapPoolDescription, Season, DownloadLink, OneClickLink, Visibility, PoolType, GeneratedAt)
         VALUES
             (@MapPoolName, @MapPoolDescription, @Season,  @DownloadLink, @OneClickLink, @Visibility, @PoolType, @GeneratedAt)
-        """, dbConn);
+        """, dbConn, transaction);
         cmd.Parameters.AddWithValue("@MapPoolName", frontFacingMapPool.MapPoolName);
         cmd.Parameters.AddWithValue("@MapPoolDescription", frontFacingMapPool.MapPoolDescription);
         cmd.Parameters.AddWithValue("@Season", frontFacingMapPool.Season);
@@ -322,8 +332,18 @@ public static class MapTools
             ? frontFacingMapPool.GeneratedAt.Value.ToString("yyyy-MM-dd HH:mm:ss")
             : (object)DBNull.Value);
         cmd.ExecuteNonQuery();
+        ulong newPoolId = (ulong)cmd.LastInsertedId;
 
-        return GetMapPoolById(dbConn, (ulong)cmd.LastInsertedId, includePrivate: true);
+        foreach (FrontFacingMap map in maps)
+        {
+            FrontFacingMap poolMap = map;
+            poolMap.MapPoolID = newPoolId;
+            poolMap.Season = frontFacingMapPool.Season;
+            InsertMap(dbConn, poolMap, hasTagsColumn, transaction);
+        }
+
+        transaction.Commit();
+        return GetMapPoolById(dbConn, newPoolId, includePrivate: true);
     }
 
     public static void UpdateMapPool(MySqlConnection dbConn, MapPool mapPool) //PUT

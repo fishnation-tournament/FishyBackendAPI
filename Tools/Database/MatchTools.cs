@@ -118,7 +118,7 @@ public class MatchTools
         cmd.Parameters.AddWithValue("@Player2UID", frontFacingMatch.Player2ID ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@Player1Points", 0);
         cmd.Parameters.AddWithValue("@Player2Points", 0);
-        cmd.Parameters.AddWithValue("@MatchDateTime", frontFacingMatch.MatchDate.ToString("yyyy-MM-dd HH:mm:ss"));
+        cmd.Parameters.AddWithValue("@MatchDateTime", frontFacingMatch.MatchDate.HasValue ? frontFacingMatch.MatchDate.Value.ToString("yyyy-MM-dd HH:mm:ss") : (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@MatchComplete", false);
         cmd.Parameters.AddWithValue("@WinnerUID", DBNull.Value);
         cmd.Parameters.AddWithValue("@Season", frontFacingMatch.Season);

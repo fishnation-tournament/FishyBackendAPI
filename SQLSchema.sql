@@ -164,8 +164,6 @@ create table users
     Description       text                                null,
     DiscordID         bigint                              null,
     DiscordName       varchar(100)                        null,
-    GoogleID          char(255)                           null,
-    GoogleEmail       char(255)                           null,
     RegistrationDate  timestamp default CURRENT_TIMESTAMP null,
     Title             varchar(50)                         null comment 'Display title shown on the website; not used for access control',
     ScoreSaberProfile longtext                            null,

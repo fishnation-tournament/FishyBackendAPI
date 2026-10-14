@@ -1,136 +1,118 @@
 // ─── Supporting Types ────────────────────────────────────────────────────────
+//
+// Every event uses the same camelCase field names as the REST API.
 
 export interface FrontFacingUser {
-    UID:               number;
-    SSID:              string | undefined;   // serialised as string (ulong)
-    OptBLUID:          string | undefined;   // serialised as string (ulong)
-    Username:          string;
-    UserPfpLink:       string | undefined;
-    UserBio:           string | undefined;
-    DiscordID:         string | undefined;   // serialised as string (ulong)
-    DiscordUsername:   string | undefined;
-    RegistrationDate:  string;               // ISO 8601
-    Roles:             string[];             // role keys, e.g. ["user", "organizer"]
-    Title:             string | undefined;   // display text, not used for access
-    ScoreSaberProfile: object | undefined;   // raw JSON blob
-    BeatLeaderProfile: object | undefined;   // raw JSON blob
+    uid:               number;
+    ssid:              string | null;   // serialised as string (ulong)
+    optBLUID:          string | null;   // serialised as string (ulong)
+    username:          string;
+    userPfpLink:       string | null;
+    userBio:           string | null;
+    discordID:         string | null;   // serialised as string (ulong)
+    discordUsername:   string | null;
+    registrationDate:  string;          // ISO 8601
+    roles:             string[];        // role keys, e.g. ["user", "organizer"]
+    title:             string | null;   // display text, not used for access
+    scoreSaberProfile: object | null;   // raw JSON blob
+    beatLeaderProfile: object | null;   // raw JSON blob
 }
 
 export interface MatchScore {
-    ScoreID:         number;
-    UID:             number;
-    MapID:           number;
-    MatchID:         number;
-    Score:           number;
-    MaxScore:        number;
-    Misses:          number;
+    scoreID:           number;
+    uid:               string;          // serialised as string (ulong)
+    mapID:             number;
+    matchID:           number;
+    score:             number;
+    maxScore:          number;
+    misses:            number;
     /** A replay was called after this score. The score is still a required benchmark for the replaying player. */
-    ReplayCalledAfter: boolean;
-    IsReplayAttempt:   boolean;
-}
-
-export interface FrontFacingMatchScore {
-    UID:             number;
-    MapID:           number;
-    MatchID:         number;
-    Score:           number;
-    MaxScore:        number;
-    Misses:          number;
-    IsReplayAttempt: boolean;
+    replayCalledAfter: boolean;
+    isReplayAttempt:   boolean;
+    teamID:            number | null;
 }
 
 export interface PickBan {
-    PickBanID: number;
-    MatchID:   number;
-    IsPick:    boolean;   // true = pick, false = ban
-    PlayerID:  number;
+    pickBanID: number;
+    matchID:   number;
+    isPick:    boolean;   // true = pick, false = ban
+    playerID:  number;
+    teamID:    number | null;
+    mapID:     number | null;
+    map:       object | null;
+}
+
+export interface MatchLineup {
+    lineupID: number;
+    matchID:  number;
+    mapID:    number;
+    teamID:   number;
+    userID:   number;
 }
 
 export interface Match {
-    MatchID:            number;
-    Player1ID:          number | undefined;
-    Player2ID:          number | undefined;
-    Complete:           boolean;
-    WinnerID:           number | undefined;
-    Player1Score:       number | undefined;
-    Player2Score:       number | undefined;
-    MatchDate:          string | undefined;  // ISO 8601
-    Scores:             MatchScore[];
-    Season:             number;
-    MapPoolID:          number;
-    Status:             string | undefined;
-    BestOf:             number | undefined;
-    Player1ReplayUsed:  boolean;
-    Player2ReplayUsed:  boolean;
-    IsStreamed:         boolean;
-    CoordinatorUID:     number | undefined;
-    Player1User:        FrontFacingUser | undefined;
-    Player2User:        FrontFacingUser | undefined;
-    CoordinatorUser:    FrontFacingUser | undefined;
-    RoundName:          string | undefined;
-    RoundOrder:         number | undefined;
-    BanCount:           number | undefined;
-    PickCount:          number | undefined;
-}
-
-export interface ReplayCalledData {
-    callingPlayerUID: number;
-    /** Scores from the attempt on which the replay was called. The replaying player must beat all of these. */
-    preReplayScores:  MatchScore[];
-    match:            Match;
+    matchID:           number;
+    player1ID:         number | null;
+    player2ID:         number | null;
+    complete:          boolean;
+    winnerID:          number | null;
+    player1Score:      number | null;
+    player2Score:      number | null;
+    matchDate:         string | null;   // ISO 8601
+    scores:            MatchScore[];
+    pickBans:          PickBan[];
+    lineups:           MatchLineup[];
+    season:            number;
+    mapPoolID:         number;
+    status:            string | null;
+    bestOf:            number | null;
+    player1ReplayUsed: boolean;
+    player2ReplayUsed: boolean;
+    isStreamed:        boolean;
+    coordinatorUID:    number | null;
+    roundName:         string | null;
+    roundOrder:        number | null;
+    banCount:          number | null;
+    pickCount:         number | null;
+    localMatchID:      number;
+    isLosersBracket:   boolean;
+    winnerGoesToMatch: number | null;
+    loserGoesToMatch:  number | null;
+    team1ID:           number | null;
+    team2ID:           number | null;
+    winnerTeamID:      number | null;
+    player1User:       FrontFacingUser | null;
+    player2User:       FrontFacingUser | null;
+    coordinatorUser:   FrontFacingUser | null;
+    team1:             object | null;
+    team2:             object | null;
 }
 
 // ─── Individual Event Types ───────────────────────────────────────────────────
 
-export interface ScorePostedEvent {
-    event:   "score_posted";
-    matchId: number;
-    data:    FrontFacingMatchScore;
-}
-
-export interface ScoreUpdatedEvent {
-    event:   "score_updated";
-    matchId: number;
-    data:    MatchScore;
-}
-
-export interface PickAddedEvent {
-    event:   "pick_added";
-    matchId: number;
-    data:    PickBan;
-}
-
-export interface BanAddedEvent {
-    event:   "ban_added";
-    matchId: number;
-    data:    PickBan;
-}
-
-export interface PickBanRemovedEvent {
-    event:   "pick_ban_removed";
-    matchId: number;
-    data: {
-        pickBanId: number;
-    };
-}
-
+/** Sent after every match action, alongside match_state, with the full match record. */
 export interface MatchUpdatedEvent {
     event:   "match_updated";
     matchId: number;
     data:    Match;
 }
 
-export interface ReplayCalledEvent {
-    event:   "replay_called";
+export interface LineupAddedEvent {
+    event:   "lineup_added";
     matchId: number;
-    data:    ReplayCalledData;
+    data:    MatchLineup;
+}
+
+export interface LineupRemovedEvent {
+    event:   "lineup_removed";
+    matchId: number;
+    data:    { lineupId: number };
 }
 
 // ─── Server-computed match state (GET /Matches/{id}/State, event "match_state") ─
 //
 // The server owns the match rules. Render this; send `version` back as `expectedVersion` with every action
 // (POST /Matches/{id}/PickBan | Scores | Replay | ConfirmResult | Tiebreaker | Forfeit | Undo).
-// Unlike the legacy events, match_state uses camelCase field names (same as the REST API).
 
 export type MatchStatus    = "not_started" | "in_progress" | "complete" | "forfeit";
 export type NextActionType = "none" | "ban" | "pick" | "set_lineup" | "submit_scores" | "set_tiebreaker" | "replay_or_confirm";
@@ -210,14 +192,10 @@ export interface MatchStateEvent {
 // ─── Parent Union ─────────────────────────────────────────────────────────────
 
 export type MatchEvent =
-    | ScorePostedEvent
-    | ScoreUpdatedEvent
-    | PickAddedEvent
-    | BanAddedEvent
-    | PickBanRemovedEvent
+    | MatchStateEvent
     | MatchUpdatedEvent
-    | ReplayCalledEvent
-    | MatchStateEvent;
+    | LineupAddedEvent
+    | LineupRemovedEvent;
 
 // ─── Parsing Helper ───────────────────────────────────────────────────────────
 //
@@ -226,9 +204,9 @@ export type MatchEvent =
 //       const event = parseMatchEvent(msg.data);
 //       if (!event) return;
 //
-//       if (event.event === "score_posted")   { /* event.data is FrontFacingMatchScore */ }
-//       if (event.event === "replay_called")  { /* event.data is ReplayCalledData      */ }
-//       if (event.event === "match_updated")  { /* event.data is Match                 */ }
+//       if (event.event === "match_state")   { /* event.data is { action, state: MatchState } */ }
+//       if (event.event === "match_updated") { /* event.data is Match                         */ }
+//       if (event.event === "lineup_added")  { /* event.data is MatchLineup                   */ }
 //   };
 
 export function parseMatchEvent(raw: string): MatchEvent | undefined {
