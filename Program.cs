@@ -76,6 +76,9 @@ builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Nightly, rate-limited refresh of every player's ScoreSaber/BeatLeader profile (see the service for settings).
+builder.Services.AddHostedService(_ => new PlayerProfileRefreshService(connManager));
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();

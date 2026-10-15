@@ -112,7 +112,7 @@ public struct UserProfiles
 
         if (SSID != null)
         {
-            var scoreSaberResponse = await httpClient.GetAsync($"https://scoresaber.com/api/player/{SSID}/full");
+            var scoreSaberResponse = await RequestScoreSaberProfileAsync(httpClient, SSID.Value);
             if (scoreSaberResponse.IsSuccessStatusCode)
             {
                 userProfiles.ScoreSaberProfile = await scoreSaberResponse.Content.ReadAsStringAsync();
@@ -122,12 +122,7 @@ public struct UserProfiles
 
         if (OptBLUID != null)
         {
-            NameValueCollection beatLeaderParameters = HttpUtility.ParseQueryString(string.Empty);
-            beatLeaderParameters["stats"] = "true";
-            beatLeaderParameters["keepOriginalId"] = "false";
-            beatLeaderParameters["leaderboardContext"] = "general";
-
-            var beatLeaderResponse = await httpClient.GetAsync($"https://api.beatleader.com/player/{OptBLUID}?{beatLeaderParameters}");
+            var beatLeaderResponse = await RequestBeatLeaderProfileAsync(httpClient, OptBLUID.Value);
             if (beatLeaderResponse.IsSuccessStatusCode)
             {
                 userProfiles.BeatLeaderProfile = await beatLeaderResponse.Content.ReadAsStringAsync();
@@ -136,6 +131,23 @@ public struct UserProfiles
         }
 
         return userProfiles;
+    }
+
+    public static Task<HttpResponseMessage> RequestScoreSaberProfileAsync(HttpClient httpClient, ulong SSID,
+        CancellationToken cancellationToken = default)
+    {
+        return httpClient.GetAsync($"https://scoresaber.com/api/player/{SSID}/full", cancellationToken);
+    }
+
+    public static Task<HttpResponseMessage> RequestBeatLeaderProfileAsync(HttpClient httpClient, ulong OptBLUID,
+        CancellationToken cancellationToken = default)
+    {
+        NameValueCollection beatLeaderParameters = HttpUtility.ParseQueryString(string.Empty);
+        beatLeaderParameters["stats"] = "true";
+        beatLeaderParameters["keepOriginalId"] = "false";
+        beatLeaderParameters["leaderboardContext"] = "general";
+
+        return httpClient.GetAsync($"https://api.beatleader.com/player/{OptBLUID}?{beatLeaderParameters}", cancellationToken);
     }
 }
 

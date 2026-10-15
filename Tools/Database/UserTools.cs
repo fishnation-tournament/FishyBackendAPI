@@ -187,6 +187,46 @@ public static class UserTools
         Console.WriteLine($"Updated user {user.Username} (UID: {user.UID}) in the database. {user.Username} now has Title: {user.Title}, SSID: {user.SSID}, OptBLUID: {user.OptBLUID}");
     }
 
+    /// <summary>Every user registered as a player in any season who has a ScoreSaber or BeatLeader ID linked.</summary>
+    public static List<(ulong UID, ulong? SSID, ulong? OptBLUID)> GetPlayerProfileIds(MySqlConnection dbConn)
+    {
+        MySqlCommand cmd = new MySqlCommand("""
+        SELECT u.UserID, u.SSID, u.OptBLUID
+        FROM users u
+        WHERE (u.SSID IS NOT NULL OR u.OptBLUID IS NOT NULL)
+          AND EXISTS (SELECT 1 FROM players p WHERE p.UID = u.UserID)
+        ORDER BY u.UserID
+        """, dbConn);
+        using MySqlDataReader reader = cmd.ExecuteReader();
+
+        List<(ulong, ulong?, ulong?)> ids = new List<(ulong, ulong?, ulong?)>();
+        while (reader.Read())
+        {
+            ids.Add((
+                reader.GetUInt64(0),
+                reader.IsDBNull(1) ? null : reader.GetUInt64(1),
+                reader.IsDBNull(2) ? null : reader.GetUInt64(2)));
+        }
+
+        reader.Close();
+        return ids;
+    }
+
+    /// <summary>Writes only the profile columns; a null profile leaves the stored one untouched.</summary>
+    public static void UpdateUserProfiles(MySqlConnection dbConn, ulong UID, string? scoreSaberProfile, string? beatLeaderProfile)
+    {
+        MySqlCommand cmd = new MySqlCommand("""
+        UPDATE users SET
+            ScoreSaberProfile = COALESCE(@ScoreSaberProfile, ScoreSaberProfile),
+            BeatLeaderProfile = COALESCE(@BeatLeaderProfile, BeatLeaderProfile)
+        WHERE UserID = @UserID
+        """, dbConn);
+        cmd.Parameters.AddWithValue("@ScoreSaberProfile", scoreSaberProfile ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@BeatLeaderProfile", beatLeaderProfile ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@UserID", UID);
+        cmd.ExecuteNonQuery();
+    }
+
     public static void DeleteUser(MySqlConnection dbConn, ulong UID)
     {
         MySqlCommand cmd = new MySqlCommand("DELETE FROM users WHERE UserID = @UID", dbConn);
