@@ -22,3 +22,9 @@
 **/values.dev.yaml
 LICENSE
 README.md
+# Secrets and old deploy artifacts must never end up in the image
+**/.env
+**/.env.*
+**/*.pem
+.dnu
+DeploymentResources*

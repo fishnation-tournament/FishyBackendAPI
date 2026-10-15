@@ -24,7 +24,7 @@ public static class DiscordAuth
             parameters["response_type"] = "code";
             parameters["grant_type"] = "authorization_code";
             parameters["scope"] = "identify";
-            parameters["redirect_uri"] = "https://api.fishnation.xyz/auth/discord/callback";
+            parameters["redirect_uri"] = $"{PublicUrls.Api}/auth/discord/callback";
 
             var parameterString = parameters.ToString();
             var discordAuthUrl = $"https://discord.com/api/oauth2/authorize?{parameterString}";
@@ -37,7 +37,7 @@ public static class DiscordAuth
             var code = context.Request.Query["code"];
             var clientId = Environment.GetEnvironmentVariable("DISCORD_APPID");
             var clientSecret = Environment.GetEnvironmentVariable("DISCORD_SECRET");
-            var redirectUri = "https://api.fishnation.xyz/auth/discord/callback";
+            var redirectUri = $"{PublicUrls.Api}/auth/discord/callback";
 
             using var httpClient = new HttpClient();
             var tokenResponse = await httpClient.PostAsync("https://discord.com/api/oauth2/token", new FormUrlEncodedContent(new[]
@@ -87,7 +87,7 @@ public static class DiscordAuth
                 }
                 
                 token = apiToken.GenerateToken(user, DateTime.Now.AddDays(7));
-                var websiteRedirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
+                var websiteRedirect = $"{PublicUrls.Site}/auth/discord/callback?token={token}";
                 context.Response.Redirect(websiteRedirect);
                 return;
             }
@@ -118,7 +118,7 @@ public static class DiscordAuth
             }
 
             token = apiToken.GenerateToken(newUser, DateTime.Now.AddDays(7));
-            var Redirect = $"https://fishnation.xyz/auth/discord/callback?token={token}";
+            var Redirect = $"{PublicUrls.Site}/auth/discord/callback?token={token}";
 
             // Return the token
             context.Response.Redirect(Redirect);

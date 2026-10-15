@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using FishyAPI.Tools;
 using FishyAPI.Tools.DBInteractions;
@@ -7,6 +6,7 @@ using FishyAPI.Routes;
 using FishyAPI.Tools.Authentication;
 using FishyAPI.Tools.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MySql.Data.MySqlClient;
@@ -19,12 +19,8 @@ var DBServer = Environment.GetEnvironmentVariable("DATABASE_SERVER");
 var DBName = Environment.GetEnvironmentVariable("DATABASE_NAME");
 var DBUser = Environment.GetEnvironmentVariable("DATABASE_USER");
 var DBPassword = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
-var CertPath = Environment.GetEnvironmentVariable("CERT_PATH");
-var CertKey = Environment.GetEnvironmentVariable("CERT_KEY");
 var SecretKey = Environment.GetEnvironmentVariable("SECRET_KEY");
 var SteamKey = Environment.GetEnvironmentVariable("STEAM_API_KEY")?.Trim();
-
-Console.WriteLine($"Steam Key: {SteamKey}");
 
 ConnectionManager connManager = new ConnectionManager(
     DBServer,
@@ -44,28 +40,15 @@ catch
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options =>
-    {
-        options.ListenAnyIP(80);
-        options.ListenAnyIP(443, httpsOptions =>
-        {
-            httpsOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1;
-            try
-            {
-                var certPem = File.ReadAllText(CertPath);
-                var keyPem = File.ReadAllText(CertKey);
-                var certificate = new X509Certificate2(
-                    X509Certificate2.CreateFromPem(certPem, keyPem));
-                httpsOptions.UseHttps(certificate);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Could not find certificate files at {CertPath} and {CertKey}");
-                Console.WriteLine($"Failed to load certificate: {ex.Message}");
-                throw;
-            }
-        });
-    });
+// TLS is terminated by Cloudflare; the API serves plain HTTP (port 8080 in the container image).
+// Trust X-Forwarded-* from the proxy in front of us (cloudflared / the site's nginx) so the
+// client IP and https scheme are correct. The container is only reachable through those proxies.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddAuthentication(options =>
     {
@@ -95,12 +78,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseWebSockets();
-
-app.UseHttpsRedirection();
 
 app.Use(async (context, next) => {
     if (context.Request.Query.TryGetValue("token", out var token) &&

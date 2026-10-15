@@ -81,8 +81,8 @@ public static class SteamAuth
             parameters["openid.mode"] = "checkid_setup";
             parameters["openid.claimed_id"] = "http://specs.openid.net/auth/2.0/identifier_select";
             parameters["openid.identity"] = "http://specs.openid.net/auth/2.0/identifier_select";
-            parameters["openid.return_to"] = $"https://api.fishnation.xyz/auth/steam/callback?token={token}";
-            parameters["openid.realm"] = "https://api.fishnation.xyz";
+            parameters["openid.return_to"] = $"{PublicUrls.Api}/auth/steam/callback?token={token}";
+            parameters["openid.realm"] = PublicUrls.Api;
 
             context.Response.Redirect($"https://steamcommunity.com/openid/login?{parameters}");
         }).WithName("SteamAuth").WithOpenApi().RequirePermission(Permission.AccountManageSelf);
@@ -151,7 +151,7 @@ public static class SteamAuth
                 NameValueCollection respParameters = HttpUtility.ParseQueryString(string.Empty);
                 respParameters["sysMessage"] = "You already have an account linked with this Steam account.";
 
-                var websiteRedirect = $"https://fishnation.xyz/me?{respParameters}";
+                var websiteRedirect = $"{PublicUrls.Site}/me?{respParameters}";
                 context.Response.Redirect(websiteRedirect);
                 return;
             }
@@ -178,7 +178,7 @@ public static class SteamAuth
             NameValueCollection respParam = HttpUtility.ParseQueryString(string.Empty);
             respParam["sysMessage"] = "Your account has been successfully linked to your Steam account.";
 
-            var redirect = $"https://fishnation.xyz/me?{respParam}";
+            var redirect = $"{PublicUrls.Site}/me?{respParam}";
             context.Response.Redirect(redirect);
             return;
         }).WithName("SteamAuthCallback").WithOpenApi().ExcludeFromDescription().RequirePermission(Permission.AccountManageSelf);
