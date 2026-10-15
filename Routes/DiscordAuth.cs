@@ -19,10 +19,10 @@ public static class DiscordAuth
         app.MapGet("/Auth/Discord", (HttpContext context) =>
         {
             NameValueCollection parameters = HttpUtility.ParseQueryString(string.Empty);
+            // The client secret is only sent server-to-server in the callback's token exchange;
+            // this URL goes to the user's browser.
             parameters["client_id"] = Environment.GetEnvironmentVariable("DISCORD_APPID");
-            parameters["client_secret"] = Environment.GetEnvironmentVariable("DISCORD_SECRET");
             parameters["response_type"] = "code";
-            parameters["grant_type"] = "authorization_code";
             parameters["scope"] = "identify";
             parameters["redirect_uri"] = $"{PublicUrls.Api}/auth/discord/callback";
 
