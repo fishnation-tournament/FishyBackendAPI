@@ -1,6 +1,7 @@
 # Builds the API image and pushes it to GHCR.
 #   dev-main -> ghcr.io/fishnation-tournament/fishyapi:dev
 #   prod     -> ghcr.io/fishnation-tournament/fishyapi:prod
+# Then deploys it to the dev or prod VM.
 # Each build is also tagged <tag>-<commit sha> so a VM can be pinned/rolled back to a specific build.
 name: Build image
 
@@ -49,3 +50,22 @@ jobs:
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # Runs on the self-hosted runner on the matching VM (see FishyInfra README).
+  deploy:
+    needs: build
+    runs-on: [self-hosted, "${{ github.ref_name == 'prod' && 'fishnation-prod' || 'fishnation-dev' }}"]
+    permissions:
+      packages: read
+    concurrency:
+      group: deploy-${{ github.ref_name }}
+    steps:
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Deploy api
+        run: ~/FishyInfra/scripts/deploy.sh api
+
+      - name: Log out of GHCR
+        if: always()
+        run: docker logout ghcr.io
