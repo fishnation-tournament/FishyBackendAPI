@@ -32,9 +32,9 @@ try
 {
     using MySqlConnection dbConn = connManager.IssueConnection();
 }
-catch
+catch (Exception ex)
 {
-    Console.WriteLine("Failed to connect to database");
+    Console.WriteLine($"Failed to connect to database: {ex.Message}");
     return;
 }
 
